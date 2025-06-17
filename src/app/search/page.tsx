@@ -4,42 +4,29 @@ import { Search } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
-import VideoCard from '@/components/card/VideoCard';
-import Sidebar from '@/components/layout/Sidebar';
+import PageLayout from '@/components/layout/PageLayout';
+import VideoCard from '@/components/VideoCard';
 
 // 模拟搜索历史数据
 const mockSearchHistory = ['流浪地球', '三体', '狂飙', '满江红'];
 
-// 模拟搜索结果数据
-const mockSearchResults = [
-  {
-    id: 1,
-    title: '流浪地球2',
-    poster:
-      'https://vip.dytt-img.com/upload/vod/20250326-1/9857e2e8581f231e24747ee32e633a3b.jpg',
-    type: 'movie' as const,
-    source: '电影天堂',
-  },
-  {
-    id: 2,
-    title: '三体',
-    poster:
-      'https://vip.dytt-img.com/upload/vod/20250326-1/9857e2e8581f231e24747ee32e633a3b.jpg',
-    type: 'tv' as const,
-    episodes: 30,
-    source: '电影天堂',
-  },
-];
+// 定义搜索结果类型
+type SearchResult = {
+  id: string;
+  title: string;
+  poster: string;
+  source: string;
+  source_name: string;
+  episodes?: number;
+};
 
 export default function SearchPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
-  const [searchResults, setSearchResults] = useState<typeof mockSearchResults>(
-    []
-  );
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -52,30 +39,43 @@ export default function SearchPage() {
     const query = searchParams.get('q');
     if (query) {
       setSearchQuery(query);
-      // 这里应该调用实际的搜索 API
-      setSearchResults(mockSearchResults);
-      setShowResults(true);
+      fetchSearchResults(query);
     } else {
       setShowResults(false);
     }
   }, [searchParams]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+  const fetchSearchResults = async (query: string) => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(
+        `/api/search?q=${encodeURIComponent(query)}`
+      );
+      const data = await response.json();
+      setSearchResults(data.results);
+      setShowResults(true);
+    } catch (error) {
+      setSearchResults([]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  return (
-    <div className='flex min-h-screen'>
-      <Sidebar onToggle={setSidebarCollapsed} activePath='/search' />
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
 
-      <main
-        className={`flex-1 px-10 py-8 transition-all duration-300 ${
-          sidebarCollapsed ? 'ml-16' : 'ml-64'
-        }`}
-      >
+    setIsLoading(true);
+    setShowResults(true);
+    // 模拟搜索延迟
+    setTimeout(() => {
+      fetchSearchResults(searchQuery);
+    }, 1000);
+  };
+
+  return (
+    <PageLayout activePath='/search'>
+      <div className='px-10 py-8'>
         {/* 搜索框 */}
         <div className='mb-8'>
           <form onSubmit={handleSearch} className='max-w-2xl mx-auto'>
@@ -94,15 +94,24 @@ export default function SearchPage() {
         </div>
 
         {/* 搜索结果或搜索历史 */}
-        <div className='max-w-7xl mx-auto mt-12'>
-          {showResults ? (
+        <div className='max-w-[90%] mx-auto mt-12'>
+          {isLoading ? (
+            <div className='flex justify-center items-center h-40'>
+              <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-green-500'></div>
+            </div>
+          ) : showResults ? (
             // 搜索结果
-            <div className='grid grid-cols-5 gap-7'>
+            <div className='grid grid-cols-6 gap-7'>
               {searchResults.map((item) => (
                 <div key={item.id} className='w-44'>
                   <VideoCard {...item} />
                 </div>
               ))}
+              {searchResults.length === 0 && (
+                <div className='col-span-5 text-center text-gray-500 py-8'>
+                  未找到相关结果
+                </div>
+              )}
             </div>
           ) : mockSearchHistory.length > 0 ? (
             // 搜索历史
@@ -127,7 +136,7 @@ export default function SearchPage() {
             </section>
           ) : null}
         </div>
-      </main>
-    </div>
+      </div>
+    </PageLayout>
   );
 }

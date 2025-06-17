@@ -1,0 +1,58 @@
+import fs from 'fs';
+import path from 'path';
+
+export interface ApiSite {
+  key: string;
+  api: string;
+  name: string;
+  detail?: string;
+}
+
+export interface Config {
+  api_site: {
+    [key: string]: ApiSite;
+  };
+}
+
+export const API_CONFIG = {
+  search: {
+    path: '?ac=videolist&wd=',
+    pagePath: '?ac=videolist&wd={query}&pg={page}',
+    headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      Accept: 'application/json',
+    },
+    maxPages: 50,
+  },
+  detail: {
+    path: '?ac=videolist&ids=',
+    headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      Accept: 'application/json',
+    },
+  },
+};
+
+let config: Config | null = null;
+
+export function getConfig(): Config {
+  if (config) {
+    return config;
+  }
+
+  const configPath = path.join(process.cwd(), 'config.json');
+  const configContent = fs.readFileSync(configPath, 'utf-8');
+  const parsedConfig = JSON.parse(configContent) as Config;
+  config = parsedConfig;
+  return parsedConfig;
+}
+
+export function getApiSites(): ApiSite[] {
+  const config = getConfig();
+  return Object.entries(config.api_site).map(([key, site]) => ({
+    ...site,
+    key,
+  }));
+}

@@ -6,9 +6,6 @@ import React, { useState } from 'react';
 interface DemoCardProps {
   title: string;
   poster: string;
-  rating?: number;
-  type: 'movie' | 'tv';
-  episodes?: number;
 }
 
 function SearchCircle({
@@ -55,7 +52,7 @@ function SearchCircle({
   );
 }
 
-const DemoCard = ({ title, poster, episodes }: DemoCardProps) => {
+const DemoCard = ({ title, poster }: DemoCardProps) => {
   const [hover, setHover] = useState(false);
   const router = useRouter();
 
@@ -65,7 +62,7 @@ const DemoCard = ({ title, poster, episodes }: DemoCardProps) => {
 
   return (
     <div
-      className='group relative w-full overflow-hidden rounded-lg bg-white border border-[#e6e6e6] shadow-none flex flex-col cursor-pointer'
+      className='group relative w-full overflow-hidden rounded-lg bg-transparent shadow-none flex flex-col cursor-pointer'
       onClick={handleClick}
     >
       {/* 海报图片 - 2:3 比例 */}
@@ -85,17 +82,11 @@ const DemoCard = ({ title, poster, episodes }: DemoCardProps) => {
             </div>
           </div>
         </div>
-        {/* 集数指示器 - 绿色小圆球 */}
-        {episodes && (
-          <div className='absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center'>
-            <span className='text-white text-xs font-bold'>{episodes}</span>
-          </div>
-        )}
       </div>
       {/* 信息层 */}
-      <div className='p-2'>
-        <div className='flex items-center justify-between'>
-          <span className='text-gray-900 font-semibold truncate flex-1 mr-2'>
+      <div className='p-2 bg-transparent'>
+        <div className='flex flex-col items-center justify-center'>
+          <span className='text-gray-900 font-semibold truncate w-full text-center'>
             {title}
           </span>
         </div>
