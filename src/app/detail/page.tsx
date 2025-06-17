@@ -59,7 +59,7 @@ export default function DetailPage() {
             <div className='text-gray-500'>未找到视频详情</div>
           </div>
         ) : (
-          <div className='w-full max-w-[90%]'>
+          <div className='w-full max-w-[95%]'>
             {/* 主信息区：左图右文 */}
             <div className='flex flex-col md:flex-row gap-8 mb-8 bg-transparent rounded-xl p-6'>
               {/* 封面 */}

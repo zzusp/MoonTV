@@ -62,7 +62,7 @@ const DemoCard = ({ title, poster }: DemoCardProps) => {
 
   return (
     <div
-      className='group relative w-full overflow-hidden rounded-lg bg-transparent shadow-none flex flex-col cursor-pointer'
+      className='group relative w-full rounded-lg bg-transparent shadow-none flex flex-col cursor-pointer'
       onClick={handleClick}
     >
       {/* 海报图片 - 2:3 比例 */}
@@ -84,7 +84,7 @@ const DemoCard = ({ title, poster }: DemoCardProps) => {
         </div>
       </div>
       {/* 信息层 */}
-      <div className='p-2 bg-transparent'>
+      <div className='absolute top-[calc(100%+0.5rem)] left-0 right-0'>
         <div className='flex flex-col items-center justify-center'>
           <span className='text-gray-900 font-semibold truncate w-full text-center'>
             {title}

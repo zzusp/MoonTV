@@ -5,6 +5,7 @@ import { useState } from 'react';
 import CapsuleSwitch from '@/components/CapsuleSwitch';
 import DemoCard from '@/components/DemoCard';
 import PageLayout from '@/components/layout/PageLayout';
+import ScrollableRow from '@/components/ScrollableRow';
 import VideoCard from '@/components/VideoCard';
 
 const defaultPoster =
@@ -45,6 +46,38 @@ const mockData = {
       source: 'dyttzy',
       source_name: '电影天堂',
     },
+    {
+      id: '332',
+      title: '三体',
+      poster: defaultPoster,
+      source: 'dyttzy',
+      source_name: '电影天堂',
+      episodes: 30,
+    },
+    {
+      id: '4231',
+      title: '狂飙',
+      poster: defaultPoster,
+      episodes: 39,
+      source: 'dyttzy',
+      source_name: '电影天堂',
+    },
+    {
+      id: '3342',
+      title: '三体',
+      poster: defaultPoster,
+      source: 'dyttzy',
+      source_name: '电影天堂',
+      episodes: 30,
+    },
+    {
+      id: '8',
+      title: '狂飙',
+      poster: defaultPoster,
+      episodes: 39,
+      source: 'dyttzy',
+      source_name: '电影天堂',
+    },
   ],
 };
 
@@ -66,49 +99,49 @@ export default function Home() {
           />
         </div>
 
-        <div className='max-w-[90%] mx-auto'>
+        <div className='max-w-[95%] mx-auto'>
           {/* 继续观看 */}
-          <section className='mb-12'>
+          <section className='mb-8'>
             <h2 className='mb-4 text-xl font-bold text-gray-800 text-left'>
               继续观看
             </h2>
-            <div className='flex space-x-8 overflow-x-auto pb-2'>
-              {[...mockData.recentMovies, ...mockData.recentTvShows]
-                .slice(0, 4)
-                .map((item) => (
-                  <div key={item.id} className='min-w-[192px] w-48'>
+            <ScrollableRow>
+              {[...mockData.recentMovies, ...mockData.recentTvShows].map(
+                (item) => (
+                  <div key={item.id} className='min-w-[180px] w-44'>
                     <VideoCard {...item} progress={Math.random() * 100} />
                   </div>
-                ))}
-            </div>
+                )
+              )}
+            </ScrollableRow>
           </section>
 
           {/* 最新电影 */}
-          <section className='mb-12'>
+          <section className='mb-8'>
             <h2 className='mb-4 text-xl font-bold text-gray-800 text-left'>
               最新电影
             </h2>
-            <div className='grid grid-cols-5 gap-8'>
+            <ScrollableRow>
               {mockData.recentMovies.map((movie) => (
-                <div key={movie.id} className='w-48'>
+                <div key={movie.id} className='min-w-[180px] w-44'>
                   <DemoCard {...movie} />
                 </div>
               ))}
-            </div>
+            </ScrollableRow>
           </section>
 
           {/* 最新电视剧 */}
-          <section className='mb-12'>
+          <section className='mb-8'>
             <h2 className='mb-4 text-xl font-bold text-gray-800 text-left'>
               最新电视剧
             </h2>
-            <div className='grid grid-cols-5 gap-8'>
+            <ScrollableRow>
               {mockData.recentTvShows.map((show) => (
-                <div key={show.id} className='w-48'>
+                <div key={show.id} className='min-w-[180px] w-44'>
                   <DemoCard {...show} />
                 </div>
               ))}
-            </div>
+            </ScrollableRow>
           </section>
         </div>
       </div>

@@ -10,10 +10,10 @@ const PageLayout = ({ children, activePath = '/' }: PageLayoutProps) => {
   const { isCollapsed } = useSidebar();
 
   return (
-    <div className='grid grid-cols-[auto_1fr] min-h-screen'>
+    <div className='grid grid-cols-[auto_1fr] w-full'>
       <Sidebar activePath={activePath} />
       <div
-        className={`transition-all duration-300 ${
+        className={`min-w-0 transition-all duration-300 ${
           isCollapsed ? 'col-start-2' : 'col-start-2'
         }`}
       >

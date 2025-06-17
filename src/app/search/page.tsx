@@ -75,7 +75,7 @@ export default function SearchPage() {
 
   return (
     <PageLayout activePath='/search'>
-      <div className='px-10 py-8'>
+      <div className='px-10 py-8 overflow-visible'>
         {/* 搜索框 */}
         <div className='mb-8'>
           <form onSubmit={handleSearch} className='max-w-2xl mx-auto'>
@@ -94,21 +94,21 @@ export default function SearchPage() {
         </div>
 
         {/* 搜索结果或搜索历史 */}
-        <div className='max-w-[90%] mx-auto mt-12'>
+        <div className='max-w-[95%] mx-auto mt-12 overflow-visible'>
           {isLoading ? (
             <div className='flex justify-center items-center h-40'>
               <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-green-500'></div>
             </div>
           ) : showResults ? (
             // 搜索结果
-            <div className='grid grid-cols-6 gap-7'>
+            <div className='grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-x-8 gap-y-20 px-4'>
               {searchResults.map((item) => (
                 <div key={item.id} className='w-44'>
                   <VideoCard {...item} />
                 </div>
               ))}
               {searchResults.length === 0 && (
-                <div className='col-span-5 text-center text-gray-500 py-8'>
+                <div className='col-span-full text-center text-gray-500 py-8'>
                   未找到相关结果
                 </div>
               )}

@@ -78,7 +78,7 @@ export default function VideoCard({
 
   return (
     <Link href={`/detail?source=${source}&id=${id}`}>
-      <div className='group relative w-full overflow-hidden rounded-lg bg-transparent shadow-none flex flex-col'>
+      <div className='group relative w-full rounded-lg bg-transparent shadow-none flex flex-col'>
         {/* 海报图片 - 2:3 比例 */}
         <div className='relative aspect-[2/3] w-full overflow-hidden'>
           <Image src={poster} alt={title} fill className='object-cover' />
@@ -122,7 +122,7 @@ export default function VideoCard({
         </div>
 
         {/* 信息层 */}
-        <div className='p-2 bg-transparent'>
+        <div className='absolute top-[calc(100%+0.5rem)] left-0 right-0'>
           <div className='flex flex-col items-center justify-center'>
             <span className='text-gray-900 font-semibold truncate w-full text-center'>
               {title}

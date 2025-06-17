@@ -2,8 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
+}
+
 :root {
   --foreground-rgb: 255, 255, 255;
+}
+
+html,
+body {
+  height: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -18,7 +35,6 @@ body {
     #d3dde6 100%
   );
   background-attachment: fixed;
-  min-height: 100vh;
 }
 
 /* 自定义滚动条样式 */
