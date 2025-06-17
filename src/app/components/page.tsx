@@ -9,7 +9,7 @@ import {
   Plus,
   Shield,
 } from 'lucide-react';
-import React from 'react';
+import * as React from 'react';
 
 import Button from '@/components/buttons/Button';
 import IconButton from '@/components/buttons/IconButton';

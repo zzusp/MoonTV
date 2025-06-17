@@ -1,0 +1,39 @@
+import React from 'react';
+
+interface CapsuleSwitchProps {
+  options: { label: string; value: string }[];
+  active: string;
+  onChange: (value: string) => void;
+  className?: string;
+}
+
+const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
+  options,
+  active,
+  onChange,
+  className,
+}) => {
+  return (
+    <div
+      className={`inline-flex bg-gray-300/80 rounded-full p-1 ${
+        className || ''
+      }`}
+    >
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          onClick={() => onChange(opt.value)}
+          className={`w-20 px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+            active === opt.value
+              ? 'bg-white text-gray-900 shadow-sm'
+              : 'text-gray-700 hover:text-gray-900'
+          }`}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+};
+
+export default CapsuleSwitch;
