@@ -1,8 +1,9 @@
 import { Search } from 'lucide-react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
-interface SearchCardProps {
+interface DemoCardProps {
   title: string;
   poster: string;
   rating?: number;
@@ -54,10 +55,19 @@ function SearchCircle({
   );
 }
 
-const SearchCard = ({ title, poster, episodes }: SearchCardProps) => {
+const DemoCard = ({ title, poster, episodes }: DemoCardProps) => {
   const [hover, setHover] = useState(false);
+  const router = useRouter();
+
+  const handleClick = () => {
+    router.push(`/search?q=${encodeURIComponent(title)}`);
+  };
+
   return (
-    <div className='group relative w-full overflow-hidden rounded-lg bg-white border border-[#e6e6e6] shadow-none flex flex-col'>
+    <div
+      className='group relative w-full overflow-hidden rounded-lg bg-white border border-[#e6e6e6] shadow-none flex flex-col cursor-pointer'
+      onClick={handleClick}
+    >
       {/* 海报图片 - 2:3 比例 */}
       <div className='relative aspect-[2/3] w-full overflow-hidden'>
         <Image src={poster} alt={title} fill className='object-cover' />
@@ -70,7 +80,6 @@ const SearchCard = ({ title, poster, episodes }: SearchCardProps) => {
               className={`transition-all duration-200 ${
                 hover ? 'scale-110' : ''
               }`}
-              style={{ cursor: 'pointer' }}
             >
               <SearchCircle fillColor={hover ? '#22c55e' : 'none'} />
             </div>
@@ -95,4 +104,4 @@ const SearchCard = ({ title, poster, episodes }: SearchCardProps) => {
   );
 };
 
-export default SearchCard;
+export default DemoCard;

@@ -1,28 +1,38 @@
 import { Film, Folder, Home, Menu, Search, Star, Tv } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 // 可替换为你自己的 logo 图片
 const Logo = () => (
-  <div className='flex items-center justify-center h-16 select-none'>
+  <Link
+    href='/'
+    className='flex items-center justify-center h-16 select-none hover:opacity-80 transition-opacity duration-200'
+  >
     <span className='text-2xl font-bold text-green-600 tracking-tight'>
       LibreTV
     </span>
-  </div>
+  </Link>
 );
 
 interface SidebarProps {
   onToggle?: (collapsed: boolean) => void;
+  activePath?: string;
 }
 
-const Sidebar = ({ onToggle }: SidebarProps) => {
+const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
+  const router = useRouter();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [active, setActive] = useState('/');
+  const [active, setActive] = useState(activePath);
 
   const handleToggle = () => {
     const newCollapsed = !isCollapsed;
     setIsCollapsed(newCollapsed);
     onToggle?.(newCollapsed);
+  };
+
+  const handleSearchClick = () => {
+    router.push('/search');
   };
 
   const menuItems = [
@@ -65,38 +75,14 @@ const Sidebar = ({ onToggle }: SidebarProps) => {
           </button>
         </div>
 
-        {/* 搜索框 */}
-        <div className='px-2 pb-2 h-12'>
-          <div
-            className={`relative h-full ${
-              isCollapsed ? 'w-full max-w-none mx-0' : 'max-w-[215px] mx-auto'
-            }`}
-          >
-            {isCollapsed ? (
-              <button className='flex items-center justify-center rounded-lg p-2 text-gray-600 hover:bg-gray-100/50 hover:text-green-600 w-full h-full transition-all duration-300'>
-                <Search className='h-4 w-4 text-gray-500' />
-              </button>
-            ) : (
-              <div className='relative h-full'>
-                <Search className='absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 transition-all duration-300' />
-                <input
-                  type='text'
-                  placeholder='搜索...'
-                  className='w-full h-full rounded-lg bg-gray-50/80 py-3 pl-9 pr-4 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-400 focus:bg-white border border-gray-200/50 shadow-sm transition-all duration-300'
-                />
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* 首页导航 */}
-        <nav className='px-2 mt-4'>
+        {/* 首页和搜索导航 */}
+        <nav className='px-2 mt-4 space-y-1'>
           <Link
             href='/'
             onClick={() => setActive('/')}
             data-active={active === '/'}
-            className={`flex items-center rounded-lg px-2 py-2 pl-4 text-gray-700 hover:bg-gray-100/30 hover:text-green-600 data-[active=true]:bg-green-500/20 data-[active=true]:text-green-700 font-medium transition-colors duration-200 min-h-[40px] ${
-              isCollapsed ? 'w-full max-w-none mx-0' : 'max-w-[215px] mx-auto'
+            className={`group flex items-center rounded-lg px-2 py-2 pl-4 text-gray-700 hover:bg-gray-100/30 hover:text-green-600 data-[active=true]:bg-green-500/20 data-[active=true]:text-green-700 font-medium transition-colors duration-200 min-h-[40px] ${
+              isCollapsed ? 'w-full max-w-none mx-0' : 'max-w-[220px] mx-auto'
             } gap-3 justify-start`}
           >
             <div className='w-4 h-4 flex items-center justify-center'>
@@ -105,6 +91,27 @@ const Sidebar = ({ onToggle }: SidebarProps) => {
             {!isCollapsed && (
               <span className='whitespace-nowrap transition-opacity duration-200 opacity-100'>
                 首页
+              </span>
+            )}
+          </Link>
+          <Link
+            href='/search'
+            onClick={(e) => {
+              e.preventDefault();
+              handleSearchClick();
+              setActive('/search');
+            }}
+            data-active={active === '/search'}
+            className={`group flex items-center rounded-lg px-2 py-2 pl-4 text-gray-700 hover:bg-gray-100/30 hover:text-green-600 data-[active=true]:bg-green-500/20 data-[active=true]:text-green-700 font-medium transition-colors duration-200 min-h-[40px] ${
+              isCollapsed ? 'w-full max-w-none mx-0' : 'max-w-[220px] mx-auto'
+            } gap-3 justify-start`}
+          >
+            <div className='w-4 h-4 flex items-center justify-center'>
+              <Search className='h-4 w-4 text-gray-500 group-hover:text-green-600 data-[active=true]:text-green-700' />
+            </div>
+            {!isCollapsed && (
+              <span className='whitespace-nowrap transition-opacity duration-200 opacity-100'>
+                搜索
               </span>
             )}
           </Link>
@@ -122,7 +129,7 @@ const Sidebar = ({ onToggle }: SidebarProps) => {
                 className={`group flex items-center rounded-lg px-2 py-2 pl-4 text-gray-700 hover:bg-gray-100/30 hover:text-green-600 data-[active=true]:bg-green-500/20 data-[active=true]:text-green-700 transition-colors duration-200 min-h-[40px] ${
                   isCollapsed
                     ? 'w-full max-w-none mx-0'
-                    : 'max-w-[215px] mx-auto'
+                    : 'max-w-[220px] mx-auto'
                 } gap-3 justify-start`}
               >
                 <div className='w-4 h-4 flex items-center justify-center'>

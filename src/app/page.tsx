@@ -3,9 +3,9 @@
 import { useState } from 'react';
 
 import CapsuleSwitch from '@/components/CapsuleSwitch';
+import DemoCard from '@/components/card/DemoCard';
+import VideoCard from '@/components/card/VideoCard';
 import Sidebar from '@/components/layout/Sidebar';
-import SearchCard from '@/components/video/SearchCard';
-import VideoCard from '@/components/video/VideoCard';
 
 const defaultPoster =
   'https://vip.dytt-img.com/upload/vod/20250326-1/9857e2e8581f231e24747ee32e633a3b.jpg';
@@ -105,7 +105,7 @@ export default function Home() {
           <div className='grid grid-cols-5 gap-8'>
             {mockData.recentMovies.map((movie) => (
               <div key={movie.id} className='w-48'>
-                <SearchCard {...movie} />
+                <DemoCard {...movie} />
               </div>
             ))}
           </div>
@@ -119,7 +119,7 @@ export default function Home() {
           <div className='grid grid-cols-5 gap-8'>
             {mockData.recentTvShows.map((show) => (
               <div key={show.id} className='w-48'>
-                <SearchCard {...show} />
+                <DemoCard {...show} />
               </div>
             ))}
           </div>
