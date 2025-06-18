@@ -88,6 +88,10 @@ export async function GET(request: Request) {
     );
   }
 
+  if (tag === 'top250') {
+    return handleTop250(pageStart);
+  }
+
   const target = `https://movie.douban.com/j/search_subjects?type=${type}&tag=${tag}&sort=recommend&page_limit=${pageSize}&page_start=${pageStart}`;
 
   try {
@@ -113,4 +117,72 @@ export async function GET(request: Request) {
       { status: 500 }
     );
   }
+}
+
+function handleTop250(pageStart: number) {
+  const target = `https://movie.douban.com/top250?start=${pageStart}&filter=`;
+
+  // 直接使用 fetch 获取 HTML 页面
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+  const fetchOptions = {
+    signal: controller.signal,
+    headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+      Referer: 'https://movie.douban.com/',
+      Accept:
+        'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    },
+  };
+
+  return fetch(target, fetchOptions)
+    .then(async (fetchResponse) => {
+      clearTimeout(timeoutId);
+
+      if (!fetchResponse.ok) {
+        throw new Error(`HTTP error! Status: ${fetchResponse.status}`);
+      }
+
+      // 获取 HTML 内容
+      const html = await fetchResponse.text();
+
+      // 使用正则表达式提取电影信息
+      const moviePattern =
+        /<div class="item">[\s\S]*?<img.*?alt="([^"]*)"[\s\S]*?src="([^"]*)"[\s\S]*?<\/div>/g;
+      const movies: DoubanItem[] = [];
+      let match;
+
+      while ((match = moviePattern.exec(html)) !== null) {
+        const title = match[1];
+        const cover = match[2];
+
+        // 处理图片 URL，确保使用 HTTPS
+        const processedCover = cover.replace(/^http:/, 'https:');
+
+        movies.push({
+          title: title,
+          poster: processedCover,
+        });
+      }
+
+      const apiResponse: DoubanResponse = {
+        code: 200,
+        message: '获取成功',
+        list: movies,
+      };
+
+      return NextResponse.json(apiResponse);
+    })
+    .catch((error) => {
+      clearTimeout(timeoutId);
+      return NextResponse.json(
+        {
+          error: '获取豆瓣 Top250 数据失败',
+          details: (error as Error).message,
+        },
+        { status: 500 }
+      );
+    });
 }

@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import Sidebar from '@/components/layout/Sidebar';
+import PageLayout from '@/components/layout/PageLayout';
 
 import { VideoDetail } from '../api/detail/route';
 
@@ -43,23 +43,27 @@ export default function DetailPage() {
   }, [searchParams]);
 
   return (
-    <div className='flex min-h-screen'>
-      <Sidebar activePath='/detail' />
-      <main className='flex-1 p-8 flex flex-col items-center'>
+    <PageLayout activePath='/detail'>
+      <div className='px-10 py-8 overflow-visible'>
         {loading ? (
-          <div className='flex items-center justify-center min-h-screen'>
+          <div className='flex items-center justify-center min-h-[60vh]'>
             <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500'></div>
           </div>
         ) : error ? (
-          <div className='flex items-center justify-center min-h-screen'>
-            <div className='text-red-500'>{error}</div>
+          <div className='flex items-center justify-center min-h-[60vh]'>
+            <div className='text-red-500 text-center'>
+              <div className='text-lg font-semibold mb-2'>加载失败</div>
+              <div className='text-sm'>{error}</div>
+            </div>
           </div>
         ) : !detail ? (
-          <div className='flex items-center justify-center min-h-screen'>
-            <div className='text-gray-500'>未找到视频详情</div>
+          <div className='flex items-center justify-center min-h-[60vh]'>
+            <div className='text-gray-500 text-center'>
+              <div className='text-lg font-semibold mb-2'>未找到视频详情</div>
+            </div>
           </div>
         ) : (
-          <div className='w-full max-w-[95%]'>
+          <div className='max-w-[95%] mx-auto'>
             {/* 主信息区：左图右文 */}
             <div className='flex flex-col md:flex-row gap-8 mb-8 bg-transparent rounded-xl p-6'>
               {/* 封面 */}
@@ -152,7 +156,7 @@ export default function DetailPage() {
             )}
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </PageLayout>
   );
 }
