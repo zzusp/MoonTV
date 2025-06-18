@@ -67,7 +67,13 @@ const DemoCard = ({ title, poster }: DemoCardProps) => {
     >
       {/* 海报图片 - 2:3 比例 */}
       <div className='relative aspect-[2/3] w-full overflow-hidden'>
-        <Image src={poster} alt={title} fill className='object-cover' />
+        <Image
+          src={poster}
+          alt={title}
+          fill
+          className='object-cover'
+          referrerPolicy='no-referrer'
+        />
         {/* Hover 效果 */}
         <div className='absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center group'>
           <div className='absolute inset-0 flex items-center justify-center'>

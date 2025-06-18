@@ -70,13 +70,13 @@ export default function ScrollableRow({ children }: ScrollableRowProps) {
 
   const handleScrollRightClick = () => {
     if (containerRef.current) {
-      containerRef.current.scrollBy({ left: 800, behavior: 'smooth' });
+      containerRef.current.scrollBy({ left: 1000, behavior: 'smooth' });
     }
   };
 
   const handleScrollLeftClick = () => {
     if (containerRef.current) {
-      containerRef.current.scrollBy({ left: -800, behavior: 'smooth' });
+      containerRef.current.scrollBy({ left: -1000, behavior: 'smooth' });
     }
   };
 
@@ -112,7 +112,7 @@ export default function ScrollableRow({ children }: ScrollableRowProps) {
           />
           <div
             className='absolute inset-0 flex items-center justify-center'
-            style={{ top: '40%', bottom: '60%' }}
+            style={{ top: '40%', bottom: '60%', left: '-4.5rem' }}
           >
             <button
               onClick={handleScrollLeftClick}
@@ -139,7 +139,7 @@ export default function ScrollableRow({ children }: ScrollableRowProps) {
           />
           <div
             className='absolute inset-0 flex items-center justify-center'
-            style={{ top: '40%', bottom: '60%' }}
+            style={{ top: '40%', bottom: '60%', right: '-4.5rem' }}
           >
             <button
               onClick={handleScrollRightClick}

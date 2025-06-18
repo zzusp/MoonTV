@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import CapsuleSwitch from '@/components/CapsuleSwitch';
 import DemoCard from '@/components/DemoCard';
@@ -10,6 +10,17 @@ import VideoCard from '@/components/VideoCard';
 
 const defaultPoster =
   'https://vip.dytt-img.com/upload/vod/20250326-1/9857e2e8581f231e24747ee32e633a3b.jpg';
+
+interface DoubanItem {
+  title: string;
+  poster: string;
+}
+
+interface DoubanResponse {
+  code: number;
+  message: string;
+  list: DoubanItem[];
+}
 
 // 模拟数据
 const mockData = {
@@ -83,6 +94,37 @@ const mockData = {
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('home');
+  const [hotMovies, setHotMovies] = useState<DoubanItem[]>([]);
+  const [hotTvShows, setHotTvShows] = useState<DoubanItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDoubanData = async () => {
+      try {
+        setLoading(true);
+
+        // 并行获取热门电影和热门剧集
+        const [moviesResponse, tvShowsResponse] = await Promise.all([
+          fetch('/api/douban?type=movie&tag=热门'),
+          fetch('/api/douban?type=tv&tag=热门'),
+        ]);
+
+        if (moviesResponse.ok) {
+          const moviesData: DoubanResponse = await moviesResponse.json();
+          setHotMovies(moviesData.list);
+        }
+
+        if (tvShowsResponse.ok) {
+          const tvShowsData: DoubanResponse = await tvShowsResponse.json();
+          setHotTvShows(tvShowsData.list);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDoubanData();
+  }, []);
 
   return (
     <PageLayout>
@@ -116,31 +158,53 @@ export default function Home() {
             </ScrollableRow>
           </section>
 
-          {/* 最新电影 */}
+          {/* 热门电影 */}
           <section className='mb-8'>
             <h2 className='mb-4 text-xl font-bold text-gray-800 text-left'>
-              最新电影
+              热门电影
             </h2>
             <ScrollableRow>
-              {mockData.recentMovies.map((movie) => (
-                <div key={movie.id} className='min-w-[180px] w-44'>
-                  <DemoCard {...movie} />
-                </div>
-              ))}
+              {loading
+                ? // 加载状态显示灰色占位数据
+                  Array.from({ length: 8 }).map((_, index) => (
+                    <div key={index} className='min-w-[180px] w-44'>
+                      <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse'>
+                        <div className='absolute inset-0 bg-gray-300'></div>
+                      </div>
+                      <div className='mt-2 h-4 bg-gray-200 rounded animate-pulse'></div>
+                    </div>
+                  ))
+                : // 显示真实数据
+                  hotMovies.map((movie, index) => (
+                    <div key={index} className='min-w-[180px] w-44'>
+                      <DemoCard title={movie.title} poster={movie.poster} />
+                    </div>
+                  ))}
             </ScrollableRow>
           </section>
 
-          {/* 最新电视剧 */}
+          {/* 热门剧集 */}
           <section className='mb-8'>
             <h2 className='mb-4 text-xl font-bold text-gray-800 text-left'>
-              最新电视剧
+              热门剧集
             </h2>
             <ScrollableRow>
-              {mockData.recentTvShows.map((show) => (
-                <div key={show.id} className='min-w-[180px] w-44'>
-                  <DemoCard {...show} />
-                </div>
-              ))}
+              {loading
+                ? // 加载状态显示灰色占位数据
+                  Array.from({ length: 8 }).map((_, index) => (
+                    <div key={index} className='min-w-[180px] w-44'>
+                      <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse'>
+                        <div className='absolute inset-0 bg-gray-300'></div>
+                      </div>
+                      <div className='mt-2 h-4 bg-gray-200 rounded animate-pulse'></div>
+                    </div>
+                  ))
+                : // 显示真实数据
+                  hotTvShows.map((show, index) => (
+                    <div key={index} className='min-w-[180px] w-44'>
+                      <DemoCard title={show.title} poster={show.poster} />
+                    </div>
+                  ))}
             </ScrollableRow>
           </section>
         </div>
