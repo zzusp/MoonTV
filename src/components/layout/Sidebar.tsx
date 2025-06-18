@@ -1,4 +1,15 @@
-import { Film, Folder, Home, Menu, Search, Star, Tv } from 'lucide-react';
+import {
+  Film,
+  Home,
+  Menu,
+  MessageCircleHeart,
+  MountainSnow,
+  Search,
+  Star,
+  Swords,
+  Tv,
+  VenetianMask,
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -6,6 +17,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useState,
 } from 'react';
 
@@ -36,15 +48,49 @@ interface SidebarProps {
   activePath?: string;
 }
 
+// 在浏览器环境下通过全局变量缓存折叠状态，避免组件重新挂载时出现初始值闪烁
+declare global {
+  interface Window {
+    __sidebarCollapsed?: boolean;
+  }
+}
+
 const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    const saved = localStorage.getItem('sidebarCollapsed');
-    return saved !== null ? JSON.parse(saved) : false;
+  // 若同一次 SPA 会话中已经读取过折叠状态，则直接复用，避免闪烁
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    if (
+      typeof window !== 'undefined' &&
+      typeof window.__sidebarCollapsed === 'boolean'
+    ) {
+      return window.__sidebarCollapsed;
+    }
+    return false; // 默认展开
   });
+
+  // 首次挂载时读取 localStorage，以便刷新后仍保持上次的折叠状态
+  useLayoutEffect(() => {
+    const saved = localStorage.getItem('sidebarCollapsed');
+    if (saved !== null) {
+      const val = JSON.parse(saved);
+      setIsCollapsed(val);
+      window.__sidebarCollapsed = val;
+    }
+  }, []);
+
+  // 当折叠状态变化时，同步到 <html> data 属性，供首屏 CSS 使用
+  useLayoutEffect(() => {
+    if (typeof document !== 'undefined') {
+      if (isCollapsed) {
+        document.documentElement.dataset.sidebarCollapsed = 'true';
+      } else {
+        delete document.documentElement.dataset.sidebarCollapsed;
+      }
+    }
+  }, [isCollapsed]);
+
   const [active, setActive] = useState(activePath);
 
   useEffect(() => {
@@ -66,6 +112,9 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
     const newState = !isCollapsed;
     setIsCollapsed(newState);
     localStorage.setItem('sidebarCollapsed', JSON.stringify(newState));
+    if (typeof window !== 'undefined') {
+      window.__sidebarCollapsed = newState;
+    }
     onToggle?.(newState);
   }, [isCollapsed, onToggle]);
 
@@ -93,16 +142,21 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
       label: '豆瓣 Top250',
       href: '/douban?type=movie&tag=top250&title=豆瓣 Top250',
     },
-    { icon: Folder, label: '美剧', href: '/douban?type=tv&tag=美剧' },
-    { icon: Folder, label: '韩剧', href: '/douban?type=tv&tag=韩剧' },
-    { icon: Folder, label: '日剧', href: '/douban?type=tv&tag=日剧' },
-    { icon: Folder, label: '日漫', href: '/douban?type=tv&tag=日本动画' },
+    { icon: Swords, label: '美剧', href: '/douban?type=tv&tag=美剧' },
+    {
+      icon: MessageCircleHeart,
+      label: '韩剧',
+      href: '/douban?type=tv&tag=韩剧',
+    },
+    { icon: MountainSnow, label: '日剧', href: '/douban?type=tv&tag=日剧' },
+    { icon: VenetianMask, label: '日漫', href: '/douban?type=tv&tag=日本动画' },
   ];
 
   return (
     <SidebarContext.Provider value={contextValue}>
       <div className='flex'>
         <aside
+          data-sidebar
           className={`fixed top-0 left-0 h-screen bg-white/40 backdrop-blur-xl transition-all duration-300 border-r border-gray-200/50 z-10 shadow-lg ${
             isCollapsed ? 'w-16' : 'w-64'
           }`}
@@ -226,7 +280,7 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
           </div>
         </aside>
         <div
-          className={`transition-all duration-300 ${
+          className={`transition-all duration-300 sidebar-offset ${
             isCollapsed ? 'w-16' : 'w-64'
           }`}
         ></div>

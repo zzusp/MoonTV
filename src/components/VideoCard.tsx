@@ -1,6 +1,7 @@
 import { Heart } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
 interface VideoCardProps {
@@ -11,6 +12,7 @@ interface VideoCardProps {
   episodes?: number;
   source_name: string;
   progress?: number;
+  from?: string;
 }
 
 function CheckCircleCustom() {
@@ -73,11 +75,15 @@ export default function VideoCard({
   source,
   source_name,
   progress,
+  from,
 }: VideoCardProps) {
   const [playHover, setPlayHover] = useState(false);
+  const router = useRouter();
 
   return (
-    <Link href={`/detail?source=${source}&id=${id}`}>
+    <Link
+      href={`/detail?source=${source}&id=${id}${from ? `&from=${from}` : ''}`}
+    >
       <div className='group relative w-full rounded-lg bg-transparent shadow-none flex flex-col'>
         {/* 海报图片 - 2:3 比例 */}
         <div className='relative aspect-[2/3] w-full overflow-hidden'>
@@ -87,12 +93,17 @@ export default function VideoCard({
           <div className='absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center group'>
             <div className='absolute inset-0 flex items-center justify-center'>
               <div
-                onMouseEnter={() => setPlayHover(true)}
-                onMouseLeave={() => setPlayHover(false)}
                 className={`transition-all duration-200 ${
                   playHover ? 'scale-110' : ''
                 }`}
                 style={{ cursor: 'pointer' }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  router.push(`/play?source=${source}&id=${id}`);
+                }}
+                onMouseEnter={() => setPlayHover(true)}
+                onMouseLeave={() => setPlayHover(false)}
               >
                 <PlayCircleSolid fillColor={playHover ? '#22c55e' : 'none'} />
               </div>

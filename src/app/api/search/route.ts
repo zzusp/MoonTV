@@ -4,7 +4,7 @@ import { API_CONFIG, ApiSite, getApiSites } from '@/lib/config';
 
 import { getVideoDetail } from '../detail/route';
 
-interface SearchResult {
+export interface SearchResult {
   id: string;
   title: string;
   poster: string;

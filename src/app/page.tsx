@@ -1,8 +1,18 @@
 'use client';
 
+import {
+  Film,
+  MessageCircleHeart,
+  MountainSnow,
+  Star,
+  Swords,
+  Tv,
+  VenetianMask,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import CapsuleSwitch from '@/components/CapsuleSwitch';
+import CollectionCard from '@/components/CollectionCard';
 import DemoCard from '@/components/DemoCard';
 import PageLayout from '@/components/layout/PageLayout';
 import ScrollableRow from '@/components/ScrollableRow';
@@ -92,6 +102,29 @@ const mockData = {
   ],
 };
 
+// 合集数据
+const collections = [
+  {
+    icon: Film,
+    title: '热门电影',
+    href: '/douban?type=movie&tag=热门&title=热门电影',
+  },
+  {
+    icon: Tv,
+    title: '热门剧集',
+    href: '/douban?type=tv&tag=热门&title=热门剧集',
+  },
+  {
+    icon: Star,
+    title: '豆瓣 Top250',
+    href: '/douban?type=movie&tag=top250&title=豆瓣 Top250',
+  },
+  { icon: Swords, title: '美剧', href: '/douban?type=tv&tag=美剧' },
+  { icon: MessageCircleHeart, title: '韩剧', href: '/douban?type=tv&tag=韩剧' },
+  { icon: MountainSnow, title: '日剧', href: '/douban?type=tv&tag=日剧' },
+  { icon: VenetianMask, title: '日漫', href: '/douban?type=tv&tag=日本动画' },
+];
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState('home');
   const [hotMovies, setHotMovies] = useState<DoubanItem[]>([]);
@@ -142,6 +175,24 @@ export default function Home() {
         </div>
 
         <div className='max-w-[95%] mx-auto'>
+          {/* 推荐 */}
+          <section className='mb-8'>
+            <h2 className='mb-4 text-xl font-bold text-gray-800 text-left'>
+              推荐
+            </h2>
+            <ScrollableRow scrollDistance={800}>
+              {collections.map((collection) => (
+                <div key={collection.title} className='min-w-[280px] w-72'>
+                  <CollectionCard
+                    title={collection.title}
+                    icon={collection.icon}
+                    href={collection.href}
+                  />
+                </div>
+              ))}
+            </ScrollableRow>
+          </section>
+
           {/* 继续观看 */}
           <section className='mb-8'>
             <h2 className='mb-4 text-xl font-bold text-gray-800 text-left'>

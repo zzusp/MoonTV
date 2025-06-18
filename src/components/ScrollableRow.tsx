@@ -3,9 +3,13 @@ import { useEffect, useRef, useState } from 'react';
 
 interface ScrollableRowProps {
   children: React.ReactNode;
+  scrollDistance?: number;
 }
 
-export default function ScrollableRow({ children }: ScrollableRowProps) {
+export default function ScrollableRow({
+  children,
+  scrollDistance = 1000,
+}: ScrollableRowProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [showLeftScroll, setShowLeftScroll] = useState(false);
   const [showRightScroll, setShowRightScroll] = useState(false);
@@ -70,13 +74,19 @@ export default function ScrollableRow({ children }: ScrollableRowProps) {
 
   const handleScrollRightClick = () => {
     if (containerRef.current) {
-      containerRef.current.scrollBy({ left: 1000, behavior: 'smooth' });
+      containerRef.current.scrollBy({
+        left: scrollDistance,
+        behavior: 'smooth',
+      });
     }
   };
 
   const handleScrollLeftClick = () => {
     if (containerRef.current) {
-      containerRef.current.scrollBy({ left: -1000, behavior: 'smooth' });
+      containerRef.current.scrollBy({
+        left: -scrollDistance,
+        behavior: 'smooth',
+      });
     }
   };
 

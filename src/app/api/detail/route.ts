@@ -4,6 +4,17 @@ import { API_CONFIG, ApiSite, getApiSites } from '@/lib/config';
 
 const M3U8_PATTERN = /(https?:\/\/[^"'\s]+?\.m3u8)/g;
 
+// 清理 HTML 标签的工具函数
+function cleanHtmlTags(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/<[^>]+>/g, '\n') // 将 HTML 标签替换为换行
+    .replace(/\n+/g, '\n') // 将多个连续换行合并为一个
+    .replace(/[ \t]+/g, ' ') // 将多个连续空格和制表符合并为一个空格，但保留换行符
+    .replace(/^\n+|\n+$/g, '') // 去掉首尾换行
+    .trim(); // 去掉首尾空格
+}
+
 export interface VideoDetail {
   code: number;
   episodes: string[];
@@ -71,9 +82,7 @@ async function handleSpecialSourceDetail(
   const descMatch = html.match(
     /<div[^>]*class=["']sketch["'][^>]*>([\s\S]*?)<\/div>/
   );
-  const descText = descMatch
-    ? descMatch[1].replace(/<[^>]+>/g, ' ').trim()
-    : '';
+  const descText = descMatch ? cleanHtmlTags(descMatch[1]) : '';
 
   const coverMatch = html.match(/(https?:\/\/[^"'\s]+?\.jpg)/g);
   const coverUrl = coverMatch ? coverMatch[0].trim() : '';
@@ -158,7 +167,7 @@ async function getDetailFromApi(
     videoInfo: {
       title: videoDetail.vod_name,
       cover: videoDetail.vod_pic,
-      desc: videoDetail.vod_content,
+      desc: cleanHtmlTags(videoDetail.vod_content),
       type: videoDetail.type_name,
       year: videoDetail.vod_year,
       area: videoDetail.vod_area,
