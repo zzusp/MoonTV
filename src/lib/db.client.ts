@@ -36,6 +36,12 @@ const STORAGE_TYPE =
     | 'database'
     | undefined) || 'localstorage';
 
+// ---------------- 搜索历史相关常量 ----------------
+const SEARCH_HISTORY_KEY = 'moontv_search_history';
+
+// 搜索历史最大保存条数
+const SEARCH_HISTORY_LIMIT = 20;
+
 // ---- 工具函数 ----
 async function fetchFromApi<T>(path: string): Promise<T> {
   const res = await fetch(path);
@@ -163,4 +169,97 @@ export async function deletePlayRecord(
     console.error('删除播放记录失败:', err);
     throw err;
   }
+}
+
+/* ---------------- 搜索历史相关 API ---------------- */
+
+/**
+ * 获取搜索历史
+ */
+export async function getSearchHistory(): Promise<string[]> {
+  // 如果配置为使用数据库，则从后端 API 获取
+  if (STORAGE_TYPE === 'database') {
+    try {
+      return fetchFromApi<string[]>('/api/searchhistory');
+    } catch (err) {
+      console.error('获取搜索历史失败:', err);
+      return [];
+    }
+  }
+
+  // 默认从 localStorage 读取
+  if (typeof window === 'undefined') {
+    return [];
+  }
+
+  try {
+    const raw = localStorage.getItem(SEARCH_HISTORY_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw) as string[];
+    // 仅返回字符串数组
+    return Array.isArray(arr) ? arr : [];
+  } catch (err) {
+    console.error('读取搜索历史失败:', err);
+    return [];
+  }
+}
+
+/**
+ * 将关键字添加到搜索历史
+ */
+export async function addSearchHistory(keyword: string): Promise<void> {
+  const trimmed = keyword.trim();
+  if (!trimmed) return;
+
+  // 数据库模式
+  if (STORAGE_TYPE === 'database') {
+    try {
+      await fetch('/api/searchhistory', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ keyword: trimmed }),
+      });
+    } catch (err) {
+      console.error('保存搜索历史失败:', err);
+    }
+    return;
+  }
+
+  // localStorage 模式
+  if (typeof window === 'undefined') return;
+
+  try {
+    const history = await getSearchHistory();
+    const newHistory = [trimmed, ...history.filter((k) => k !== trimmed)];
+    // 限制长度
+    if (newHistory.length > SEARCH_HISTORY_LIMIT) {
+      newHistory.length = SEARCH_HISTORY_LIMIT;
+    }
+    localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(newHistory));
+  } catch (err) {
+    console.error('保存搜索历史失败:', err);
+  }
+}
+
+/**
+ * 清空搜索历史
+ */
+export async function clearSearchHistory(): Promise<void> {
+  // 数据库模式
+  if (STORAGE_TYPE === 'database') {
+    try {
+      await fetch('/api/searchhistory', {
+        method: 'DELETE',
+      });
+    } catch (err) {
+      console.error('清空搜索历史失败:', err);
+    }
+    return;
+  }
+
+  // localStorage 模式
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(SEARCH_HISTORY_KEY);
 }

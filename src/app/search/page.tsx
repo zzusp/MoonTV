@@ -5,12 +5,18 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
+import {
+  addSearchHistory,
+  clearSearchHistory,
+  getSearchHistory,
+} from '@/lib/db.client';
+
 import PageLayout from '@/components/PageLayout';
 import VideoCard from '@/components/VideoCard';
 
 function SearchPageClient() {
-  // 模拟搜索历史数据
-  const mockSearchHistory = ['流浪地球', '三体', '狂飙', '满江红'];
+  // 搜索历史
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
 
   // 定义搜索结果类型
   type SearchResult = {
@@ -33,6 +39,12 @@ function SearchPageClient() {
   useEffect(() => {
     // 自动聚焦搜索框
     searchInputRef.current?.focus();
+
+    // 加载搜索历史
+    (async () => {
+      const history = await getSearchHistory();
+      setSearchHistory(history);
+    })();
   }, []);
 
   useEffect(() => {
@@ -41,6 +53,12 @@ function SearchPageClient() {
     if (query) {
       setSearchQuery(query);
       fetchSearchResults(query);
+
+      // 保存到搜索历史
+      addSearchHistory(query).then(async () => {
+        const history = await getSearchHistory();
+        setSearchHistory(history);
+      });
     } else {
       setShowResults(false);
     }
@@ -68,10 +86,15 @@ function SearchPageClient() {
 
     setIsLoading(true);
     setShowResults(true);
-    // 模拟搜索延迟
-    setTimeout(() => {
-      fetchSearchResults(searchQuery);
-    }, 1000);
+
+    // 直接发请求
+    fetchSearchResults(searchQuery);
+
+    // 保存到搜索历史
+    addSearchHistory(searchQuery).then(async () => {
+      const history = await getSearchHistory();
+      setSearchHistory(history);
+    });
   };
 
   return (
@@ -114,21 +137,32 @@ function SearchPageClient() {
                 </div>
               )}
             </div>
-          ) : mockSearchHistory.length > 0 ? (
+          ) : searchHistory.length > 0 ? (
             // 搜索历史
             <section className='mb-12'>
               <h2 className='mb-4 text-xl font-bold text-gray-800 text-left'>
                 搜索历史
+                {searchHistory.length > 0 && (
+                  <button
+                    onClick={async () => {
+                      await clearSearchHistory();
+                      setSearchHistory([]);
+                    }}
+                    className='ml-3 text-sm text-gray-500 hover:text-red-500 transition-colors'
+                  >
+                    清空
+                  </button>
+                )}
               </h2>
               <div className='flex flex-wrap gap-2'>
-                {mockSearchHistory.map((item, index) => (
+                {searchHistory.map((item, index) => (
                   <button
                     key={index}
                     onClick={() => {
                       setSearchQuery(item);
                       router.push(`/search?q=${encodeURIComponent(item)}`);
                     }}
-                    className='px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full text-sm text-gray-700 transition-colors duration-200'
+                    className='px-4 py-2 bg-gray-500/10 hover:bg-gray-300 rounded-full text-sm text-gray-700 transition-colors duration-200'
                   >
                     {item}
                   </button>
