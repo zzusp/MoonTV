@@ -2,6 +2,7 @@
 
 'use client';
 
+import { Heart } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { useEffect, useRef, useState } from 'react';
@@ -11,7 +12,9 @@ import {
   deletePlayRecord,
   generateStorageKey,
   getAllPlayRecords,
+  isFavorited,
   savePlayRecord,
+  toggleFavorite,
 } from '@/lib/db.client';
 import { VideoDetail } from '@/lib/video';
 
@@ -82,6 +85,9 @@ function PlayPageClient() {
 
   // 总集数：从 detail 中获取，保证随 detail 更新而变化
   const totalEpisodes = detail?.episodes?.length || 0;
+
+  // 收藏状态
+  const [favorited, setFavorited] = useState(false);
 
   // 用于记录是否需要在播放器 ready 后跳转到指定进度
   const resumeTimeRef = useRef<number | null>(null);
@@ -973,6 +979,37 @@ function PlayPageClient() {
     }
   };
 
+  // 每当 source 或 id 变化时检查收藏状态
+  useEffect(() => {
+    if (!currentSource || !currentId) return;
+    (async () => {
+      try {
+        const fav = await isFavorited(currentSource, currentId);
+        setFavorited(fav);
+      } catch (err) {
+        console.error('检查收藏状态失败:', err);
+      }
+    })();
+  }, [currentSource, currentId]);
+
+  // 切换收藏
+  const handleToggleFavorite = async () => {
+    if (!currentSource || !currentId) return;
+
+    try {
+      const newState = await toggleFavorite(currentSource, currentId, {
+        title: videoTitle,
+        source_name: detail?.videoInfo.source_name || '',
+        cover: videoCover || '',
+        total_episodes: totalEpisodes || 1,
+        save_time: Date.now(),
+      });
+      setFavorited(newState);
+    } catch (err) {
+      console.error('切换收藏失败:', err);
+    }
+  };
+
   if (loading) {
     return (
       <div className='min-h-screen bg-black flex items-center justify-center'>
@@ -1067,8 +1104,24 @@ function PlayPageClient() {
 
             {/* 中央标题及集数信息 */}
             <div className='text-center'>
-              <div className='text-white font-semibold text-lg truncate max-w-xs mx-auto'>
-                {videoTitle}
+              <div className='flex items-center justify-center gap-2 max-w-xs mx-auto'>
+                <span className='text-white font-semibold text-lg truncate'>
+                  {videoTitle}
+                </span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleFavorite();
+                  }}
+                  className='flex-shrink-0'
+                >
+                  <Heart
+                    className={`h-5 w-5 stroke-[2] ${
+                      favorited ? 'text-red-500' : 'text-gray-300'
+                    }`}
+                    fill={favorited ? 'currentColor' : 'none'}
+                  />
+                </button>
               </div>
 
               {totalEpisodes > 1 && (

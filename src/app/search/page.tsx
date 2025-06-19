@@ -125,7 +125,7 @@ function SearchPageClient() {
             </div>
           ) : showResults ? (
             // 搜索结果
-            <div className='grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-x-8 gap-y-20 px-4'>
+            <div className='flex flex-wrap gap-x-8 gap-y-20 px-4'>
               {searchResults.map((item) => (
                 <div key={item.id} className='w-44'>
                   <VideoCard {...item} from='search' />

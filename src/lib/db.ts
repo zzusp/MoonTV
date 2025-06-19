@@ -22,6 +22,7 @@ export interface Favorite {
   title: string;
   cover: string;
   user_id: number; // 用户ID，localStorage情况下全部为0
+  save_time: number; // 记录保存时间（时间戳）
 }
 
 // 存储接口

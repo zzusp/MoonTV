@@ -1,13 +1,19 @@
-/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable react-hooks/exhaustive-deps, no-console */
 
 'use client';
 
+import { Heart } from 'lucide-react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
 import type { PlayRecord } from '@/lib/db.client';
-import { generateStorageKey, getAllPlayRecords } from '@/lib/db.client';
+import {
+  generateStorageKey,
+  getAllPlayRecords,
+  isFavorited,
+  toggleFavorite,
+} from '@/lib/db.client';
 import { VideoDetail } from '@/lib/video';
 
 import PageLayout from '@/components/PageLayout';
@@ -18,6 +24,7 @@ function DetailPageClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [playRecord, setPlayRecord] = useState<PlayRecord | null>(null);
+  const [favorited, setFavorited] = useState(false);
 
   // 当接口缺失标题时，使用 URL 中的 title 参数作为后备
   const fallbackTitle = searchParams.get('title') || '';
@@ -64,6 +71,14 @@ function DetailPageClient() {
         const allRecords = await getAllPlayRecords();
         const key = generateStorageKey(source, id);
         setPlayRecord(allRecords[key] || null);
+
+        // 检查收藏状态
+        try {
+          const fav = await isFavorited(source, id);
+          setFavorited(fav);
+        } catch (checkErr) {
+          console.error('检查收藏状态失败:', checkErr);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : '获取详情失败');
       } finally {
@@ -73,6 +88,26 @@ function DetailPageClient() {
 
     fetchData();
   }, [searchParams]);
+
+  // 切换收藏状态
+  const handleToggleFavorite = async () => {
+    const source = searchParams.get('source');
+    const id = searchParams.get('id');
+    if (!source || !id || !detail) return;
+
+    try {
+      const newState = await toggleFavorite(source, id, {
+        title: detail.videoInfo.title,
+        source_name: detail.videoInfo.source_name,
+        cover: detail.videoInfo.cover || '',
+        total_episodes: detail.episodes?.length || 1,
+        save_time: Date.now(),
+      });
+      setFavorited(newState);
+    } catch (err) {
+      console.error('切换收藏失败:', err);
+    }
+  };
 
   return (
     <PageLayout activePath='/detail'>
@@ -214,21 +249,20 @@ function DetailPageClient() {
                     </>
                   )}
                   {/* 爱心按钮 */}
-                  <button className='flex items-center justify-center w-10 h-10 bg-pink-400 hover:bg-pink-500 rounded-full transition-colors'>
-                    <svg
-                      xmlns='http://www.w3.org/2000/svg'
-                      className='h-5 w-5 text-white'
-                      fill='none'
-                      viewBox='0 0 24 24'
-                      stroke='currentColor'
-                    >
-                      <path
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                        strokeWidth={2}
-                        d='M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z'
-                      />
-                    </svg>
+                  <button
+                    onClick={handleToggleFavorite}
+                    className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors  ${
+                      favorited
+                        ? 'bg-gray-300 hover:bg-gray-400'
+                        : 'bg-gray-400 hover:bg-gray-500'
+                    }`}
+                  >
+                    <Heart
+                      className={`h-5 w-5 stroke-[2] ${
+                        favorited ? 'text-red-500' : 'text-white'
+                      }`}
+                      fill={favorited ? 'currentColor' : 'none'}
+                    />
                   </button>
                 </div>
                 {/* 播放记录进度条 */}

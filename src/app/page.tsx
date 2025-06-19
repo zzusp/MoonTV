@@ -11,12 +11,16 @@ import {
 } from 'lucide-react';
 import { Suspense, useEffect, useState } from 'react';
 
+// 客户端收藏 API
+import { getAllFavorites } from '@/lib/db.client';
+
 import CapsuleSwitch from '@/components/CapsuleSwitch';
 import CollectionCard from '@/components/CollectionCard';
 import ContinueWatching from '@/components/ContinueWatching';
 import DemoCard from '@/components/DemoCard';
 import PageLayout from '@/components/PageLayout';
 import ScrollableRow from '@/components/ScrollableRow';
+import VideoCard from '@/components/VideoCard';
 
 interface DoubanItem {
   title: string;
@@ -58,6 +62,18 @@ function HomeClient() {
   const [hotTvShows, setHotTvShows] = useState<DoubanItem[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // 收藏夹数据
+  type FavoriteItem = {
+    id: string;
+    source: string;
+    title: string;
+    poster: string;
+    episodes: number;
+    source_name: string;
+  };
+
+  const [favoriteItems, setFavoriteItems] = useState<FavoriteItem[]>([]);
+
   useEffect(() => {
     const fetchDoubanData = async () => {
       try {
@@ -86,6 +102,32 @@ function HomeClient() {
     fetchDoubanData();
   }, []);
 
+  // 当切换到收藏夹时加载收藏数据
+  useEffect(() => {
+    if (activeTab !== 'favorites') return;
+
+    (async () => {
+      const all = await getAllFavorites();
+      // 根据保存时间排序（从近到远）
+      const sorted = Object.entries(all)
+        .sort(([, a], [, b]) => b.save_time - a.save_time)
+        .map(([key, fav]) => {
+          const plusIndex = key.indexOf('+');
+          const source = key.slice(0, plusIndex);
+          const id = key.slice(plusIndex + 1);
+          return {
+            id,
+            source,
+            title: fav.title,
+            poster: fav.cover,
+            episodes: fav.total_episodes,
+            source_name: fav.source_name,
+          } as FavoriteItem;
+        });
+      setFavoriteItems(sorted);
+    })();
+  }, [activeTab]);
+
   return (
     <PageLayout>
       <div className='px-10 py-8'>
@@ -102,76 +144,100 @@ function HomeClient() {
         </div>
 
         <div className='max-w-[95%] mx-auto'>
-          {/* 推荐 */}
-          <section className='mb-8'>
-            <h2 className='mb-4 text-xl font-bold text-gray-800 text-left'>
-              推荐
-            </h2>
-            <ScrollableRow scrollDistance={800}>
-              {collections.map((collection) => (
-                <div key={collection.title} className='min-w-[280px] w-72'>
-                  <CollectionCard
-                    title={collection.title}
-                    icon={collection.icon}
-                    href={collection.href}
-                  />
-                </div>
-              ))}
-            </ScrollableRow>
-          </section>
-
-          {/* 继续观看 */}
-          <ContinueWatching />
-
-          {/* 热门电影 */}
-          <section className='mb-8'>
-            <h2 className='mb-4 text-xl font-bold text-gray-800 text-left'>
-              热门电影
-            </h2>
-            <ScrollableRow>
-              {loading
-                ? // 加载状态显示灰色占位数据
-                  Array.from({ length: 8 }).map((_, index) => (
-                    <div key={index} className='min-w-[180px] w-44'>
-                      <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse'>
-                        <div className='absolute inset-0 bg-gray-300'></div>
-                      </div>
-                      <div className='mt-2 h-4 bg-gray-200 rounded animate-pulse'></div>
-                    </div>
-                  ))
-                : // 显示真实数据
-                  hotMovies.map((movie, index) => (
-                    <div key={index} className='min-w-[180px] w-44'>
-                      <DemoCard title={movie.title} poster={movie.poster} />
+          {activeTab === 'favorites' ? (
+            // 收藏夹视图
+            <section className='mb-8'>
+              <h2 className='mb-4 text-xl font-bold text-gray-800 text-left'>
+                我的收藏
+              </h2>
+              <div className='flex flex-wrap gap-x-8 gap-y-20 px-4'>
+                {favoriteItems.map((item) => (
+                  <div key={item.id + item.source} className='w-44'>
+                    <VideoCard {...item} from='favorites' />
+                  </div>
+                ))}
+                {favoriteItems.length === 0 && (
+                  <div className='col-span-full text-center text-gray-500 py-8'>
+                    暂无收藏内容
+                  </div>
+                )}
+              </div>
+            </section>
+          ) : (
+            // 首页视图
+            <>
+              {/* 推荐 */}
+              <section className='mb-8'>
+                <h2 className='mb-4 text-xl font-bold text-gray-800 text-left'>
+                  推荐
+                </h2>
+                <ScrollableRow scrollDistance={800}>
+                  {collections.map((collection) => (
+                    <div key={collection.title} className='min-w-[280px] w-72'>
+                      <CollectionCard
+                        title={collection.title}
+                        icon={collection.icon}
+                        href={collection.href}
+                      />
                     </div>
                   ))}
-            </ScrollableRow>
-          </section>
+                </ScrollableRow>
+              </section>
 
-          {/* 热门剧集 */}
-          <section className='mb-8'>
-            <h2 className='mb-4 text-xl font-bold text-gray-800 text-left'>
-              热门剧集
-            </h2>
-            <ScrollableRow>
-              {loading
-                ? // 加载状态显示灰色占位数据
-                  Array.from({ length: 8 }).map((_, index) => (
-                    <div key={index} className='min-w-[180px] w-44'>
-                      <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse'>
-                        <div className='absolute inset-0 bg-gray-300'></div>
-                      </div>
-                      <div className='mt-2 h-4 bg-gray-200 rounded animate-pulse'></div>
-                    </div>
-                  ))
-                : // 显示真实数据
-                  hotTvShows.map((show, index) => (
-                    <div key={index} className='min-w-[180px] w-44'>
-                      <DemoCard title={show.title} poster={show.poster} />
-                    </div>
-                  ))}
-            </ScrollableRow>
-          </section>
+              {/* 继续观看 */}
+              <ContinueWatching />
+
+              {/* 热门电影 */}
+              <section className='mb-8'>
+                <h2 className='mb-4 text-xl font-bold text-gray-800 text-left'>
+                  热门电影
+                </h2>
+                <ScrollableRow>
+                  {loading
+                    ? // 加载状态显示灰色占位数据
+                      Array.from({ length: 8 }).map((_, index) => (
+                        <div key={index} className='min-w-[180px] w-44'>
+                          <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse'>
+                            <div className='absolute inset-0 bg-gray-300'></div>
+                          </div>
+                          <div className='mt-2 h-4 bg-gray-200 rounded animate-pulse'></div>
+                        </div>
+                      ))
+                    : // 显示真实数据
+                      hotMovies.map((movie, index) => (
+                        <div key={index} className='min-w-[180px] w-44'>
+                          <DemoCard title={movie.title} poster={movie.poster} />
+                        </div>
+                      ))}
+                </ScrollableRow>
+              </section>
+
+              {/* 热门剧集 */}
+              <section className='mb-8'>
+                <h2 className='mb-4 text-xl font-bold text-gray-800 text-left'>
+                  热门剧集
+                </h2>
+                <ScrollableRow>
+                  {loading
+                    ? // 加载状态显示灰色占位数据
+                      Array.from({ length: 8 }).map((_, index) => (
+                        <div key={index} className='min-w-[180px] w-44'>
+                          <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse'>
+                            <div className='absolute inset-0 bg-gray-300'></div>
+                          </div>
+                          <div className='mt-2 h-4 bg-gray-200 rounded animate-pulse'></div>
+                        </div>
+                      ))
+                    : // 显示真实数据
+                      hotTvShows.map((show, index) => (
+                        <div key={index} className='min-w-[180px] w-44'>
+                          <DemoCard title={show.title} poster={show.poster} />
+                        </div>
+                      ))}
+                </ScrollableRow>
+              </section>
+            </>
+          )}
         </div>
       </div>
     </PageLayout>

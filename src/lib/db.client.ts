@@ -263,3 +263,177 @@ export async function clearSearchHistory(): Promise<void> {
   if (typeof window === 'undefined') return;
   localStorage.removeItem(SEARCH_HISTORY_KEY);
 }
+
+// ---------------- 收藏相关 API ----------------
+
+// 收藏数据结构
+export interface Favorite {
+  title: string;
+  source_name: string;
+  cover: string;
+  total_episodes: number;
+  save_time: number;
+  user_id: number; // 本地存储情况下恒为 0
+}
+
+// 收藏在 localStorage 中使用的 key
+const FAVORITES_KEY = 'moontv_favorites';
+
+/**
+ * 获取全部收藏
+ */
+export async function getAllFavorites(): Promise<Record<string, Favorite>> {
+  // 数据库模式
+  if (STORAGE_TYPE === 'database') {
+    return fetchFromApi<Record<string, Favorite>>('/api/favorites');
+  }
+
+  // localStorage 模式
+  if (typeof window === 'undefined') {
+    return {};
+  }
+
+  try {
+    const raw = localStorage.getItem(FAVORITES_KEY);
+    if (!raw) return {};
+    return JSON.parse(raw) as Record<string, Favorite>;
+  } catch (err) {
+    console.error('读取收藏失败:', err);
+    return {};
+  }
+}
+
+/**
+ * 保存收藏
+ */
+export async function saveFavorite(
+  source: string,
+  id: string,
+  favorite: Omit<Favorite, 'user_id'>
+): Promise<void> {
+  const key = generateStorageKey(source, id);
+  const fullFavorite: Favorite = { ...favorite, user_id: 0 };
+
+  // 数据库模式
+  if (STORAGE_TYPE === 'database') {
+    try {
+      const res = await fetch('/api/favorites', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ key, favorite: fullFavorite }),
+      });
+      if (!res.ok) throw new Error(`保存收藏失败: ${res.status}`);
+    } catch (err) {
+      console.error('保存收藏到数据库失败:', err);
+      throw err;
+    }
+    return;
+  }
+
+  // localStorage 模式
+  if (typeof window === 'undefined') {
+    console.warn('无法在服务端保存收藏到 localStorage');
+    return;
+  }
+
+  try {
+    const allFavorites = await getAllFavorites();
+    allFavorites[key] = fullFavorite;
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify(allFavorites));
+  } catch (err) {
+    console.error('保存收藏失败:', err);
+    throw err;
+  }
+}
+
+/**
+ * 删除收藏
+ */
+export async function deleteFavorite(
+  source: string,
+  id: string
+): Promise<void> {
+  const key = generateStorageKey(source, id);
+
+  // 数据库模式
+  if (STORAGE_TYPE === 'database') {
+    try {
+      const res = await fetch(`/api/favorites?key=${encodeURIComponent(key)}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error(`删除收藏失败: ${res.status}`);
+    } catch (err) {
+      console.error('删除收藏到数据库失败:', err);
+      throw err;
+    }
+    return;
+  }
+
+  // localStorage 模式
+  if (typeof window === 'undefined') {
+    console.warn('无法在服务端删除收藏到 localStorage');
+    return;
+  }
+
+  try {
+    const allFavorites = await getAllFavorites();
+    delete allFavorites[key];
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify(allFavorites));
+  } catch (err) {
+    console.error('删除收藏失败:', err);
+    throw err;
+  }
+}
+
+/**
+ * 判断是否已收藏
+ */
+export async function isFavorited(
+  source: string,
+  id: string
+): Promise<boolean> {
+  const key = generateStorageKey(source, id);
+
+  // 数据库模式
+  if (STORAGE_TYPE === 'database') {
+    try {
+      const res = await fetch(`/api/favorites?key=${encodeURIComponent(key)}`);
+      if (!res.ok) return false;
+      const data = await res.json();
+      return !!data;
+    } catch (err) {
+      console.error('检查收藏状态失败:', err);
+      return false;
+    }
+  }
+
+  // localStorage 模式
+  const allFavorites = await getAllFavorites();
+  return !!allFavorites[key];
+}
+
+/**
+ * 切换收藏状态
+ * 返回切换后的状态（true = 已收藏）
+ */
+export async function toggleFavorite(
+  source: string,
+  id: string,
+  favoriteData?: Omit<Favorite, 'user_id'>
+): Promise<boolean> {
+  const already = await isFavorited(source, id);
+
+  if (already) {
+    await deleteFavorite(source, id);
+    return false;
+  }
+
+  if (!favoriteData) {
+    throw new Error('收藏数据缺失');
+  }
+
+  await saveFavorite(source, id, favoriteData);
+  return true;
+}

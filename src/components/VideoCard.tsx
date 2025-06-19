@@ -2,9 +2,9 @@ import { Heart } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
-import { deletePlayRecord } from '@/lib/db.client';
+import { deletePlayRecord, isFavorited, toggleFavorite } from '@/lib/db.client';
 
 interface VideoCardProps {
   id: string;
@@ -84,8 +84,44 @@ export default function VideoCard({
   onDelete,
 }: VideoCardProps) {
   const [playHover, setPlayHover] = useState(false);
-  const [deleted, setDeleted] = useState(false);
+  const [favorited, setFavorited] = useState(false);
   const router = useRouter();
+
+  // 检查初始收藏状态
+  useEffect(() => {
+    (async () => {
+      try {
+        const fav = await isFavorited(source, id);
+        setFavorited(fav);
+      } catch (err) {
+        /* eslint-disable no-console */
+        console.error('检查收藏状态失败:', err);
+      }
+    })();
+    // 仅在组件挂载或 source/id 变化时运行
+  }, [source, id]);
+
+  // 切换收藏状态
+  const handleToggleFavorite = async (
+    e: React.MouseEvent<HTMLSpanElement | SVGElement, MouseEvent>
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      const newState = await toggleFavorite(source, id, {
+        title,
+        source_name,
+        cover: poster,
+        total_episodes: episodes ?? 1,
+        save_time: Date.now(),
+      });
+      setFavorited(newState);
+    } catch (err) {
+      /* eslint-disable no-console */
+      console.error('切换收藏失败:', err);
+    }
+  };
 
   // 删除对应播放记录
   const handleDeleteRecord = async (
@@ -99,16 +135,16 @@ export default function VideoCard({
 
       // 通知父组件更新
       onDelete?.();
-
-      // 若父组件未处理，可本地隐藏
-      setDeleted(true);
     } catch (err) {
       /* eslint-disable no-console */
       console.error('删除播放记录失败:', err);
     }
   };
 
-  return deleted ? null : (
+  const inFavorites = from === 'favorites';
+  const hideCheckCircle = inFavorites;
+
+  return (
     <Link
       href={`/detail?source=${source}&id=${id}&title=${encodeURIComponent(
         title
@@ -116,14 +152,14 @@ export default function VideoCard({
     >
       <div className='group relative w-full rounded-lg bg-transparent shadow-none flex flex-col'>
         {/* 海报图片 - 2:3 比例 */}
-        <div className='relative aspect-[2/3] w-full overflow-hidden'>
+        <div className='relative aspect-[2/3] w-full overflow-hidden rounded-md'>
           <Image src={poster} alt={title} fill className='object-cover' />
 
           {/* Hover 效果 */}
-          <div className='absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center group'>
-            <div className='absolute inset-0 flex items-center justify-center'>
+          <div className='absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center group pointer-events-none'>
+            <div className='absolute inset-0 flex items-center justify-center pointer-events-auto'>
               <div
-                className={`transition-all duration-200 ${
+                className={`transition-all duration-200 pointer-events-auto ${
                   playHover ? 'scale-110' : ''
                 }`}
                 style={{ cursor: 'pointer' }}
@@ -143,21 +179,37 @@ export default function VideoCard({
               </div>
             </div>
             <div className='absolute bottom-4 right-4 flex items-center gap-6'>
-              <span
-                onClick={handleDeleteRecord}
-                title='标记已看'
-                className='inline-flex items-center justify-center'
-              >
-                <CheckCircleCustom />
-              </span>
-              <span className='inline-flex items-center justify-center'>
-                <Heart className='h-6 w-6 text-white/90 stroke-[2]' />
-              </span>
+              {!hideCheckCircle && (
+                <span
+                  onClick={handleDeleteRecord}
+                  title='标记已看'
+                  className='inline-flex items-center justify-center pointer-events-auto'
+                >
+                  <CheckCircleCustom />
+                </span>
+              )}
+              {favorited && (
+                <span className='inline-flex w-6 h-6 pointer-events-none' />
+              )}
+              {!favorited && (
+                <span
+                  onClick={handleToggleFavorite}
+                  title={favorited ? '移除收藏' : '加入收藏'}
+                  className='inline-flex items-center justify-center pointer-events-auto'
+                >
+                  <Heart
+                    className={`h-6 w-6 stroke-[2] ${
+                      favorited ? 'text-red-500' : 'text-white/90'
+                    }`}
+                    fill={favorited ? 'currentColor' : 'none'}
+                  />
+                </span>
+              )}
             </div>
           </div>
 
           {/* 集数指示器 - 绿色小圆球 */}
-          {episodes && (
+          {episodes && episodes > 1 && (
             <div className='absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center'>
               <span className='text-white text-xs font-bold'>{episodes}</span>
             </div>
@@ -174,7 +226,7 @@ export default function VideoCard({
           )}
 
           {/* 当前播放集数 */}
-          {currentEpisode && (
+          {currentEpisode && episodes && episodes > 1 && (
             <div className='absolute top-2 left-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center'>
               <span className='text-white text-xs font-bold'>
                 {currentEpisode}
@@ -184,7 +236,7 @@ export default function VideoCard({
         </div>
 
         {/* 信息层 */}
-        <div className='absolute top-[calc(100%+0.5rem)] left-0 right-0'>
+        <div className='absolute top-[calc(100%+0.2rem)] left-0 right-0'>
           <div className='flex flex-col items-center justify-center'>
             <span className='text-gray-900 font-semibold truncate w-full text-center'>
               {title}
@@ -198,6 +250,24 @@ export default function VideoCard({
             )}
           </div>
         </div>
+
+        {/* 收藏夹始终显示红心 */}
+        {favorited && (
+          <div className='absolute bottom-4 right-4 flex items-center'>
+            <span
+              onClick={handleToggleFavorite}
+              title={favorited ? '移除收藏' : '加入收藏'}
+              className='inline-flex items-center justify-center'
+            >
+              <Heart
+                className={`h-6 w-6 stroke-[2] ${
+                  favorited ? 'text-red-500' : 'text-white/90'
+                }`}
+                fill={favorited ? 'currentColor' : 'none'}
+              />
+            </span>
+          </div>
+        )}
       </div>
     </Link>
   );
