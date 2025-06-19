@@ -787,11 +787,11 @@ export default function PlayPage() {
             showTopBar ? 'opacity-100' : 'opacity-0'
           }`}
         >
-          <div className='bg-black/60 backdrop-blur-sm px-6 py-4 flex items-center justify-between'>
+          <div className='bg-black/60 backdrop-blur-sm px-6 py-4 relative flex items-center justify-center'>
             {/* 返回按钮 */}
             <button
               onClick={handleBack}
-              className='text-white hover:text-gray-300 transition-colors p-2'
+              className='absolute left-6 text-white hover:text-gray-300 transition-colors p-2'
             >
               <svg
                 width='24'
@@ -807,18 +807,10 @@ export default function PlayPage() {
               </svg>
             </button>
 
-            {/* 中央标题 */}
-            <div className='flex-1 text-center'>
-              {/* 标题行与数据源徽章 */}
-              <div className='flex items-center justify-center flex-wrap gap-2 max-w-full'>
-                <div className='text-white font-semibold text-lg truncate max-w-xs'>
-                  {videoTitle}
-                </div>
-                {detail?.videoInfo?.source_name && (
-                  <span className='text-gray-300 text-[11px] border border-gray-500/60 px-2 py-[1px] rounded'>
-                    {detail.videoInfo.source_name}
-                  </span>
-                )}
+            {/* 中央标题及集数信息 */}
+            <div className='text-center'>
+              <div className='text-white font-semibold text-lg truncate max-w-xs mx-auto'>
+                {videoTitle}
               </div>
 
               {totalEpisodes > 1 && (
@@ -828,8 +820,15 @@ export default function PlayPage() {
               )}
             </div>
 
-            {/* 右侧占位，保持标题居中 */}
-            <div className='w-10'></div>
+            {/* 数据源徽章放置在右侧，不影响标题居中 */}
+            {detail?.videoInfo?.source_name && (
+              <span
+                className='absolute right-6 text-gray-300 text-sm border border-gray-500/60 px-2 py-[1px] rounded cursor-pointer hover:bg-gray-600/30 transition-colors'
+                onClick={handleSourcePanelOpen}
+              >
+                {detail.videoInfo.source_name}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -1076,7 +1075,9 @@ export default function PlayPage() {
                               {result.title}
                             </h4>
                             <div className='text-gray-400 text-xs space-y-1'>
-                              <div>{result.source_name}</div>
+                              <div className='inline-block border border-gray-500/60 rounded px-2 py-[1px]'>
+                                {result.source_name}
+                              </div>
                             </div>
                           </div>
                         </div>

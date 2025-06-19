@@ -140,7 +140,9 @@ export default function VideoCard({
             </span>
             {source && (
               <span className='text-gray-500 text-xs w-full text-center mt-1'>
-                {source_name}
+                <span className='inline-block border border-gray-500/60 rounded px-2 py-[1px]'>
+                  {source_name}
+                </span>
               </span>
             )}
           </div>
