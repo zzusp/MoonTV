@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { API_CONFIG, ApiSite, getApiSites } from '@/lib/config';
+import { API_CONFIG, ApiSite, getApiSites, getCacheTime } from '@/lib/config';
 
 import { getVideoDetail } from '../detail/route';
 
@@ -160,7 +160,15 @@ export async function GET(request: Request) {
   const query = searchParams.get('q');
 
   if (!query) {
-    return NextResponse.json({ results: [] });
+    const cacheTime = getCacheTime();
+    return NextResponse.json(
+      { results: [] },
+      {
+        headers: {
+          'Cache-Control': `public, max-age=${cacheTime}`,
+        },
+      }
+    );
   }
 
   const apiSites = getApiSites();
@@ -169,8 +177,16 @@ export async function GET(request: Request) {
   try {
     const results = await Promise.all(searchPromises);
     const flattenedResults = results.flat();
+    const cacheTime = getCacheTime();
 
-    return NextResponse.json({ results: flattenedResults });
+    return NextResponse.json(
+      { results: flattenedResults },
+      {
+        headers: {
+          'Cache-Control': `public, max-age=${cacheTime}`,
+        },
+      }
+    );
   } catch (error) {
     return NextResponse.json({ error: '搜索失败' }, { status: 500 });
   }

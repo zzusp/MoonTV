@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+import { getCacheTime } from '@/lib/config';
+
 interface DoubanItem {
   title: string;
   poster: string;
@@ -110,7 +112,12 @@ export async function GET(request: Request) {
       list: list,
     };
 
-    return NextResponse.json(response);
+    const cacheTime = getCacheTime();
+    return NextResponse.json(response, {
+      headers: {
+        'Cache-Control': `public, max-age=${cacheTime}`,
+      },
+    });
   } catch (error) {
     return NextResponse.json(
       { error: '获取豆瓣数据失败', details: (error as Error).message },
@@ -173,7 +180,12 @@ function handleTop250(pageStart: number) {
         list: movies,
       };
 
-      return NextResponse.json(apiResponse);
+      const cacheTime = getCacheTime();
+      return NextResponse.json(apiResponse, {
+        headers: {
+          'Cache-Control': `public, max-age=${cacheTime}`,
+        },
+      });
     })
     .catch((error) => {
       clearTimeout(timeoutId);

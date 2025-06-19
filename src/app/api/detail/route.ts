@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { API_CONFIG, ApiSite, getApiSites } from '@/lib/config';
+import { API_CONFIG, ApiSite, getApiSites, getCacheTime } from '@/lib/config';
 
 const M3U8_PATTERN = /(https?:\/\/[^"'\s]+?\.m3u8)/g;
 
@@ -218,7 +218,13 @@ export async function GET(request: Request) {
 
   try {
     const result = await getVideoDetail(id, sourceCode);
-    return NextResponse.json(result);
+    const cacheTime = getCacheTime();
+
+    return NextResponse.json(result, {
+      headers: {
+        'Cache-Control': `public, max-age=${cacheTime}`,
+      },
+    });
   } catch (error) {
     return NextResponse.json(
       { error: (error as Error).message },

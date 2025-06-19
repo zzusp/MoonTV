@@ -9,6 +9,7 @@ export interface ApiSite {
 }
 
 export interface Config {
+  cache_time?: number;
   api_site: {
     [key: string]: ApiSite;
   };
@@ -47,6 +48,11 @@ export function getConfig(): Config {
   const parsedConfig = JSON.parse(configContent) as Config;
   config = parsedConfig;
   return parsedConfig;
+}
+
+export function getCacheTime(): number {
+  const config = getConfig();
+  return config.cache_time || 300; // 默认5分钟缓存
 }
 
 export function getApiSites(): ApiSite[] {
