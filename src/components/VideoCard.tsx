@@ -141,8 +141,7 @@ export default function VideoCard({
     }
   };
 
-  const inFavorites = from === 'favorites';
-  const hideCheckCircle = inFavorites;
+  const hideCheckCircle = from === 'favorites' || from === 'search';
 
   return (
     <Link
