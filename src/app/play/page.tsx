@@ -6,7 +6,12 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import React from 'react';
 
-import { deletePlayRecord, savePlayRecord } from '@/lib/db.client';
+import {
+  deletePlayRecord,
+  generateStorageKey,
+  getAllPlayRecords,
+  savePlayRecord,
+} from '@/lib/db.client';
 
 import { VideoDetail } from '../api/detail/route';
 
@@ -81,6 +86,9 @@ export default function PlayPage() {
 
   // 总集数：从 detail 中获取，保证随 detail 更新而变化
   const totalEpisodes = detail?.episodes?.length || 0;
+
+  // 用于记录是否需要在播放器 ready 后跳转到指定进度
+  const resumeTimeRef = useRef<number | null>(null);
 
   // 根据 detail 和集数索引更新视频地址（仅当地址真正变化时）
   const updateVideoUrl = (
@@ -162,6 +170,7 @@ export default function PlayPage() {
         if (searchParams.has('index')) {
           const newUrl = new URL(window.location.href);
           newUrl.searchParams.delete('index');
+          newUrl.searchParams.delete('position');
           window.history.replaceState({}, '', newUrl.toString());
         }
       } catch (err) {
@@ -173,6 +182,64 @@ export default function PlayPage() {
 
     fetchDetail();
   }, [currentSource]);
+
+  /* -------------------- 播放记录处理 -------------------- */
+  useEffect(() => {
+    // 仅在初次挂载时检查播放记录
+    const initFromHistory = async () => {
+      if (!currentSource || !currentId) return;
+
+      try {
+        const allRecords = await getAllPlayRecords();
+        const key = generateStorageKey(currentSource, currentId);
+        const record = allRecords[key];
+
+        // URL 参数
+        const urlIndexParam = searchParams.get('index');
+        const urlPositionParam = searchParams.get('position');
+
+        // 当index参数存在时的处理逻辑
+        if (urlIndexParam) {
+          const urlIndex = parseInt(urlIndexParam, 10) - 1;
+          let targetTime = 0; // 默认从0开始
+
+          // 只有index参数和position参数都存在时才生效position
+          if (urlPositionParam) {
+            targetTime = parseInt(urlPositionParam, 10);
+          } else if (record && urlIndex === record.index - 1) {
+            // 如果有同集播放记录则跳转到播放记录处
+            targetTime = record.play_time;
+          }
+          // 否则从0开始（targetTime已经是0）
+
+          // 更新当前选集索引
+          if (urlIndex !== currentEpisodeIndex) {
+            setCurrentEpisodeIndex(urlIndex);
+          }
+
+          // 保存待恢复的播放进度，待播放器就绪后跳转
+          resumeTimeRef.current = targetTime;
+        } else if (record) {
+          // 没有index参数但有播放记录时，使用原有逻辑
+          const targetIndex = record.index - 1;
+          const targetTime = record.play_time;
+
+          // 更新当前选集索引
+          if (targetIndex !== currentEpisodeIndex) {
+            setCurrentEpisodeIndex(targetIndex);
+          }
+
+          // 保存待恢复的播放进度，待播放器就绪后跳转
+          resumeTimeRef.current = targetTime;
+        }
+      } catch (err) {
+        console.error('读取播放记录失败:', err);
+      }
+    };
+
+    initFromHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const attachVideoEventListeners = (video: HTMLVideoElement) => {
     if (!video) return;
@@ -417,6 +484,16 @@ export default function PlayPage() {
       artPlayerRef.current.on('ready', () => {
         console.log('播放器准备就绪');
         setError(null);
+
+        // 若存在需要恢复的播放进度，则跳转
+        if (resumeTimeRef.current && resumeTimeRef.current > 0) {
+          try {
+            artPlayerRef.current.video.currentTime = resumeTimeRef.current;
+          } catch (err) {
+            console.warn('恢复播放进度失败:', err);
+          }
+          resumeTimeRef.current = null;
+        }
       });
 
       artPlayerRef.current.on('error', (err: any) => {

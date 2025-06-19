@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
+import { deletePlayRecord } from '@/lib/db.client';
+
 interface VideoCardProps {
   id: string;
   source: string;
@@ -14,6 +16,7 @@ interface VideoCardProps {
   progress?: number;
   from?: string;
   currentEpisode?: number;
+  onDelete?: () => void;
 }
 
 function CheckCircleCustom() {
@@ -78,11 +81,34 @@ export default function VideoCard({
   progress,
   from,
   currentEpisode,
+  onDelete,
 }: VideoCardProps) {
   const [playHover, setPlayHover] = useState(false);
+  const [deleted, setDeleted] = useState(false);
   const router = useRouter();
 
-  return (
+  // 删除对应播放记录
+  const handleDeleteRecord = async (
+    e: React.MouseEvent<HTMLSpanElement | SVGElement, MouseEvent>
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      await deletePlayRecord(source, id);
+
+      // 通知父组件更新
+      onDelete?.();
+
+      // 若父组件未处理，可本地隐藏
+      setDeleted(true);
+    } catch (err) {
+      /* eslint-disable no-console */
+      console.error('删除播放记录失败:', err);
+    }
+  };
+
+  return deleted ? null : (
     <Link
       href={`/detail?source=${source}&id=${id}${from ? `&from=${from}` : ''}`}
     >
@@ -111,8 +137,16 @@ export default function VideoCard({
               </div>
             </div>
             <div className='absolute bottom-4 right-4 flex items-center gap-6'>
-              <CheckCircleCustom />
-              <Heart className='h-5 w-5 text-white/90 stroke-[2]' />
+              <span
+                onClick={handleDeleteRecord}
+                title='标记已看'
+                className='inline-flex items-center justify-center'
+              >
+                <CheckCircleCustom />
+              </span>
+              <span className='inline-flex items-center justify-center'>
+                <Heart className='h-6 w-6 text-white/90 stroke-[2]' />
+              </span>
             </div>
           </div>
 

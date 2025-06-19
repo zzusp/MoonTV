@@ -4,6 +4,9 @@ import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import type { PlayRecord } from '@/lib/db.client';
+import { generateStorageKey, getAllPlayRecords } from '@/lib/db.client';
+
 import PageLayout from '@/components/layout/PageLayout';
 
 import { VideoDetail } from '../api/detail/route';
@@ -13,6 +16,18 @@ export default function DetailPage() {
   const [detail, setDetail] = useState<VideoDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [playRecord, setPlayRecord] = useState<PlayRecord | null>(null);
+
+  // 格式化剩余时间（如 1h 50m）
+  const formatDuration = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const parts: string[] = [];
+    if (h) parts.push(`${h}h`);
+    if (m) parts.push(`${m}m`);
+    if (parts.length === 0) parts.push('0m');
+    return parts.join(' ');
+  };
 
   useEffect(() => {
     const source = searchParams.get('source');
@@ -24,7 +39,7 @@ export default function DetailPage() {
       return;
     }
 
-    const fetchDetail = async () => {
+    const fetchData = async () => {
       try {
         const response = await fetch(`/api/detail?source=${source}&id=${id}`);
         if (!response.ok) {
@@ -32,6 +47,11 @@ export default function DetailPage() {
         }
         const data = await response.json();
         setDetail(data);
+
+        // 获取播放记录
+        const allRecords = await getAllPlayRecords();
+        const key = generateStorageKey(source, id);
+        setPlayRecord(allRecords[key] || null);
       } catch (err) {
         setError(err instanceof Error ? err.message : '获取详情失败');
       } finally {
@@ -39,7 +59,7 @@ export default function DetailPage() {
       }
     };
 
-    fetchDetail();
+    fetchData();
   }, [searchParams]);
 
   return (
@@ -95,12 +115,12 @@ export default function DetailPage() {
                 </svg>
               </button>
               {/* 封面 */}
-              <div className='flex-shrink-0 w-full md:w-64'>
+              <div className='flex-shrink-0 w-full md:w-72'>
                 <Image
                   src={detail.videoInfo.cover || '/images/placeholder.png'}
                   alt={detail.videoInfo.title}
-                  width={256}
-                  height={384}
+                  width={288}
+                  height={432}
                   className='w-full rounded-xl object-cover'
                   style={{ aspectRatio: '2/3' }}
                   priority
@@ -109,7 +129,7 @@ export default function DetailPage() {
               {/* 右侧信息 */}
               <div
                 className='flex-1 flex flex-col min-h-0'
-                style={{ height: '384px' }}
+                style={{ height: '430px' }}
               >
                 <h1 className='text-3xl font-bold mb-2 tracking-wide flex items-center flex-shrink-0'>
                   {detail.videoInfo.title}
@@ -130,16 +150,46 @@ export default function DetailPage() {
                     <span>{detail.videoInfo.type}</span>
                   )}
                 </div>
+                {/* 按钮区域 */}
                 <div className='flex items-center gap-4 mb-4 flex-shrink-0'>
-                  <a
-                    href={`/play?source=${searchParams.get(
-                      'source'
-                    )}&id=${searchParams.get('id')}`}
-                    className='flex items-center justify-center gap-2 px-6 py-2 bg-green-500 hover:bg-green-600 rounded-lg transition-colors text-white'
-                  >
-                    <div className='w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-white border-b-[6px] border-b-transparent'></div>
-                    <span>播放</span>
-                  </a>
+                  {playRecord ? (
+                    <>
+                      {/* 恢复播放 */}
+                      <a
+                        href={`/play?source=${searchParams.get(
+                          'source'
+                        )}&id=${searchParams.get('id')}`}
+                        className='flex items-center justify-center gap-2 px-6 py-2 bg-green-500 hover:bg-green-600 rounded-lg transition-colors text-white'
+                      >
+                        <div className='w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-white border-b-[6px] border-b-transparent'></div>
+                        <span>恢复播放</span>
+                      </a>
+                      {/* 从头开始 */}
+                      <a
+                        href={`/play?source=${searchParams.get(
+                          'source'
+                        )}&id=${searchParams.get('id')}&index=1&position=0`}
+                        className='flex items-center justify-center gap-2 px-6 py-2 bg-gray-500 hover:bg-gray-600 rounded-lg transition-colors text-white'
+                      >
+                        <div className='w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-white border-b-[6px] border-b-transparent'></div>
+                        <span>从头开始</span>
+                      </a>
+                    </>
+                  ) : (
+                    <>
+                      {/* 播放 */}
+                      <a
+                        href={`/play?source=${searchParams.get(
+                          'source'
+                        )}&id=${searchParams.get('id')}&index=1&position=0`}
+                        className='flex items-center justify-center gap-2 px-6 py-2 bg-green-500 hover:bg-green-600 rounded-lg transition-colors text-white'
+                      >
+                        <div className='w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-white border-b-[6px] border-b-transparent'></div>
+                        <span>播放</span>
+                      </a>
+                    </>
+                  )}
+                  {/* 爱心按钮 */}
                   <button className='flex items-center justify-center w-10 h-10 bg-pink-400 hover:bg-pink-500 rounded-full transition-colors'>
                     <svg
                       xmlns='http://www.w3.org/2000/svg'
@@ -157,9 +207,32 @@ export default function DetailPage() {
                     </svg>
                   </button>
                 </div>
+                {/* 播放记录进度条 */}
+                {playRecord && (
+                  <div className='mb-4 flex items-center gap-3 w-full max-w-sm'>
+                    {/* 进度条 */}
+                    <div className='flex-1 h-1 bg-gray-600 rounded-sm overflow-hidden'>
+                      <div
+                        className='h-full bg-green-500'
+                        style={{
+                          width: `${
+                            (playRecord.play_time / playRecord.total_time) * 100
+                          }%`,
+                        }}
+                      ></div>
+                    </div>
+                    {/* 剩余时间 */}
+                    <span className='text-gray-600/60 text-xs whitespace-nowrap'>
+                      剩余{' '}
+                      {formatDuration(
+                        playRecord.total_time - playRecord.play_time
+                      )}
+                    </span>
+                  </div>
+                )}
                 {detail.videoInfo.desc && (
                   <div
-                    className='mt-4 text-base leading-relaxed opacity-90 overflow-y-auto pr-2 flex-1 min-h-0 scrollbar-hide'
+                    className='mt-0 text-base leading-relaxed opacity-90 overflow-y-auto pr-2 flex-1 min-h-0 scrollbar-hide'
                     style={{ whiteSpace: 'pre-line' }}
                   >
                     {detail.videoInfo.desc}
