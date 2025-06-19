@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 
 import type { PlayRecord } from '@/lib/db.client';
 import { generateStorageKey, getAllPlayRecords } from '@/lib/db.client';
@@ -10,7 +10,7 @@ import { VideoDetail } from '@/lib/video';
 
 import PageLayout from '@/components/PageLayout';
 
-export default function DetailPage() {
+function DetailPageClient() {
   const searchParams = useSearchParams();
   const [detail, setDetail] = useState<VideoDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -267,5 +267,13 @@ export default function DetailPage() {
         )}
       </div>
     </PageLayout>
+  );
+}
+
+export default function DetailPage() {
+  return (
+    <Suspense>
+      <DetailPageClient />
+    </Suspense>
   );
 }

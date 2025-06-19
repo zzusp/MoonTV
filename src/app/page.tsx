@@ -9,7 +9,7 @@ import {
   Tv,
   VenetianMask,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 
 import CapsuleSwitch from '@/components/CapsuleSwitch';
 import CollectionCard from '@/components/CollectionCard';
@@ -52,7 +52,7 @@ const collections = [
   { icon: VenetianMask, title: '日漫', href: '/douban?type=tv&tag=日本动画' },
 ];
 
-export default function Home() {
+function HomeClient() {
   const [activeTab, setActiveTab] = useState('home');
   const [hotMovies, setHotMovies] = useState<DoubanItem[]>([]);
   const [hotTvShows, setHotTvShows] = useState<DoubanItem[]>([]);
@@ -175,5 +175,13 @@ export default function Home() {
         </div>
       </div>
     </PageLayout>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense>
+      <HomeClient />
+    </Suspense>
   );
 }

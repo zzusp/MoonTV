@@ -3,6 +3,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import React from 'react';
 
@@ -35,7 +36,7 @@ interface SearchResult {
   source_name: string;
 }
 
-export default function PlayPage() {
+function PlayPageClient() {
   const searchParams = useSearchParams();
   const artRef = useRef<HTMLDivElement>(null);
   const artPlayerRef = useRef<any>(null);
@@ -1342,5 +1343,13 @@ export default function PlayPage() {
         </>
       )}
     </div>
+  );
+}
+
+export default function PlayPage() {
+  return (
+    <Suspense>
+      <PlayPageClient />
+    </Suspense>
   );
 }

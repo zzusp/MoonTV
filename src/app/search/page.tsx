@@ -2,25 +2,26 @@
 
 import { Search } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
 import PageLayout from '@/components/PageLayout';
 import VideoCard from '@/components/VideoCard';
 
-// 模拟搜索历史数据
-const mockSearchHistory = ['流浪地球', '三体', '狂飙', '满江红'];
+function SearchPageClient() {
+  // 模拟搜索历史数据
+  const mockSearchHistory = ['流浪地球', '三体', '狂飙', '满江红'];
 
-// 定义搜索结果类型
-type SearchResult = {
-  id: string;
-  title: string;
-  poster: string;
-  source: string;
-  source_name: string;
-  episodes?: number;
-};
+  // 定义搜索结果类型
+  type SearchResult = {
+    id: string;
+    title: string;
+    poster: string;
+    source: string;
+    source_name: string;
+    episodes?: number;
+  };
 
-export default function SearchPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
@@ -138,5 +139,13 @@ export default function SearchPage() {
         </div>
       </div>
     </PageLayout>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense>
+      <SearchPageClient />
+    </Suspense>
   );
 }

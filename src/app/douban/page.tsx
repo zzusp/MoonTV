@@ -1,6 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
 import DemoCard from '@/components/DemoCard';
@@ -20,7 +21,7 @@ interface DoubanResponse {
   list: DoubanItem[];
 }
 
-export default function DoubanPage() {
+function DoubanPageClient() {
   const searchParams = useSearchParams();
   const [doubanData, setDoubanData] = useState<DoubanItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -246,5 +247,13 @@ export default function DoubanPage() {
         </div>
       </div>
     </PageLayout>
+  );
+}
+
+export default function DoubanPage() {
+  return (
+    <Suspense>
+      <DoubanPageClient />
+    </Suspense>
   );
 }
