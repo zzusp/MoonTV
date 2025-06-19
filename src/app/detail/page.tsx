@@ -6,10 +6,9 @@ import { useEffect, useState } from 'react';
 
 import type { PlayRecord } from '@/lib/db.client';
 import { generateStorageKey, getAllPlayRecords } from '@/lib/db.client';
+import { VideoDetail } from '@/lib/video';
 
-import PageLayout from '@/components/layout/PageLayout';
-
-import { VideoDetail } from '../api/detail/route';
+import PageLayout from '@/components/PageLayout';
 
 export default function DetailPage() {
   const searchParams = useSearchParams();

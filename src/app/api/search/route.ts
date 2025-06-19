@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { API_CONFIG, ApiSite, getApiSites, getCacheTime } from '@/lib/config';
-
-import { getVideoDetail } from '../detail/route';
+import { getVideoDetail } from '@/lib/video';
 
 export interface SearchResult {
   id: string;

@@ -4,7 +4,7 @@ import { Search } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
-import PageLayout from '@/components/layout/PageLayout';
+import PageLayout from '@/components/PageLayout';
 import VideoCard from '@/components/VideoCard';
 
 // 模拟搜索历史数据

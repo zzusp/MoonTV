@@ -15,7 +15,7 @@ import CapsuleSwitch from '@/components/CapsuleSwitch';
 import CollectionCard from '@/components/CollectionCard';
 import ContinueWatching from '@/components/ContinueWatching';
 import DemoCard from '@/components/DemoCard';
-import PageLayout from '@/components/layout/PageLayout';
+import PageLayout from '@/components/PageLayout';
 import ScrollableRow from '@/components/ScrollableRow';
 
 interface DoubanItem {

@@ -12,8 +12,7 @@ import {
   getAllPlayRecords,
   savePlayRecord,
 } from '@/lib/db.client';
-
-import { VideoDetail } from '../api/detail/route';
+import { VideoDetail } from '@/lib/video';
 
 // 动态导入 Artplayer 和 Hls 以避免 SSR 问题
 let Artplayer: any = null;

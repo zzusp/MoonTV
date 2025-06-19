@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import DemoCard from '@/components/DemoCard';
 import DoubanCardSkeleton from '@/components/DoubanCardSkeleton';
-import PageLayout from '@/components/layout/PageLayout';
+import PageLayout from '@/components/PageLayout';
 
 // 定义豆瓣数据项类型
 interface DoubanItem {
