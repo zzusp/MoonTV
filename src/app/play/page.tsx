@@ -42,8 +42,8 @@ function PlayPageClient() {
   // 使用 useState 保存视频详情
   const [detail, setDetail] = useState<VideoDetail | null>(null);
 
-  // 轻量级界面状态，仅用于显示
-  const [videoTitle, setVideoTitle] = useState('');
+  // 初始标题：如果 URL 中携带 title 参数，则优先使用
+  const [videoTitle, setVideoTitle] = useState(searchParams.get('title') || '');
   const [videoCover, setVideoCover] = useState('');
 
   const [currentSource, setCurrentSource] = useState(
@@ -159,7 +159,7 @@ function PlayPageClient() {
         const data = await response.json();
 
         // 更新状态保存详情
-        setVideoTitle(data.videoInfo.title);
+        setVideoTitle(data.videoInfo.title || videoTitle);
         setVideoCover(data.videoInfo.cover);
         setDetail(data);
 
@@ -740,7 +740,11 @@ function PlayPageClient() {
   };
 
   // 处理换源
-  const handleSourceChange = async (newSource: string, newId: string) => {
+  const handleSourceChange = async (
+    newSource: string,
+    newId: string,
+    newTitle: string
+  ) => {
     try {
       // 显示换源加载状态
       setSourceChanging(true);
@@ -782,7 +786,7 @@ function PlayPageClient() {
       // 关闭换源面板
       setShowSourcePanel(false);
 
-      setVideoTitle(newDetail.videoInfo.title);
+      setVideoTitle(newDetail.videoInfo.title || newTitle);
       setVideoCover(newDetail.videoInfo.cover);
       setCurrentSource(newSource);
       setCurrentId(newId);
@@ -1293,7 +1297,11 @@ function PlayPageClient() {
                           }`}
                           onClick={() =>
                             !isCurrentSource &&
-                            handleSourceChange(result.source, result.id)
+                            handleSourceChange(
+                              result.source,
+                              result.id,
+                              result.title
+                            )
                           }
                         >
                           {/* 视频封面 */}

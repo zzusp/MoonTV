@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+
 'use client';
 
 import Image from 'next/image';
@@ -16,6 +18,9 @@ function DetailPageClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [playRecord, setPlayRecord] = useState<PlayRecord | null>(null);
+
+  // 当接口缺失标题时，使用 URL 中的 title 参数作为后备
+  const fallbackTitle = searchParams.get('title') || '';
 
   // 格式化剩余时间（如 1h 50m）
   const formatDuration = (seconds: number) => {
@@ -45,7 +50,15 @@ function DetailPageClient() {
           throw new Error('获取详情失败');
         }
         const data = await response.json();
-        setDetail(data);
+        // 如果接口中缺失标题，则补上备用标题
+        let finalData = data;
+        if (!data?.videoInfo?.title && fallbackTitle) {
+          finalData = {
+            ...data,
+            videoInfo: { ...data.videoInfo, title: fallbackTitle },
+          };
+        }
+        setDetail(finalData);
 
         // 获取播放记录
         const allRecords = await getAllPlayRecords();
@@ -117,7 +130,7 @@ function DetailPageClient() {
               <div className='flex-shrink-0 w-full md:w-72'>
                 <Image
                   src={detail.videoInfo.cover || '/images/placeholder.png'}
-                  alt={detail.videoInfo.title}
+                  alt={detail.videoInfo.title || fallbackTitle}
                   width={288}
                   height={432}
                   className='w-full rounded-xl object-cover'
@@ -131,7 +144,7 @@ function DetailPageClient() {
                 style={{ height: '430px' }}
               >
                 <h1 className='text-3xl font-bold mb-2 tracking-wide flex items-center flex-shrink-0'>
-                  {detail.videoInfo.title}
+                  {detail.videoInfo.title || fallbackTitle}
                 </h1>
                 <div className='flex flex-wrap items-center gap-3 text-base mb-4 opacity-80 flex-shrink-0'>
                   {detail.videoInfo.remarks && (
@@ -157,7 +170,11 @@ function DetailPageClient() {
                       <a
                         href={`/play?source=${searchParams.get(
                           'source'
-                        )}&id=${searchParams.get('id')}`}
+                        )}&id=${searchParams.get('id')}${
+                          fallbackTitle
+                            ? `&title=${encodeURIComponent(fallbackTitle)}`
+                            : ''
+                        }`}
                         className='flex items-center justify-center gap-2 px-6 py-2 bg-green-500 hover:bg-green-600 rounded-lg transition-colors text-white'
                       >
                         <div className='w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-white border-b-[6px] border-b-transparent'></div>
@@ -167,7 +184,11 @@ function DetailPageClient() {
                       <a
                         href={`/play?source=${searchParams.get(
                           'source'
-                        )}&id=${searchParams.get('id')}&index=1&position=0`}
+                        )}&id=${searchParams.get('id')}&index=1&position=0${
+                          fallbackTitle
+                            ? `&title=${encodeURIComponent(fallbackTitle)}`
+                            : ''
+                        }`}
                         className='flex items-center justify-center gap-2 px-6 py-2 bg-gray-500 hover:bg-gray-600 rounded-lg transition-colors text-white'
                       >
                         <div className='w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-white border-b-[6px] border-b-transparent'></div>
@@ -180,7 +201,11 @@ function DetailPageClient() {
                       <a
                         href={`/play?source=${searchParams.get(
                           'source'
-                        )}&id=${searchParams.get('id')}&index=1&position=0`}
+                        )}&id=${searchParams.get('id')}&index=1&position=0${
+                          fallbackTitle
+                            ? `&title=${encodeURIComponent(fallbackTitle)}`
+                            : ''
+                        }`}
                         className='flex items-center justify-center gap-2 px-6 py-2 bg-green-500 hover:bg-green-600 rounded-lg transition-colors text-white'
                       >
                         <div className='w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-white border-b-[6px] border-b-transparent'></div>
@@ -254,7 +279,11 @@ function DetailPageClient() {
                       key={idx}
                       href={`/play?source=${searchParams.get(
                         'source'
-                      )}&id=${searchParams.get('id')}&index=${idx + 1}`}
+                      )}&id=${searchParams.get('id')}&index=${idx + 1}${
+                        fallbackTitle
+                          ? `&title=${encodeURIComponent(fallbackTitle)}`
+                          : ''
+                      }`}
                       className='bg-gray-500/80 hover:bg-green-500 text-white px-5 py-2 rounded-lg transition-colors text-base font-medium w-24 text-center'
                     >
                       第{idx + 1}集

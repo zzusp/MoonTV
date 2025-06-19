@@ -110,7 +110,9 @@ export default function VideoCard({
 
   return deleted ? null : (
     <Link
-      href={`/detail?source=${source}&id=${id}${from ? `&from=${from}` : ''}`}
+      href={`/detail?source=${source}&id=${id}&title=${encodeURIComponent(
+        title
+      )}${from ? `&from=${from}` : ''}`}
     >
       <div className='group relative w-full rounded-lg bg-transparent shadow-none flex flex-col'>
         {/* 海报图片 - 2:3 比例 */}
@@ -128,7 +130,11 @@ export default function VideoCard({
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  router.push(`/play?source=${source}&id=${id}`);
+                  router.push(
+                    `/play?source=${source}&id=${id}&title=${encodeURIComponent(
+                      title
+                    )}`
+                  );
                 }}
                 onMouseEnter={() => setPlayHover(true)}
                 onMouseLeave={() => setPlayHover(false)}
