@@ -8,11 +8,23 @@ export interface ApiSite {
   detail?: string;
 }
 
+export interface StorageConfig {
+  type: 'localstorage' | 'database';
+  database?: {
+    host?: string;
+    port?: number;
+    username?: string;
+    password?: string;
+    database?: string;
+  };
+}
+
 export interface Config {
   cache_time?: number;
   api_site: {
     [key: string]: ApiSite;
   };
+  storage?: StorageConfig;
 }
 
 export const API_CONFIG = {
@@ -61,4 +73,9 @@ export function getApiSites(): ApiSite[] {
     ...site,
     key,
   }));
+}
+
+export function getStorageConfig(): StorageConfig {
+  const config = getConfig();
+  return config.storage || { type: 'localstorage' };
 }

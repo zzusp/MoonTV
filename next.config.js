@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+/* eslint-disable @typescript-eslint/no-var-requires */
 const nextConfig = {
   eslint: {
     dirs: ['src'],
@@ -6,6 +7,28 @@ const nextConfig = {
 
   reactStrictMode: true,
   swcMinify: true,
+
+  /**
+   * 在编译阶段把 storage.type 写入环境变量，供浏览器端动态切换存储方案。
+   */
+  env: (function () {
+    const fs = require('fs');
+    const path = require('path');
+
+    let storageType = 'localstorage';
+    try {
+      const json = JSON.parse(
+        fs.readFileSync(path.join(__dirname, 'config.json'), 'utf-8')
+      );
+      storageType = json?.storage?.type ?? 'localstorage';
+    } catch {
+      // ignore – 保持默认值
+    }
+
+    return {
+      NEXT_PUBLIC_STORAGE_TYPE: storageType,
+    };
+  })(),
 
   // Uncoment to add domain whitelist
   images: {

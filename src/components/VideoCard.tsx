@@ -13,6 +13,7 @@ interface VideoCardProps {
   source_name: string;
   progress?: number;
   from?: string;
+  currentEpisode?: number;
 }
 
 function CheckCircleCustom() {
@@ -76,6 +77,7 @@ export default function VideoCard({
   source_name,
   progress,
   from,
+  currentEpisode,
 }: VideoCardProps) {
   const [playHover, setPlayHover] = useState(false);
   const router = useRouter();
@@ -128,6 +130,15 @@ export default function VideoCard({
                 className='h-full bg-blue-500 transition-all duration-300'
                 style={{ width: `${progress}%` }}
               />
+            </div>
+          )}
+
+          {/* 当前播放集数 */}
+          {currentEpisode && (
+            <div className='absolute top-2 left-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center'>
+              <span className='text-white text-xs font-bold'>
+                {currentEpisode}
+              </span>
             </div>
           )}
         </div>

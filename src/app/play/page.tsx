@@ -6,6 +6,8 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import React from 'react';
 
+import { deletePlayRecord, savePlayRecord } from '@/lib/db.client';
+
 import { VideoDetail } from '../api/detail/route';
 
 // 动态导入 Artplayer 和 Hls 以避免 SSR 问题
@@ -68,6 +70,14 @@ export default function PlayPage() {
 
   // 视频播放地址
   const [videoUrl, setVideoUrl] = useState('');
+
+  // 播放进度保存相关
+  const saveIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSaveTimeRef = useRef<number>(0);
+  const videoEventListenersRef = useRef<{
+    video: HTMLVideoElement;
+    listeners: Array<{ event: string; handler: EventListener }>;
+  } | null>(null);
 
   // 总集数：从 detail 中获取，保证随 detail 更新而变化
   const totalEpisodes = detail?.episodes?.length || 0;
@@ -142,6 +152,8 @@ export default function PlayPage() {
         setVideoTitle(data.videoInfo.title);
         setVideoCover(data.videoInfo.cover);
         setDetail(data);
+
+        // 确保集数索引在有效范围内
         if (currentEpisodeIndex >= data.episodes.length) {
           setCurrentEpisodeIndex(0);
         }
@@ -161,6 +173,45 @@ export default function PlayPage() {
 
     fetchDetail();
   }, [currentSource]);
+
+  const attachVideoEventListeners = (video: HTMLVideoElement) => {
+    if (!video) return;
+
+    // 移除旧监听器（如果存在）
+    if (videoEventListenersRef.current) {
+      const { video: oldVideo, listeners } = videoEventListenersRef.current;
+      listeners.forEach(({ event, handler }) => {
+        oldVideo.removeEventListener(event, handler);
+      });
+      videoEventListenersRef.current = null;
+    }
+
+    // 暂停时立即保存
+    const pauseHandler = () => {
+      saveCurrentPlayProgress();
+    };
+
+    // timeupdate 节流（5 秒）保存
+    let lastSave = 0;
+    const timeUpdateHandler = () => {
+      const now = Date.now();
+      if (now - lastSave > 5000) {
+        saveCurrentPlayProgress();
+        lastSave = now;
+      }
+    };
+
+    video.addEventListener('pause', pauseHandler);
+    video.addEventListener('timeupdate', timeUpdateHandler);
+
+    videoEventListenersRef.current = {
+      video,
+      listeners: [
+        { event: 'pause', handler: pauseHandler },
+        { event: 'timeupdate', handler: timeUpdateHandler },
+      ],
+    };
+  };
 
   // 播放器创建/切换逻辑，只依赖视频URL和集数索引
   useEffect(() => {
@@ -189,6 +240,7 @@ export default function PlayPage() {
       setError('视频地址无效');
       return;
     }
+    console.log(videoUrl);
 
     // 检测是否为WebKit浏览器
     const isWebkit =
@@ -202,7 +254,11 @@ export default function PlayPage() {
         currentEpisodeIndex + 1
       }集`;
       artPlayerRef.current.poster = videoCover;
-      console.log(videoUrl);
+      if (artPlayerRef.current?.video) {
+        attachVideoEventListeners(
+          artPlayerRef.current.video as HTMLVideoElement
+        );
+      }
       return;
     }
 
@@ -380,11 +436,41 @@ export default function PlayPage() {
           }, 1000);
         }
       });
+      if (artPlayerRef.current?.video) {
+        attachVideoEventListeners(
+          artPlayerRef.current.video as HTMLVideoElement
+        );
+      }
     } catch (err) {
       console.error('创建播放器失败:', err);
       setError('播放器初始化失败');
     }
-  }, [videoUrl]);
+  }, [Artplayer, Hls, videoUrl]);
+
+  // 页面卸载和隐藏时保存播放进度
+  useEffect(() => {
+    // 页面即将卸载时保存播放进度
+    const handleBeforeUnload = () => {
+      saveCurrentPlayProgress();
+    };
+
+    // 页面可见性变化时保存播放进度
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        saveCurrentPlayProgress();
+      }
+    };
+
+    // 添加事件监听器
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      // 清理事件监听器
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [currentEpisodeIndex, detail, artPlayerRef.current]);
 
   // 清理定时器
   useEffect(() => {
@@ -394,6 +480,18 @@ export default function PlayPage() {
       }
       if (shortcutHintTimeoutRef.current) {
         clearTimeout(shortcutHintTimeoutRef.current);
+      }
+      if (saveIntervalRef.current) {
+        clearInterval(saveIntervalRef.current);
+      }
+
+      // 清理视频事件监听器
+      if (videoEventListenersRef.current) {
+        const { video, listeners } = videoEventListenersRef.current;
+        listeners.forEach(({ event, handler }) => {
+          video.removeEventListener(event, handler);
+        });
+        videoEventListenersRef.current = null;
       }
     };
   }, []);
@@ -418,6 +516,14 @@ export default function PlayPage() {
   // 处理选集切换
   const handleEpisodeChange = (episodeIndex: number) => {
     if (episodeIndex >= 0 && episodeIndex < totalEpisodes) {
+      // 在更换集数前保存当前播放进度
+      if (
+        artPlayerRef.current &&
+        artPlayerRef.current.video &&
+        !artPlayerRef.current.video.paused
+      ) {
+        saveCurrentPlayProgress();
+      }
       setCurrentEpisodeIndex(episodeIndex);
       setShowEpisodePanel(false);
     }
@@ -430,6 +536,14 @@ export default function PlayPage() {
       detail.episodes &&
       currentEpisodeIndex < detail.episodes.length - 1
     ) {
+      // 在更换集数前保存当前播放进度
+      if (
+        artPlayerRef.current &&
+        artPlayerRef.current.video &&
+        !artPlayerRef.current.video.paused
+      ) {
+        saveCurrentPlayProgress();
+      }
       setCurrentEpisodeIndex(currentEpisodeIndex + 1);
     }
   };
@@ -478,6 +592,13 @@ export default function PlayPage() {
   // 处理上一集
   const handlePreviousEpisode = () => {
     if (detail && currentEpisodeIndex > 0) {
+      if (
+        artPlayerRef.current &&
+        artPlayerRef.current.video &&
+        !artPlayerRef.current.video.paused
+      ) {
+        saveCurrentPlayProgress();
+      }
       setCurrentEpisodeIndex(currentEpisodeIndex - 1);
     }
   };
@@ -539,12 +660,22 @@ export default function PlayPage() {
     }
   };
 
-  // 处理换源 - 使用 startTransition 批量更新状态
+  // 处理换源
   const handleSourceChange = async (newSource: string, newId: string) => {
     try {
       // 显示换源加载状态
       setSourceChanging(true);
       setError(null);
+
+      // 清除前一个历史记录
+      if (currentSource && currentId) {
+        try {
+          await deletePlayRecord(currentSource, currentId);
+          console.log('已清除前一个播放记录');
+        } catch (err) {
+          console.error('清除播放记录失败:', err);
+        }
+      }
 
       // 获取新源的详情
       const response = await fetch(
@@ -712,6 +843,50 @@ export default function PlayPage() {
         artPlayerRef.current.fullscreen = !artPlayerRef.current.fullscreen;
         e.preventDefault();
       }
+    }
+  };
+
+  // 保存播放进度的函数
+  const saveCurrentPlayProgress = async () => {
+    if (
+      !artPlayerRef.current?.video ||
+      !currentSource ||
+      !currentId ||
+      !videoTitle ||
+      !detail?.videoInfo?.source_name
+    ) {
+      return;
+    }
+
+    const video = artPlayerRef.current.video;
+    const currentTime = video.currentTime || 0;
+    const duration = video.duration || 0;
+
+    // 如果播放时间太短（少于5秒）或者视频时长无效，不保存
+    if (currentTime < 1 || !duration) {
+      return;
+    }
+
+    try {
+      await savePlayRecord(currentSource, currentId, {
+        title: videoTitle,
+        source_name: detail.videoInfo.source_name,
+        cover: videoCover,
+        index: currentEpisodeIndex + 1, // 转换为1基索引
+        total_episodes: totalEpisodes,
+        play_time: Math.floor(currentTime),
+        total_time: Math.floor(duration),
+        save_time: Date.now(),
+      });
+
+      lastSaveTimeRef.current = Date.now();
+      console.log('播放进度已保存:', {
+        title: videoTitle,
+        episode: currentEpisodeIndex + 1,
+        progress: `${Math.floor(currentTime)}/${Math.floor(duration)}`,
+      });
+    } catch (err) {
+      console.error('保存播放进度失败:', err);
     }
   };
 
