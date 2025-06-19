@@ -15,10 +15,6 @@ import {
 } from '@/lib/db.client';
 import { VideoDetail } from '@/lib/video';
 
-// 动态导入 Artplayer 和 Hls 以避免 SSR 问题
-let Artplayer: any = null;
-let Hls: any = null;
-
 // 扩展 HTMLVideoElement 类型以支持 hls 属性
 declare global {
   interface HTMLVideoElement {
@@ -90,6 +86,12 @@ function PlayPageClient() {
   // 用于记录是否需要在播放器 ready 后跳转到指定进度
   const resumeTimeRef = useRef<number | null>(null);
 
+  // 动态导入的 Artplayer 与 Hls 实例
+  const [{ Artplayer, Hls }, setPlayers] = useState<{
+    Artplayer: any | null;
+    Hls: any | null;
+  }>({ Artplayer: null, Hls: null });
+
   // 根据 detail 和集数索引更新视频地址（仅当地址真正变化时）
   const updateVideoUrl = (
     detailData: VideoDetail | null,
@@ -119,24 +121,24 @@ function PlayPageClient() {
     }
   }, [searchParams, currentSource, currentId]);
 
+  // 动态加载 Artplayer 与 Hls 并保存到 state
   useEffect(() => {
-    // 动态加载 Artplayer 和 Hls.js
-    const loadPlayers = async () => {
+    (async () => {
       try {
         const [ArtplayerModule, HlsModule] = await Promise.all([
           import('artplayer'),
           import('hls.js'),
         ]);
-        Artplayer = ArtplayerModule.default;
-        Hls = HlsModule.default;
+        setPlayers({
+          Artplayer: ArtplayerModule.default,
+          Hls: HlsModule.default,
+        });
       } catch (err) {
         console.error('Failed to load players:', err);
         setError('播放器加载失败');
         setLoading(false);
       }
-    };
-
-    loadPlayers();
+    })();
   }, []);
 
   useEffect(() => {
