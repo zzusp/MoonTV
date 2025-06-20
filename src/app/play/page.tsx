@@ -128,6 +128,28 @@ function PlayPageClient() {
     }
   };
 
+  // 在指定 video 元素内确保存在 <source src="...">，供部分浏览器兼容
+  const ensureVideoSource = (video: HTMLVideoElement | null, url: string) => {
+    if (!video || !url) return;
+    const sources = Array.from(video.getElementsByTagName('source'));
+    const existed = sources.some((s) => s.src === url);
+    if (!existed) {
+      // 移除旧的 source，保持唯一
+      sources.forEach((s) => s.remove());
+      const sourceEl = document.createElement('source');
+      sourceEl.src = url;
+      sourceEl.type = 'video/mp4'; // 默认类型，HLS 会被 Artplayer/Hls 处理
+      video.appendChild(sourceEl);
+    }
+
+    // 始终允许远程播放（AirPlay / Cast）
+    video.disableRemotePlayback = false;
+    // 如果曾经有禁用属性，移除之
+    if (video.hasAttribute('disableRemotePlayback')) {
+      video.removeAttribute('disableRemotePlayback');
+    }
+  };
+
   // 当集数索引变化时自动更新视频地址
   useEffect(() => {
     updateVideoUrl(detail, currentEpisodeIndex);
@@ -352,6 +374,10 @@ function PlayPageClient() {
         attachVideoEventListeners(
           artPlayerRef.current.video as HTMLVideoElement
         );
+        ensureVideoSource(
+          artPlayerRef.current.video as HTMLVideoElement,
+          videoUrl
+        );
       }
       return;
     }
@@ -543,6 +569,10 @@ function PlayPageClient() {
       if (artPlayerRef.current?.video) {
         attachVideoEventListeners(
           artPlayerRef.current.video as HTMLVideoElement
+        );
+        ensureVideoSource(
+          artPlayerRef.current.video as HTMLVideoElement,
+          videoUrl
         );
       }
     } catch (err) {
