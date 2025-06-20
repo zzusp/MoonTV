@@ -98,6 +98,25 @@ function PlayPageClient() {
     Hls: any | null;
   }>({ Artplayer: null, Hls: null });
 
+  // 解决 iOS Safari 100vh 不准确的问题：将视口高度写入 CSS 变量 --vh
+  useEffect(() => {
+    const setVH = () => {
+      if (typeof window !== 'undefined') {
+        document.documentElement.style.setProperty(
+          '--vh',
+          `${window.innerHeight * 0.01}px`
+        );
+      }
+    };
+    setVH();
+    window.addEventListener('resize', setVH);
+    window.addEventListener('orientationchange', setVH);
+    return () => {
+      window.removeEventListener('resize', setVH);
+      window.removeEventListener('orientationchange', setVH);
+    };
+  }, []);
+
   // 根据 detail 和集数索引更新视频地址（仅当地址真正变化时）
   const updateVideoUrl = (
     detailData: VideoDetail | null,
@@ -1012,7 +1031,7 @@ function PlayPageClient() {
 
   if (loading) {
     return (
-      <div className='min-h-screen bg-black flex items-center justify-center'>
+      <div className='min-h-[100dvh] bg-black flex items-center justify-center overflow-hidden overscroll-contain'>
         <div className='text-white text-center'>
           <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4'></div>
           <div className='text-lg'>加载中...</div>
@@ -1023,7 +1042,7 @@ function PlayPageClient() {
 
   if (error) {
     return (
-      <div className='min-h-screen bg-black flex items-center justify-center'>
+      <div className='min-h-[100dvh] bg-black flex items-center justify-center overflow-hidden overscroll-contain'>
         <div className='text-white text-center'>
           <div className='text-xl font-semibold mb-4 text-red-400'>
             播放失败
@@ -1042,7 +1061,7 @@ function PlayPageClient() {
 
   if (!detail) {
     return (
-      <div className='min-h-screen bg-black flex items-center justify-center'>
+      <div className='min-h-[100dvh] bg-black flex items-center justify-center overflow-hidden overscroll-contain'>
         <div className='text-white text-center'>
           <div className='text-xl font-semibold mb-4'>未找到视频</div>
           <button
@@ -1058,7 +1077,8 @@ function PlayPageClient() {
 
   return (
     <div
-      className='min-h-screen bg-black relative'
+      className='bg-black fixed inset-0 overflow-hidden overscroll-contain'
+      style={{ height: 'calc(var(--vh, 1vh) * 100)' }}
       onMouseMove={handleMouseMove}
       onClick={handleClick}
     >
@@ -1073,7 +1093,7 @@ function PlayPageClient() {
       )}
 
       {/* 播放器容器 */}
-      <div className='relative w-full h-screen'>
+      <div className='relative w-full h-full'>
         <div ref={artRef} className='w-full h-full'></div>
 
         {/* 顶栏 */}
