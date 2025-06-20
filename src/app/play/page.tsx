@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, no-console, @next/next/no-img-element */
+/* eslint-disable @typescript-eslint/ban-ts-comment, @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, no-console, @next/next/no-img-element */
 
 'use client';
 
@@ -88,6 +88,9 @@ function PlayPageClient() {
 
   // 收藏状态
   const [favorited, setFavorited] = useState(false);
+  // 是否显示旋转提示（5s 后自动隐藏）
+  const [showOrientationTip, setShowOrientationTip] = useState(false);
+  const orientationTipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // 用于记录是否需要在播放器 ready 后跳转到指定进度
   const resumeTimeRef = useRef<number | null>(null);
@@ -1053,6 +1056,94 @@ function PlayPageClient() {
     }
   };
 
+  // 监听屏幕方向变化：竖屏时显示提示蒙层
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mql = window.matchMedia('(orientation: portrait)');
+
+    const update = () => {
+      const portrait = mql.matches;
+
+      // 在进入竖屏时显示提示，5 秒后自动隐藏
+      if (portrait) {
+        setShowOrientationTip(true);
+        if (orientationTipTimeoutRef.current) {
+          clearTimeout(orientationTipTimeoutRef.current);
+        }
+        orientationTipTimeoutRef.current = setTimeout(() => {
+          setShowOrientationTip(false);
+        }, 5000);
+      } else {
+        setShowOrientationTip(false);
+        if (orientationTipTimeoutRef.current) {
+          clearTimeout(orientationTipTimeoutRef.current);
+          orientationTipTimeoutRef.current = null;
+        }
+      }
+    };
+
+    // 初始执行一次
+    update();
+
+    if (mql.addEventListener) {
+      mql.addEventListener('change', update);
+    } else {
+      // Safari < 14
+      // @ts-ignore
+      mql.addListener(update);
+    }
+
+    return () => {
+      if (mql.removeEventListener) {
+        mql.removeEventListener('change', update);
+      } else {
+        // @ts-ignore
+        mql.removeListener(update);
+      }
+    };
+  }, []);
+
+  // 进入/退出全屏时锁定/解锁横屏
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    const lockLandscape = async () => {
+      try {
+        // 某些浏览器需要在用户手势触发后才能调用
+        if (screen.orientation && (screen.orientation as any).lock) {
+          await (screen.orientation as any).lock('landscape');
+        }
+      } catch (err) {
+        console.warn('横屏锁定失败:', err);
+      }
+    };
+
+    const unlock = () => {
+      try {
+        if (screen.orientation && (screen.orientation as any).unlock) {
+          (screen.orientation as any).unlock();
+        }
+      } catch (_) {
+        // 忽略解锁屏幕方向失败的错误
+      }
+    };
+
+    const handleFsChange = () => {
+      const isFs = !!document.fullscreenElement;
+      if (isFs) {
+        lockLandscape();
+      } else {
+        unlock();
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFsChange);
+      unlock();
+    };
+  }, []);
+
   if (loading) {
     return (
       <div className='min-h-[100dvh] bg-black flex items-center justify-center overflow-hidden overscroll-contain'>
@@ -1106,6 +1197,26 @@ function PlayPageClient() {
       onMouseMove={handleMouseMove}
       onClick={handleClick}
     >
+      {/* 竖屏提示蒙层 */}
+      {showOrientationTip && (
+        <div className='fixed bottom-16 left-1/2 -translate-x-1/2 z-[190] flex items-center px-4 py-2 rounded bg-black/70 text-white space-x-2 pointer-events-none backdrop-blur-sm'>
+          <svg
+            className='w-5 h-5'
+            fill='none'
+            stroke='currentColor'
+            viewBox='0 0 24 24'
+          >
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth={2}
+              d='M12 4v16m8-8H4'
+            />
+          </svg>
+          <span className='text-sm'>请横屏观看</span>
+        </div>
+      )}
+
       {/* 换源加载遮罩 */}
       {sourceChanging && (
         <div className='fixed inset-0 bg-black/50 z-[200] flex items-center justify-center'>
@@ -1251,7 +1362,7 @@ function PlayPageClient() {
 
           {/* 侧拉面板 */}
           <div
-            className={`fixed top-0 right-0 h-full w-80 bg-black/40 backdrop-blur-xl z-[100] transform transition-transform duration-300 ${
+            className={`fixed top-0 right-0 h-full w-full md:w-80 bg-black/40 backdrop-blur-xl z-[100] transform transition-transform duration-300 ${
               showEpisodePanel ? 'translate-x-0' : 'translate-x-full'
             }`}
           >
@@ -1305,150 +1416,148 @@ function PlayPageClient() {
       )}
 
       {/* 换源侧拉面板 */}
-      {showSourcePanel && (
-        <>
-          {/* 遮罩层 */}
+      <>
+        {/* 遮罩层 */}
+        {showSourcePanel && (
           <div
             className='fixed inset-0 bg-black/50 z-[90]'
             onClick={() => setShowSourcePanel(false)}
           />
+        )}
 
-          {/* 侧拉面板 */}
-          <div
-            className={`fixed top-0 right-0 h-full w-96 bg-black/40 backdrop-blur-xl z-[100] transform transition-transform duration-300 ${
-              showSourcePanel ? 'translate-x-0' : 'translate-x-full'
-            }`}
-          >
-            <div className='p-6 h-full flex flex-col'>
-              <div className='flex items-center justify-between mb-6'>
-                <h3 className='text-white text-xl font-semibold'>播放源</h3>
-                <button
-                  onClick={() => setShowSourcePanel(false)}
-                  className='text-gray-400 hover:text-white transition-colors'
+        {/* 侧拉面板 */}
+        <div
+          className={`fixed top-0 right-0 h-full w-full md:w-96 bg-black/40 backdrop-blur-xl z-[100] transform transition-transform duration-300 ${
+            showSourcePanel ? 'translate-x-0' : 'translate-x-full'
+          }`}
+        >
+          <div className='p-6 h-full flex flex-col'>
+            <div className='flex items-center justify-between mb-6'>
+              <h3 className='text-white text-xl font-semibold'>播放源</h3>
+              <button
+                onClick={() => setShowSourcePanel(false)}
+                className='text-gray-400 hover:text-white transition-colors'
+              >
+                <svg
+                  className='w-6 h-6'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
                 >
-                  <svg
-                    className='w-6 h-6'
-                    fill='none'
-                    stroke='currentColor'
-                    viewBox='0 0 24 24'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M6 18L18 6M6 6l12 12'
-                    />
-                  </svg>
-                </button>
-              </div>
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M6 18L18 6M6 6l12 12'
+                  />
+                </svg>
+              </button>
+            </div>
 
-              {/* 搜索结果 */}
-              <div className='flex-1 overflow-y-auto'>
-                {searchLoading && (
-                  <div className='flex items-center justify-center py-8'>
-                    <div className='animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500'></div>
-                    <span className='text-gray-300 ml-3'>搜索中...</span>
-                  </div>
-                )}
+            {/* 搜索结果 */}
+            <div className='flex-1 overflow-y-auto'>
+              {searchLoading && (
+                <div className='flex items-center justify-center py-8'>
+                  <div className='animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500'></div>
+                  <span className='text-gray-300 ml-3'>搜索中...</span>
+                </div>
+              )}
 
-                {searchError && (
-                  <div className='text-red-400 text-center py-4'>
-                    {searchError}
-                  </div>
-                )}
+              {searchError && (
+                <div className='text-red-400 text-center py-4'>
+                  {searchError}
+                </div>
+              )}
 
-                {!searchLoading &&
-                  !searchError &&
-                  searchResults.length === 0 && (
-                    <div className='text-gray-400 text-center py-8'>
-                      未找到相关视频源
-                    </div>
-                  )}
+              {!searchLoading && !searchError && searchResults.length === 0 && (
+                <div className='text-gray-400 text-center py-8'>
+                  未找到相关视频源
+                </div>
+              )}
 
-                {!searchLoading && !searchError && searchResults.length > 0 && (
-                  <div className='grid grid-cols-2 gap-4'>
-                    {[
-                      ...searchResults.filter(
-                        (r) =>
+              {!searchLoading && !searchError && searchResults.length > 0 && (
+                <div className='grid grid-cols-2 gap-4'>
+                  {[
+                    ...searchResults.filter(
+                      (r) =>
+                        r.source === currentSource &&
+                        String(r.id) === String(currentId)
+                    ),
+                    ...searchResults.filter(
+                      (r) =>
+                        !(
                           r.source === currentSource &&
                           String(r.id) === String(currentId)
-                      ),
-                      ...searchResults.filter(
-                        (r) =>
-                          !(
-                            r.source === currentSource &&
-                            String(r.id) === String(currentId)
+                        )
+                    ),
+                  ].map((result) => {
+                    const isCurrentSource =
+                      result.source === currentSource &&
+                      String(result.id) === String(currentId);
+                    return (
+                      <div
+                        key={`${result.source}-${result.id}`}
+                        className={`rounded-lg transition-colors border-2 ${
+                          isCurrentSource
+                            ? 'border-green-500 bg-green-500/20 cursor-not-allowed opacity-60'
+                            : 'border-transparent bg-transparent hover:bg-gray-600/30 cursor-pointer'
+                        }`}
+                        onClick={() =>
+                          !isCurrentSource &&
+                          handleSourceChange(
+                            result.source,
+                            result.id,
+                            result.title
                           )
-                      ),
-                    ].map((result) => {
-                      const isCurrentSource =
-                        result.source === currentSource &&
-                        String(result.id) === String(currentId);
-                      return (
-                        <div
-                          key={`${result.source}-${result.id}`}
-                          className={`rounded-lg transition-colors border-2 ${
-                            isCurrentSource
-                              ? 'border-green-500 bg-green-500/20 cursor-not-allowed opacity-60'
-                              : 'border-transparent bg-transparent hover:bg-gray-600/30 cursor-pointer'
-                          }`}
-                          onClick={() =>
-                            !isCurrentSource &&
-                            handleSourceChange(
-                              result.source,
-                              result.id,
-                              result.title
-                            )
-                          }
-                        >
-                          {/* 视频封面 */}
-                          <div className='aspect-[2/3] rounded-t-lg overflow-hidden flex items-center justify-center p-1 relative'>
-                            <img
-                              src={result.poster}
-                              alt={result.title}
-                              className='w-full h-full object-cover rounded'
-                              referrerPolicy='no-referrer'
-                            />
+                        }
+                      >
+                        {/* 视频封面 */}
+                        <div className='aspect-[2/3] rounded-t-lg overflow-hidden flex items-center justify-center p-1 relative'>
+                          <img
+                            src={result.poster}
+                            alt={result.title}
+                            className='w-full h-full object-cover rounded'
+                            referrerPolicy='no-referrer'
+                          />
 
-                            {/* 集数圆形指示器 */}
-                            {result.episodes && (
-                              <div className='absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center'>
-                                <span className='text-white text-xs font-bold'>
-                                  {result.episodes}
-                                </span>
-                              </div>
-                            )}
+                          {/* 集数圆形指示器 */}
+                          {result.episodes && (
+                            <div className='absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center'>
+                              <span className='text-white text-xs font-bold'>
+                                {result.episodes}
+                              </span>
+                            </div>
+                          )}
 
-                            {isCurrentSource && (
-                              <div className='absolute inset-0 flex items-center justify-center pointer-events-none'>
-                                <div className='bg-green-500 text-white text-xs px-3 py-1 rounded shadow-lg'>
-                                  当前播放
-                                </div>
+                          {isCurrentSource && (
+                            <div className='absolute inset-0 flex items-center justify-center pointer-events-none'>
+                              <div className='bg-green-500 text-white text-xs px-3 py-1 rounded shadow-lg'>
+                                当前播放
                               </div>
-                            )}
-                          </div>
+                            </div>
+                          )}
+                        </div>
 
-                          {/* 视频信息 */}
-                          <div className='p-2 bg-transparent text-center'>
-                            <h4 className='text-white font-medium text-sm line-clamp-2 mb-2 leading-tight'>
-                              {result.title}
-                            </h4>
-                            <div className='text-gray-400 text-xs space-y-1'>
-                              <div className='inline-block border border-gray-500/60 rounded px-2 py-[1px]'>
-                                {result.source_name}
-                              </div>
+                        {/* 视频信息 */}
+                        <div className='p-2 bg-transparent text-center'>
+                          <h4 className='text-white font-medium text-sm line-clamp-2 mb-2 leading-tight'>
+                            {result.title}
+                          </h4>
+                          <div className='text-gray-400 text-xs space-y-1'>
+                            <div className='inline-block border border-gray-500/60 rounded px-2 py-[1px]'>
+                              {result.source_name}
                             </div>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
-        </>
-      )}
+        </div>
+      </>
     </div>
   );
 }
