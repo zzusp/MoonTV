@@ -138,7 +138,6 @@ function PlayPageClient() {
       sources.forEach((s) => s.remove());
       const sourceEl = document.createElement('source');
       sourceEl.src = url;
-      sourceEl.type = 'video/mp4'; // 默认类型，HLS 会被 Artplayer/Hls 处理
       video.appendChild(sourceEl);
     }
 
@@ -435,46 +434,41 @@ function PlayPageClient() {
               return;
             }
 
-            if (Hls.isSupported()) {
-              if (video.hls) {
-                video.hls.destroy();
-              }
-              const hls = new Hls({
-                debug: false,
-                enableWorker: true,
-                lowLatencyMode: true,
-                backBufferLength: 90,
-              });
-
-              hls.loadSource(url);
-              hls.attachMedia(video);
-              video.hls = hls;
-
-              hls.on(Hls.Events.ERROR, function (event: any, data: any) {
-                console.error('HLS Error:', event, data);
-                if (data.fatal) {
-                  switch (data.type) {
-                    case Hls.ErrorTypes.NETWORK_ERROR:
-                      console.log('网络错误，尝试恢复...');
-                      hls.startLoad();
-                      break;
-                    case Hls.ErrorTypes.MEDIA_ERROR:
-                      console.log('媒体错误，尝试恢复...');
-                      hls.recoverMediaError();
-                      break;
-                    default:
-                      console.log('无法恢复的错误');
-                      hls.destroy();
-                      break;
-                  }
-                }
-              });
-            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-              // Safari 原生支持 HLS
-              video.src = url;
-            } else {
-              console.error('此浏览器不支持 HLS');
+            if (video.hls) {
+              video.hls.destroy();
             }
+            const hls = new Hls({
+              debug: false,
+              enableWorker: true,
+              lowLatencyMode: true,
+              backBufferLength: 90,
+            });
+
+            hls.loadSource(url);
+            hls.attachMedia(video);
+            video.hls = hls;
+
+            ensureVideoSource(video, url);
+
+            hls.on(Hls.Events.ERROR, function (event: any, data: any) {
+              console.error('HLS Error:', event, data);
+              if (data.fatal) {
+                switch (data.type) {
+                  case Hls.ErrorTypes.NETWORK_ERROR:
+                    console.log('网络错误，尝试恢复...');
+                    hls.startLoad();
+                    break;
+                  case Hls.ErrorTypes.MEDIA_ERROR:
+                    console.log('媒体错误，尝试恢复...');
+                    hls.recoverMediaError();
+                    break;
+                  default:
+                    console.log('无法恢复的错误');
+                    hls.destroy();
+                    break;
+                }
+              }
+            });
           },
         },
         icons: {
