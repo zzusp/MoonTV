@@ -418,7 +418,7 @@ function PlayPageClient() {
         volume: 0.7,
         isLive: false,
         muted: false,
-        autoplay: true,
+        autoplay: false,
         pip: false,
         autoSize: false,
         autoMini: false,
@@ -1342,7 +1342,7 @@ function PlayPageClient() {
             </button>
 
             {/* 中央标题及集数信息 */}
-            <div className='ml-10 sm:ml-0 text-center'>
+            <div className='ml-10 sm:ml-0 text-left sm:text-center'>
               <div className='flex items-center justify-center gap-2 max-w-xs mx-auto'>
                 <span className='text-white font-semibold text-lg truncate'>
                   {videoTitle}
