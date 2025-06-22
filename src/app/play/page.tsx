@@ -1321,11 +1321,11 @@ function PlayPageClient() {
             showTopBar ? 'opacity-100' : 'opacity-0'
           }`}
         >
-          <div className='bg-black/60 backdrop-blur-sm px-6 py-4 relative flex items-center justify-center'>
+          <div className='bg-black/60 backdrop-blur-sm px-0 sm:px-6 py-4 relative flex items-center sm:justify-center'>
             {/* 返回按钮 */}
             <button
               onClick={handleBack}
-              className='absolute left-6 text-white hover:text-gray-300 transition-colors p-2'
+              className='absolute left-0 sm:left-6 text-white hover:text-gray-300 transition-colors p-2'
             >
               <svg
                 width='24'
@@ -1342,7 +1342,7 @@ function PlayPageClient() {
             </button>
 
             {/* 中央标题及集数信息 */}
-            <div className='text-center'>
+            <div className='ml-10 sm:ml-0 text-center'>
               <div className='flex items-center justify-center gap-2 max-w-xs mx-auto'>
                 <span className='text-white font-semibold text-lg truncate'>
                   {videoTitle}
@@ -1373,7 +1373,7 @@ function PlayPageClient() {
             {/* 数据源徽章放置在右侧，不影响标题居中 */}
             {detail?.videoInfo?.source_name && (
               <span
-                className='absolute right-6 text-gray-300 text-sm border border-gray-500/60 px-2 py-[1px] rounded cursor-pointer hover:bg-gray-600/30 transition-colors'
+                className='absolute right-2 sm:right-6 text-gray-300 text-sm border border-gray-500/60 px-2 py-[1px] rounded cursor-pointer hover:bg-gray-600/30 transition-colors'
                 onClick={handleSourcePanelOpen}
               >
                 {detail.videoInfo.source_name}
