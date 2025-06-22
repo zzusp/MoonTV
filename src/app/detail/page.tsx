@@ -279,7 +279,9 @@ function DetailPageClient() {
                     </div>
                     {/* 剩余时间 */}
                     <span className='text-gray-600/60 text-xs whitespace-nowrap'>
-                      剩余{' '}
+                      {playRecord.total_episodes > 1
+                        ? `第${playRecord.index}集 剩余 `
+                        : '剩余 '}
                       {formatDuration(
                         playRecord.total_time - playRecord.play_time
                       )}
