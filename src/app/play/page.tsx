@@ -91,6 +91,13 @@ function PlayPageClient() {
   const [showOrientationTip, setShowOrientationTip] = useState(false);
   const orientationTipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // 长按三倍速相关状态
+  const [isLongPressing, setIsLongPressing] = useState(false);
+  const [showSpeedTip, setShowSpeedTip] = useState(false);
+  const longPressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const originalPlaybackRateRef = useRef<number>(1);
+  const speedTipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // 用于记录是否需要在播放器 ready 后跳转到指定进度
   const resumeTimeRef = useRef<number | null>(null);
 
@@ -600,6 +607,12 @@ function PlayPageClient() {
       }
       if (saveIntervalRef.current) {
         clearInterval(saveIntervalRef.current);
+      }
+      if (longPressTimeoutRef.current) {
+        clearTimeout(longPressTimeoutRef.current);
+      }
+      if (speedTipTimeoutRef.current) {
+        clearTimeout(speedTipTimeoutRef.current);
       }
 
       // 清理视频事件监听器
@@ -1122,6 +1135,87 @@ function PlayPageClient() {
     };
   }, []);
 
+  // 长按三倍速处理函数
+  const handleTouchStart = (e: TouchEvent) => {
+    // 防止在控制栏区域触发
+    const target = e.target as HTMLElement;
+    if (target.closest('.art-controls') || target.closest('.art-contextmenu')) {
+      return;
+    }
+
+    // 清除之前的定时器
+    if (longPressTimeoutRef.current) {
+      clearTimeout(longPressTimeoutRef.current);
+    }
+
+    // 设置长按检测定时器（500ms）
+    longPressTimeoutRef.current = setTimeout(() => {
+      if (artPlayerRef.current && artPlayerRef.current.video) {
+        // 保存原始播放速度
+        originalPlaybackRateRef.current =
+          artPlayerRef.current.video.playbackRate;
+
+        // 设置三倍速
+        artPlayerRef.current.video.playbackRate = 3;
+
+        // 更新状态
+        setIsLongPressing(true);
+        setShowSpeedTip(true);
+
+        // 触发震动反馈（如果支持）
+        if (navigator.vibrate) {
+          navigator.vibrate(50);
+        }
+
+        // 3秒后自动隐藏提示
+        if (speedTipTimeoutRef.current) {
+          clearTimeout(speedTipTimeoutRef.current);
+        }
+        speedTipTimeoutRef.current = setTimeout(() => {
+          setShowSpeedTip(false);
+        }, 3000);
+      }
+    }, 500);
+  };
+
+  const handleTouchEnd = () => {
+    // 清除长按检测定时器
+    if (longPressTimeoutRef.current) {
+      clearTimeout(longPressTimeoutRef.current);
+      longPressTimeoutRef.current = null;
+    }
+
+    // 如果正在长按，恢复原始播放速度
+    if (isLongPressing && artPlayerRef.current && artPlayerRef.current.video) {
+      artPlayerRef.current.video.playbackRate = originalPlaybackRateRef.current;
+      setIsLongPressing(false);
+      setShowSpeedTip(false);
+
+      // 清除提示定时器
+      if (speedTipTimeoutRef.current) {
+        clearTimeout(speedTipTimeoutRef.current);
+        speedTipTimeoutRef.current = null;
+      }
+    }
+  };
+
+  // 添加触摸事件监听器
+  useEffect(() => {
+    if (!artRef.current) return;
+
+    const element = artRef.current;
+
+    element.addEventListener('touchstart', handleTouchStart, { passive: true });
+    element.addEventListener('touchend', handleTouchEnd, { passive: true });
+    element.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+
+    return () => {
+      element.removeEventListener('touchstart', handleTouchStart);
+      element.removeEventListener('touchend', handleTouchEnd);
+      element.removeEventListener('touchcancel', handleTouchEnd);
+    };
+  }, [artRef.current, isLongPressing]);
+
   if (loading) {
     return (
       <div className='min-h-[100dvh] bg-black flex items-center justify-center overflow-hidden overscroll-contain'>
@@ -1322,6 +1416,30 @@ function PlayPageClient() {
             )}
           </svg>
           <span className='text-white font-medium'>{shortcutText}</span>
+        </div>
+      </div>
+
+      {/* 三倍速提示 */}
+      <div
+        className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 transition-opacity duration-300 ${
+          showSpeedTip ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+      >
+        <div className='bg-orange-500/90 backdrop-blur-sm rounded-lg p-4 flex items-center space-x-3'>
+          <svg
+            className='w-6 h-6 text-white animate-pulse'
+            fill='none'
+            stroke='currentColor'
+            viewBox='0 0 24 24'
+          >
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth='2'
+              d='M13 10V3L4 14h7v7l9-11h-7z'
+            />
+          </svg>
+          <span className='text-white font-bold text-lg'>3x 倍速</span>
         </div>
       </div>
 
