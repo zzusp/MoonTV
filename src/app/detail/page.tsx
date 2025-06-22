@@ -309,7 +309,7 @@ function DetailPageClient() {
                     共 {detail.episodes.length} 集
                   </div>
                 </div>
-                <div className='flex flex-wrap gap-2 sm:gap-4'>
+                <div className='grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:gap-4'>
                   {detail.episodes.map((episode, idx) => (
                     <a
                       key={idx}
