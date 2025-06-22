@@ -315,6 +315,12 @@ function PlayPageClient() {
       saveCurrentPlayProgress();
     };
 
+    // 阻止移动端长按弹出系统菜单
+    const contextMenuHandler = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
     // timeupdate 节流（5 秒）保存
     let lastSave = 0;
     const timeUpdateHandler = () => {
@@ -327,12 +333,14 @@ function PlayPageClient() {
 
     video.addEventListener('pause', pauseHandler);
     video.addEventListener('timeupdate', timeUpdateHandler);
+    video.addEventListener('contextmenu', contextMenuHandler);
 
     videoEventListenersRef.current = {
       video,
       listeners: [
         { event: 'pause', handler: pauseHandler },
         { event: 'timeupdate', handler: timeUpdateHandler },
+        { event: 'contextmenu', handler: contextMenuHandler },
       ],
     };
   };
@@ -415,10 +423,10 @@ function PlayPageClient() {
         autoSize: false,
         autoMini: false,
         screenshot: false,
-        setting: true,
+        setting: false,
         loop: false,
         flip: false,
-        playbackRate: true,
+        playbackRate: false,
         aspectRatio: false,
         fullscreen: true,
         fullscreenWeb: false,
@@ -1204,15 +1212,21 @@ function PlayPageClient() {
     if (!artRef.current) return;
 
     const element = artRef.current;
+    const disableContextMenu = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
 
     element.addEventListener('touchstart', handleTouchStart, { passive: true });
     element.addEventListener('touchend', handleTouchEnd, { passive: true });
     element.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+    element.addEventListener('contextmenu', disableContextMenu);
 
     return () => {
       element.removeEventListener('touchstart', handleTouchStart);
       element.removeEventListener('touchend', handleTouchEnd);
       element.removeEventListener('touchcancel', handleTouchEnd);
+      element.removeEventListener('contextmenu', disableContextMenu);
     };
   }, [artRef.current, isLongPressing]);
 
@@ -1425,7 +1439,7 @@ function PlayPageClient() {
           showSpeedTip ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
       >
-        <div className='bg-orange-500/90 backdrop-blur-sm rounded-lg p-4 flex items-center space-x-3'>
+        <div className='bg-black/60 backdrop-blur-sm rounded-lg p-4 flex items-center space-x-3'>
           <svg
             className='w-6 h-6 text-white animate-pulse'
             fill='none'
