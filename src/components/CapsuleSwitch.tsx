@@ -23,7 +23,7 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
         <button
           key={opt.value}
           onClick={() => onChange(opt.value)}
-          className={`w-20 px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+          className={`w-16 px-3 py-1 text-xs sm:w-20 sm:py-2 sm:text-sm rounded-full font-medium transition-all duration-200 ${
             active === opt.value
               ? 'bg-white text-gray-900 shadow-sm'
               : 'text-gray-700 hover:text-gray-900'

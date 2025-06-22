@@ -130,7 +130,7 @@ function HomeClient() {
 
   return (
     <PageLayout>
-      <div className='px-10 py-8'>
+      <div className='px-4 sm:px-10 py-4 sm:py-8 overflow-visible'>
         {/* 顶部 Tab 切换 */}
         <div className='mb-8 flex justify-center'>
           <CapsuleSwitch
@@ -150,7 +150,7 @@ function HomeClient() {
               <h2 className='mb-4 text-xl font-bold text-gray-800 text-left'>
                 我的收藏
               </h2>
-              <div className='justify-start grid grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] gap-x-8 gap-y-20 px-4'>
+              <div className='justify-start grid grid-cols-2 gap-x-2 gap-y-6 px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8 sm:gap-y-20 sm:px-4'>
                 {favoriteItems.map((item) => (
                   <div key={item.id + item.source} className='w-full'>
                     <VideoCard {...item} from='favorites' />
@@ -173,7 +173,10 @@ function HomeClient() {
                 </h2>
                 <ScrollableRow scrollDistance={800}>
                   {collections.map((collection) => (
-                    <div key={collection.title} className='min-w-[280px] w-72'>
+                    <div
+                      key={collection.title}
+                      className='min-w-[180px] w-44 sm:min-w-[280px] sm:w-72'
+                    >
                       <CollectionCard
                         title={collection.title}
                         icon={collection.icon}
@@ -196,7 +199,10 @@ function HomeClient() {
                   {loading
                     ? // 加载状态显示灰色占位数据
                       Array.from({ length: 8 }).map((_, index) => (
-                        <div key={index} className='min-w-[180px] w-44'>
+                        <div
+                          key={index}
+                          className='min-w-[140px] w-36 sm:min-w-[180px] sm:w-44'
+                        >
                           <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse'>
                             <div className='absolute inset-0 bg-gray-300'></div>
                           </div>
@@ -205,7 +211,10 @@ function HomeClient() {
                       ))
                     : // 显示真实数据
                       hotMovies.map((movie, index) => (
-                        <div key={index} className='min-w-[180px] w-44'>
+                        <div
+                          key={index}
+                          className='min-w-[140px] w-36 sm:min-w-[180px] sm:w-44'
+                        >
                           <DemoCard title={movie.title} poster={movie.poster} />
                         </div>
                       ))}
@@ -221,7 +230,10 @@ function HomeClient() {
                   {loading
                     ? // 加载状态显示灰色占位数据
                       Array.from({ length: 8 }).map((_, index) => (
-                        <div key={index} className='min-w-[180px] w-44'>
+                        <div
+                          key={index}
+                          className='min-w-[140px] w-36 sm:min-w-[180px] sm:w-44'
+                        >
                           <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse'>
                             <div className='absolute inset-0 bg-gray-300'></div>
                           </div>
@@ -230,7 +242,10 @@ function HomeClient() {
                       ))
                     : // 显示真实数据
                       hotTvShows.map((show, index) => (
-                        <div key={index} className='min-w-[180px] w-44'>
+                        <div
+                          key={index}
+                          className='min-w-[140px] w-36 sm:min-w-[180px] sm:w-44'
+                        >
                           <DemoCard title={show.title} poster={show.poster} />
                         </div>
                       ))}

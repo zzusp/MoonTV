@@ -78,7 +78,10 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
         {loading
           ? // 加载状态显示灰色占位数据
             Array.from({ length: 6 }).map((_, index) => (
-              <div key={index} className='min-w-[180px] w-44'>
+              <div
+                key={index}
+                className='min-w-[140px] w-36 sm:min-w-[180px] sm:w-44'
+              >
                 <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse'>
                   <div className='absolute inset-0 bg-gray-300'></div>
                 </div>
@@ -90,7 +93,10 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
             playRecords.map((record) => {
               const { source, id } = parseKey(record.key);
               return (
-                <div key={record.key} className='min-w-[180px] w-44'>
+                <div
+                  key={record.key}
+                  className='min-w-[140px] w-36 sm:min-w-[180px] sm:w-44'
+                >
                   <VideoCard
                     id={id}
                     title={record.title}

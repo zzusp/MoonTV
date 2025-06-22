@@ -19,7 +19,7 @@ export default function CollectionCard({
         <div className='relative aspect-[5/3] w-full overflow-hidden rounded-xl bg-gray-200 border border-gray-300/50'>
           {/* 图标容器 */}
           <div className='absolute inset-0 flex items-center justify-center'>
-            <Icon className='h-14 w-14 text-gray-600' />
+            <Icon className='h-10 w-10 sm:h-12 sm:w-12 text-gray-600' />
           </div>
 
           {/* Hover 蒙版效果 - 参考 DemoCard */}

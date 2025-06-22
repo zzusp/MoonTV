@@ -1,6 +1,6 @@
 const DoubanCardSkeleton = () => {
   return (
-    <div className='w-44'>
+    <div className='w-full'>
       <div className='group relative w-full rounded-lg bg-transparent shadow-none flex flex-col'>
         {/* 海报骨架 - 2:3 比例 */}
         <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse'>

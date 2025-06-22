@@ -111,7 +111,7 @@ function DetailPageClient() {
 
   return (
     <PageLayout activePath='/detail'>
-      <div className='px-10 py-8 overflow-visible'>
+      <div className='px-4 sm:px-10 py-4 sm:py-8 overflow-visible'>
         {/* 顶部返回按钮已移入右侧信息容器 */}
         {loading ? (
           <div className='flex items-center justify-center min-h-[60vh]'>

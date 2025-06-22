@@ -99,7 +99,7 @@ function SearchPageClient() {
 
   return (
     <PageLayout activePath='/search'>
-      <div className='px-10 py-8 overflow-visible mb-10'>
+      <div className='px-4 sm:px-10 py-4 sm:py-8 overflow-visible mb-10'>
         {/* 搜索框 */}
         <div className='mb-8'>
           <form onSubmit={handleSearch} className='max-w-2xl mx-auto'>
@@ -125,7 +125,7 @@ function SearchPageClient() {
             </div>
           ) : showResults ? (
             // 搜索结果
-            <div className='justify-start grid grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] gap-x-8 gap-y-20 px-4'>
+            <div className='justify-start grid grid-cols-2 gap-x-2 gap-y-20 px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8 sm:gap-y-20 sm:px-4'>
               {searchResults.map((item) => (
                 <div key={item.id} className='w-full'>
                   <VideoCard {...item} from='search' />

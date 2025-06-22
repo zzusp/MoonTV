@@ -179,7 +179,7 @@ function DoubanPageClient() {
 
   return (
     <PageLayout activePath={getActivePath()}>
-      <div className='px-10 py-8 overflow-visible'>
+      <div className='px-4 sm:px-10 py-4 sm:py-8 overflow-visible'>
         {/* 页面标题 */}
         <div className='mb-8'>
           <h1 className='text-3xl font-bold text-gray-800 mb-2'>
@@ -200,7 +200,7 @@ function DoubanPageClient() {
           ) : (
             <>
               {/* 内容网格 */}
-              <div className='grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-x-8 gap-y-20 px-4'>
+              <div className='grid grid-cols-2 gap-x-2 gap-y-12 px-2 sm:grid-cols-[repeat(auto-fit,minmax(180px,1fr))] sm:gap-x-8 sm:gap-y-20 sm:px-4'>
                 {loading
                   ? // 显示骨架屏
                     skeletonData.map((index) => (
@@ -208,7 +208,7 @@ function DoubanPageClient() {
                     ))
                   : // 显示实际数据
                     doubanData.map((item, index) => (
-                      <div key={`${item.title}-${index}`} className='w-44'>
+                      <div key={`${item.title}-${index}`} className='w-full'>
                         <DemoCard title={item.title} poster={item.poster} />
                       </div>
                     ))}
