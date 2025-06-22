@@ -205,11 +205,9 @@ function DetailPageClient() {
                       <a
                         href={`/play?source=${searchParams.get(
                           'source'
-                        )}&id=${searchParams.get('id')}${
-                          fallbackTitle
-                            ? `&title=${encodeURIComponent(fallbackTitle)}`
-                            : ''
-                        }`}
+                        )}&id=${searchParams.get(
+                          'id'
+                        )}&title=${encodeURIComponent(detail.videoInfo.title)}`}
                         className='flex items-center justify-center gap-2 px-6 py-2 bg-green-500 hover:bg-green-600 rounded-lg transition-colors text-white'
                       >
                         <div className='w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-white border-b-[6px] border-b-transparent'></div>
@@ -219,11 +217,11 @@ function DetailPageClient() {
                       <a
                         href={`/play?source=${searchParams.get(
                           'source'
-                        )}&id=${searchParams.get('id')}&index=1&position=0${
-                          fallbackTitle
-                            ? `&title=${encodeURIComponent(fallbackTitle)}`
-                            : ''
-                        }`}
+                        )}&id=${searchParams.get(
+                          'id'
+                        )}&index=1&position=0&title=${encodeURIComponent(
+                          detail.videoInfo.title
+                        )}`}
                         className='flex items-center justify-center gap-2 px-6 py-2 bg-gray-500 hover:bg-gray-600 rounded-lg transition-colors text-white'
                       >
                         <div className='w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-white border-b-[6px] border-b-transparent'></div>
@@ -236,11 +234,11 @@ function DetailPageClient() {
                       <a
                         href={`/play?source=${searchParams.get(
                           'source'
-                        )}&id=${searchParams.get('id')}&index=1&position=0${
-                          fallbackTitle
-                            ? `&title=${encodeURIComponent(fallbackTitle)}`
-                            : ''
-                        }`}
+                        )}&id=${searchParams.get(
+                          'id'
+                        )}&index=1&position=0&title=${encodeURIComponent(
+                          detail.videoInfo.title
+                        )}`}
                         className='flex items-center justify-center gap-2 px-6 py-2 bg-green-500 hover:bg-green-600 rounded-lg transition-colors text-white'
                       >
                         <div className='w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-white border-b-[6px] border-b-transparent'></div>
@@ -313,11 +311,9 @@ function DetailPageClient() {
                       key={idx}
                       href={`/play?source=${searchParams.get(
                         'source'
-                      )}&id=${searchParams.get('id')}&index=${idx + 1}${
-                        fallbackTitle
-                          ? `&title=${encodeURIComponent(fallbackTitle)}`
-                          : ''
-                      }`}
+                      )}&id=${searchParams.get('id')}&index=${
+                        idx + 1
+                      }&title=${encodeURIComponent(detail.videoInfo.title)}`}
                       className='bg-gray-500/80 hover:bg-green-500 text-white px-5 py-2 rounded-lg transition-colors text-base font-medium w-24 text-center'
                     >
                       第{idx + 1}集

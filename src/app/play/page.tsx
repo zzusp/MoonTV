@@ -717,7 +717,9 @@ function PlayPageClient() {
 
   // 处理返回按钮点击
   const handleBack = () => {
-    window.location.href = `/detail?source=${currentSource}&id=${currentId}`;
+    window.location.href = `/detail?source=${currentSource}&id=${currentId}&title=${encodeURIComponent(
+      videoTitle
+    )}`;
   };
 
   // 处理上一集
