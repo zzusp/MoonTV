@@ -516,15 +516,10 @@ function PlayPageClient() {
             html: '选集',
             tooltip: '选择集数',
             click: function () {
+              if (artPlayerRef.current && artPlayerRef.current.fullscreen) {
+                artPlayerRef.current.fullscreen = false;
+              }
               setShowEpisodePanel(true);
-            },
-          },
-          {
-            position: 'right',
-            html: '换源',
-            tooltip: '更换视频源',
-            click: function () {
-              handleSourcePanelOpen();
             },
           },
         ],
