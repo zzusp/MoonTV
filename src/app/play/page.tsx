@@ -1144,6 +1144,32 @@ function PlayPageClient() {
     };
   }, []);
 
+  useEffect(() => {
+    // 播放页挂载时，锁定页面滚动并消除 body 100vh 带来的额外空白
+    if (typeof document === 'undefined') return;
+
+    const { style: bodyStyle } = document.body;
+    const { style: htmlStyle } = document.documentElement;
+
+    // 记录原始样式，供卸载时恢复
+    const originalBodyMinH = bodyStyle.minHeight;
+    const originalBodyH = bodyStyle.height;
+    const originalBodyOverflow = bodyStyle.overflow;
+    const originalHtmlOverflow = htmlStyle.overflow;
+
+    bodyStyle.minHeight = '0';
+    bodyStyle.height = 'auto';
+    bodyStyle.overflow = 'hidden';
+    htmlStyle.overflow = 'hidden';
+
+    return () => {
+      bodyStyle.minHeight = originalBodyMinH;
+      bodyStyle.height = originalBodyH;
+      bodyStyle.overflow = originalBodyOverflow;
+      htmlStyle.overflow = originalHtmlOverflow;
+    };
+  }, []);
+
   if (loading) {
     return (
       <div className='min-h-[100dvh] bg-black flex items-center justify-center overflow-hidden overscroll-contain'>
