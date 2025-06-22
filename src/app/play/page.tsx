@@ -16,7 +16,7 @@ import {
   savePlayRecord,
   toggleFavorite,
 } from '@/lib/db.client';
-import { VideoDetail } from '@/lib/video';
+import { VideoDetail } from '@/lib/types';
 
 // 扩展 HTMLVideoElement 类型以支持 hls 属性
 declare global {
@@ -491,28 +491,6 @@ function PlayPageClient() {
         },
         // 控制栏配置
         controls: [
-          {
-            position: 'left',
-            index: 10,
-            html: '<i class="art-icon flex"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.99 5V1l-5 5 5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" fill="currentColor"/></svg></i>',
-            tooltip: '后退10秒',
-            click: function () {
-              if (artPlayerRef.current) {
-                artPlayerRef.current.backward = 10;
-              }
-            },
-          },
-          {
-            position: 'left',
-            index: 12,
-            html: '<i class="art-icon flex"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 13c0 4.4 3.6 8 8 8s8-3.6 8-8h-2c0 3.3-2.7 6-6 6s-6-2.7-6-6 2.7-6 6-6v4l5-5-5-5v4c-4.4 0-8 3.6-8 8z" fill="currentColor"/></svg></i>',
-            tooltip: '前进10秒',
-            click: function () {
-              if (artPlayerRef.current) {
-                artPlayerRef.current.forward = 10;
-              }
-            },
-          },
           {
             position: 'left',
             index: 13,

@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 
 import { API_CONFIG, ApiSite, getApiSites, getCacheTime } from '@/lib/config';
-import { getVideoDetail } from '@/lib/video';
 
 export interface SearchResult {
   id: string;
@@ -17,6 +16,7 @@ interface ApiSearchItem {
   vod_name: string;
   vod_pic: string;
   vod_remarks?: string;
+  vod_play_url?: string;
 }
 
 async function searchFromApi(
@@ -56,14 +56,25 @@ async function searchFromApi(
     }
 
     // 处理第一页结果
-    const results = data.list.map((item: ApiSearchItem) => ({
-      id: item.vod_id,
-      title: item.vod_name,
-      poster: item.vod_pic,
-      episodes: item.vod_remarks ? parseInt(item.vod_remarks) : undefined,
-      source: apiSite.key,
-      source_name: apiName,
-    }));
+    const results = data.list.map((item: ApiSearchItem) => {
+      let episodes: number | undefined = undefined;
+
+      // 使用正则表达式从 vod_play_url 提取 m3u8 链接
+      if (item.vod_play_url) {
+        const m3u8Regex = /\$(https?:\/\/[^"'\s]+?\.m3u8)/g;
+        const matches = item.vod_play_url.match(m3u8Regex);
+        episodes = matches ? matches.length : undefined;
+      }
+
+      return {
+        id: item.vod_id,
+        title: item.vod_name,
+        poster: item.vod_pic,
+        episodes,
+        source: apiSite.key,
+        source_name: apiName,
+      };
+    });
 
     // 获取总页数
     const pageCount = data.pagecount || 1;
@@ -106,16 +117,25 @@ async function searchFromApi(
             if (!pageData || !pageData.list || !Array.isArray(pageData.list))
               return [];
 
-            return pageData.list.map((item: ApiSearchItem) => ({
-              id: item.vod_id,
-              title: item.vod_name,
-              poster: item.vod_pic,
-              episodes: item.vod_remarks
-                ? parseInt(item.vod_remarks)
-                : undefined,
-              source: apiSite.key,
-              source_name: apiName,
-            }));
+            return pageData.list.map((item: ApiSearchItem) => {
+              let episodes: number | undefined = undefined;
+
+              // 使用正则表达式从 vod_play_url 提取 m3u8 链接
+              if (item.vod_play_url) {
+                const m3u8Regex = /\$(https?:\/\/[^"'\s]+?\.m3u8)/g;
+                const matches = item.vod_play_url.match(m3u8Regex);
+                episodes = matches ? matches.length : undefined;
+              }
+
+              return {
+                id: item.vod_id,
+                title: item.vod_name,
+                poster: item.vod_pic,
+                episodes,
+                source: apiSite.key,
+                source_name: apiName,
+              };
+            });
           } catch (error) {
             return [];
           }
@@ -135,20 +155,7 @@ async function searchFromApi(
       });
     }
 
-    // 获取每个结果的详情
-    const detailPromises = results.map(async (result: SearchResult) => {
-      try {
-        const detail = await getVideoDetail(result.id, result.source);
-        if (detail.episodes.length > 1) {
-          return { ...result, episodes: detail.episodes.length };
-        }
-        return result;
-      } catch (error) {
-        return result;
-      }
-    });
-
-    return await Promise.all(detailPromises);
+    return results;
   } catch (error) {
     return [];
   }

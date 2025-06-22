@@ -99,7 +99,7 @@ function SearchPageClient() {
 
   return (
     <PageLayout activePath='/search'>
-      <div className='px-10 py-8 overflow-visible'>
+      <div className='px-10 py-8 overflow-visible mb-10'>
         {/* 搜索框 */}
         <div className='mb-8'>
           <form onSubmit={handleSearch} className='max-w-2xl mx-auto'>

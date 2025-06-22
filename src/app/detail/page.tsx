@@ -14,7 +14,7 @@ import {
   isFavorited,
   toggleFavorite,
 } from '@/lib/db.client';
-import { VideoDetail } from '@/lib/video';
+import { VideoDetail } from '@/lib/types';
 
 import PageLayout from '@/components/PageLayout';
 
