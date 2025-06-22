@@ -60,7 +60,6 @@ function PlayPageClient() {
   const [showEpisodePanel, setShowEpisodePanel] = useState(false);
   const [showSourcePanel, setShowSourcePanel] = useState(false);
   const [showTopBar, setShowTopBar] = useState(true);
-  const topBarTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [showShortcutHint, setShowShortcutHint] = useState(false);
   const [shortcutText, setShortcutText] = useState('');
   const [shortcutDirection, setShortcutDirection] = useState('');
@@ -441,10 +440,22 @@ function PlayPageClient() {
               video.hls.destroy();
             }
             const hls = new Hls({
-              debug: false,
-              enableWorker: true,
-              lowLatencyMode: true,
-              backBufferLength: 90,
+              debug: false, // 关闭日志
+              enableWorker: true, // WebWorker 解码，降低主线程压力
+              lowLatencyMode: true, // 开启低延迟 LL-HLS
+
+              /* 缓冲/内存相关 */
+              maxBufferLength: 30, // 前向缓冲最大 30s，过大容易导致高延迟
+              backBufferLength: 30, // 仅保留 30s 已播放内容，避免内存占用
+              maxBufferSize: 60 * 1000 * 1000, // 约 60MB，超出后触发清理
+
+              /* Live 同步及追帧 */
+              liveSyncDuration: 3, // 播放点保持在直播边缘 3s
+              liveMaxLatencyDuration: 10, // 超过 10s 向前跳
+              maxLiveSyncPlaybackRate: 1.5, // 延迟过高时 1.5x 加速追帧
+
+              /* 码率自适应优化 */
+              capLevelToPlayerSize: true, // 根据视频窗口大小限制清晰度，减少带宽消耗
             });
 
             hls.loadSource(url);
@@ -546,6 +557,11 @@ function PlayPageClient() {
         setError('视频播放失败');
       });
 
+      // 监听控制栏显隐事件，同步 topbar 的显隐
+      artPlayerRef.current.on('control', (visible: boolean) => {
+        setShowTopBar(visible);
+      });
+
       // 监听视频播放结束事件，自动播放下一集
       artPlayerRef.current.on('video:ended', () => {
         if (
@@ -601,9 +617,6 @@ function PlayPageClient() {
   // 清理定时器
   useEffect(() => {
     return () => {
-      if (topBarTimeoutRef.current) {
-        clearTimeout(topBarTimeoutRef.current);
-      }
       if (shortcutHintTimeoutRef.current) {
         clearTimeout(shortcutHintTimeoutRef.current);
       }
@@ -671,42 +684,6 @@ function PlayPageClient() {
         saveCurrentPlayProgress();
       }
       setCurrentEpisodeIndex(currentEpisodeIndex + 1);
-    }
-  };
-
-  // 处理鼠标移动，显示顶栏并重置隐藏定时器
-  const handleMouseMove = () => {
-    setShowTopBar(true);
-    if (topBarTimeoutRef.current) {
-      clearTimeout(topBarTimeoutRef.current);
-    }
-    // 仅当视频正在播放时，才在 3 秒后隐藏顶栏
-    if (
-      artPlayerRef.current &&
-      artPlayerRef.current.video &&
-      !artPlayerRef.current.video.paused
-    ) {
-      topBarTimeoutRef.current = setTimeout(() => {
-        setShowTopBar(false);
-      }, 3000);
-    }
-  };
-
-  // 处理点击事件，显示顶栏并重置隐藏定时器
-  const handleClick = () => {
-    setShowTopBar(true);
-    if (topBarTimeoutRef.current) {
-      clearTimeout(topBarTimeoutRef.current);
-    }
-    // 仅当视频正在播放时，才在 3 秒后隐藏顶栏
-    if (
-      artPlayerRef.current &&
-      artPlayerRef.current.video &&
-      !artPlayerRef.current.video.paused
-    ) {
-      topBarTimeoutRef.current = setTimeout(() => {
-        setShowTopBar(false);
-      }, 3000);
     }
   };
 
@@ -1217,8 +1194,6 @@ function PlayPageClient() {
     <div
       className='bg-black fixed inset-0 overflow-hidden overscroll-contain'
       style={{ height: 'calc(var(--vh, 1vh) * 100)' }}
-      onMouseMove={handleMouseMove}
-      onClick={handleClick}
     >
       {/* 竖屏提示蒙层 */}
       {showOrientationTip && (
