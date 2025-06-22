@@ -14,8 +14,18 @@ import {
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-const MobileBottomNav = () => {
+interface MobileBottomNavProps {
+  /**
+   * 主动指定当前激活的路径。当未提供时，自动使用 usePathname() 获取的路径。
+   */
+  activePath?: string;
+}
+
+const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
   const pathname = usePathname();
+
+  // 当前激活路径：优先使用传入的 activePath，否则回退到浏览器地址
+  const currentActive = activePath ?? pathname;
 
   const navItems = [
     { icon: Home, label: '首页', href: '/' },
@@ -50,7 +60,7 @@ const MobileBottomNav = () => {
     const tagMatch = href.match(/tag=([^&]+)/)?.[1];
 
     // 解码URL以进行正确的比较
-    const decodedActive = decodeURIComponent(pathname);
+    const decodedActive = decodeURIComponent(currentActive);
     const decodedItemHref = decodeURIComponent(href);
 
     return (

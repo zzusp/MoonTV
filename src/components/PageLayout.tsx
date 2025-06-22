@@ -36,7 +36,7 @@ const PageLayout = ({ children, activePath = '/' }: PageLayoutProps) => {
         >
           {children}
         </main>
-        <MobileBottomNav />
+        <MobileBottomNav activePath={activePath} />
       </div>
     </>
   );
