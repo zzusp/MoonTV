@@ -109,7 +109,7 @@ export default function ScrollableRow({
       </div>
       {showLeftScroll && (
         <div
-          className={`absolute left-0 top-0 bottom-0 w-16 flex items-center justify-center z-50 transition-opacity duration-200 ${
+          className={`hidden sm:flex absolute left-0 top-0 bottom-0 w-16 items-center justify-center z-50 transition-opacity duration-200 ${
             isHovered ? 'opacity-100' : 'opacity-0'
           }`}
           style={{
@@ -136,7 +136,7 @@ export default function ScrollableRow({
 
       {showRightScroll && (
         <div
-          className={`absolute right-0 top-0 bottom-0 w-16 flex items-center justify-center z-50 transition-opacity duration-200 ${
+          className={`hidden sm:flex absolute right-0 top-0 bottom-0 w-16 items-center justify-center z-50 transition-opacity duration-200 ${
             isHovered ? 'opacity-100' : 'opacity-0'
           }`}
           style={{
