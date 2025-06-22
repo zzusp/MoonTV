@@ -150,7 +150,7 @@ function HomeClient() {
               <h2 className='mb-4 text-xl font-bold text-gray-800 text-left'>
                 我的收藏
               </h2>
-              <div className='justify-start grid grid-cols-2 gap-x-2 gap-y-6 px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8 sm:gap-y-20 sm:px-4'>
+              <div className='justify-start grid grid-cols-2 gap-x-2 gap-y-20 px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8 sm:px-4'>
                 {favoriteItems.map((item) => (
                   <div key={item.id + item.source} className='w-full'>
                     <VideoCard {...item} from='favorites' />

@@ -133,7 +133,7 @@ function DetailPageClient() {
         ) : (
           <div className='max-w-[95%] mx-auto'>
             {/* 主信息区：左图右文 */}
-            <div className='relative flex flex-col md:flex-row gap-8 mb-8 bg-transparent rounded-xl p-6 md:items-start'>
+            <div className='relative flex flex-col md:flex-row gap-8 mb-0 sm:mb-8 bg-transparent rounded-xl p-2 sm:p-6 md:items-start'>
               {/* 返回按钮放置在主信息区左上角 */}
               <button
                 onClick={() => {
@@ -144,7 +144,7 @@ function DetailPageClient() {
                     window.location.href = '/';
                   }
                 }}
-                className='absolute top-0 left-0 -translate-x-[180%] -translate-y-1/2 p-2 rounded transition-colors'
+                className='absolute top-0 left-0 -translate-x-[60%] -translate-y-[30%] sm:-translate-x-[180%] sm:-translate-y-1/2 p-2 rounded transition-colors'
               >
                 <svg
                   className='h-5 w-5 text-gray-500 hover:text-green-600 transition-colors'
@@ -162,7 +162,7 @@ function DetailPageClient() {
                 </svg>
               </button>
               {/* 封面 */}
-              <div className='flex-shrink-0 w-full md:w-72'>
+              <div className='flex-shrink-0 w-full max-w-[200px] sm:max-w-none md:w-72 mx-auto'>
                 <Image
                   src={detail.videoInfo.cover || '/images/placeholder.png'}
                   alt={detail.videoInfo.title || fallbackTitle}
@@ -178,7 +178,7 @@ function DetailPageClient() {
                 className='flex-1 flex flex-col min-h-0'
                 style={{ height: '430px' }}
               >
-                <h1 className='text-3xl font-bold mb-2 tracking-wide flex items-center flex-shrink-0'>
+                <h1 className='text-3xl font-bold mb-2 tracking-wide flex items-center flex-shrink-0 text-center md:text-left w-full'>
                   {detail.videoInfo.title || fallbackTitle}
                 </h1>
                 <div className='flex flex-wrap items-center gap-3 text-base mb-4 opacity-80 flex-shrink-0'>
@@ -191,7 +191,9 @@ function DetailPageClient() {
                     <span>{detail.videoInfo.year}</span>
                   )}
                   {detail.videoInfo.source_name && (
-                    <span>{detail.videoInfo.source_name}</span>
+                    <span className='border border-gray-500/60 px-2 py-[1px] rounded'>
+                      {detail.videoInfo.source_name}
+                    </span>
                   )}
                   {detail.videoInfo.type && (
                     <span>{detail.videoInfo.type}</span>
@@ -222,7 +224,7 @@ function DetailPageClient() {
                         )}&index=1&position=0&title=${encodeURIComponent(
                           detail.videoInfo.title
                         )}`}
-                        className='flex items-center justify-center gap-2 px-6 py-2 bg-gray-500 hover:bg-gray-600 rounded-lg transition-colors text-white'
+                        className='hidden sm:flex items-center justify-center gap-2 px-6 py-2 bg-gray-500 hover:bg-gray-600 rounded-lg transition-colors text-white'
                       >
                         <div className='w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-white border-b-[6px] border-b-transparent'></div>
                         <span>从头开始</span>
@@ -300,14 +302,14 @@ function DetailPageClient() {
             </div>
             {/* 选集按钮区 */}
             {detail.episodes.length > 0 && (
-              <div className='mt-8 bg-transparent rounded-xl p-6'>
+              <div className='mt-0 sm:mt-8 bg-transparent rounded-xl p-2 sm:p-6'>
                 <div className='flex items-center gap-2 mb-4'>
                   <div className='text-xl font-semibold'>选集</div>
                   <div className='text-gray-400 ml-2'>
                     共 {detail.episodes.length} 集
                   </div>
                 </div>
-                <div className='flex flex-wrap gap-4'>
+                <div className='flex flex-wrap gap-2 sm:gap-4'>
                   {detail.episodes.map((episode, idx) => (
                     <a
                       key={idx}

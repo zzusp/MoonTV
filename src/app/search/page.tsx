@@ -125,7 +125,7 @@ function SearchPageClient() {
             </div>
           ) : showResults ? (
             // 搜索结果
-            <div className='justify-start grid grid-cols-2 gap-x-2 gap-y-20 px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8 sm:gap-y-20 sm:px-4'>
+            <div className='justify-start grid grid-cols-2 gap-x-2 gap-y-20 px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8 sm:px-4'>
               {searchResults.map((item) => (
                 <div key={item.id} className='w-full'>
                   <VideoCard {...item} from='search' />
