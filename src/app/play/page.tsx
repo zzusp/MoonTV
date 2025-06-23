@@ -1324,7 +1324,7 @@ function PlayPageClient() {
       {isPortrait && (
         <button
           onClick={handleForceLandscape}
-          className='fixed bottom-16 left-4 z-[195] w-10 h-10 rounded-full bg-gray-800 text-white flex items-center justify-center md:hidden'
+          className='fixed bottom-16 left-4 z-[85] w-10 h-10 rounded-full bg-gray-800 text-white flex items-center justify-center md:hidden'
         >
           <svg
             className='w-6 h-6'
