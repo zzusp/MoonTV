@@ -25,9 +25,6 @@ COPY . .
 # 生成生产构建
 RUN pnpm run build
 
-# 移除 devDependencies，仅保留生产依赖，减小体积
-RUN pnpm prune --prod
-
 # ---- 第 3 阶段：生成运行时镜像 ----
 FROM node:20-alpine AS runner
 
