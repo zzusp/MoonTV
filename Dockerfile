@@ -41,6 +41,7 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/config.json ./config.json
+COPY --from=builder /app/next.config.js ./next.config.js
 
 # 切换到非特权用户
 USER nextjs
