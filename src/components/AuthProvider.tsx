@@ -15,18 +15,11 @@ export default function AuthProvider({ children }: Props) {
     // 登录页或 API 路径不做校验，避免死循环
     if (pathname.startsWith('/login')) return;
 
-    const password =
-      typeof window !== 'undefined' ? localStorage.getItem('password') : null;
+    const password = localStorage.getItem('password');
     const fullPath =
       typeof window !== 'undefined'
         ? window.location.pathname + window.location.search
         : pathname;
-
-    // 没有密码直接跳转登录
-    if (!password) {
-      router.replace(`/login?redirect=${encodeURIComponent(fullPath)}`);
-      return;
-    }
 
     // 有密码时验证
     (async () => {
