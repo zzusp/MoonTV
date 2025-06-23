@@ -1,7 +1,4 @@
 {
   "cache_time": 7200,
-  "api_site": {},
-  "storage": {
-    "type": "localstorage"
-  }
+  "api_site": {}
 }

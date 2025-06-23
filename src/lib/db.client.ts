@@ -31,10 +31,8 @@ const PLAY_RECORDS_KEY = 'moontv_play_records';
 
 // ---- 环境变量 ----
 const STORAGE_TYPE =
-  (process.env.NEXT_PUBLIC_STORAGE_TYPE as
-    | 'localstorage'
-    | 'database'
-    | undefined) || 'localstorage';
+  (process.env.STORAGE_TYPE as 'localstorage' | 'database' | undefined) ||
+  'localstorage';
 
 // ---------------- 搜索历史相关常量 ----------------
 const SEARCH_HISTORY_KEY = 'moontv_search_history';

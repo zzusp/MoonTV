@@ -81,8 +81,5 @@
       "api": "https://ikunzyapi.com/api.php/provide/vod",
       "name": "iKun资源"
     }
-  },
-  "storage": {
-    "type": "localstorage"
   }
 }

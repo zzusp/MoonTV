@@ -74,8 +74,3 @@ export function getApiSites(): ApiSite[] {
     key,
   }));
 }
-
-export function getStorageConfig(): StorageConfig {
-  const config = getConfig();
-  return config.storage || { type: 'localstorage' };
-}

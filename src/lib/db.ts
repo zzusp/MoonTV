@@ -1,6 +1,9 @@
 /* eslint-disable no-console */
 
-import { getStorageConfig } from './config';
+// storage type 常量: 'localstorage' | 'database'，默认 'localstorage'
+const STORAGE_TYPE =
+  (process.env.STORAGE_TYPE as 'localstorage' | 'database' | undefined) ||
+  'localstorage';
 
 // 播放记录数据结构
 export interface PlayRecord {
@@ -85,9 +88,7 @@ class DatabaseStorage implements IStorage {
 
 // 创建存储实例
 function createStorage(): IStorage {
-  const config = getStorageConfig();
-
-  switch (config.type) {
+  switch (STORAGE_TYPE) {
     case 'database':
       return new DatabaseStorage();
     case 'localstorage':

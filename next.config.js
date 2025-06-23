@@ -9,24 +9,14 @@ const nextConfig = {
   swcMinify: true,
 
   /**
-   * 在编译阶段把 storage.type 写入环境变量，供浏览器端动态切换存储方案。
+   * 在编译阶段将 STORAGE_TYPE 写入环境变量，供浏览器端与服务端统一读取。
    */
   env: (function () {
-    const fs = require('fs');
-    const path = require('path');
-
-    let storageType = 'localstorage';
-    try {
-      const json = JSON.parse(
-        fs.readFileSync(path.join(__dirname, 'config.json'), 'utf-8')
-      );
-      storageType = json?.storage?.type ?? 'localstorage';
-    } catch {
-      // ignore – 保持默认值
-    }
+    // 编译阶段优先使用传入的环境变量；默认 localstorage
+    const storageType = process.env.STORAGE_TYPE || 'localstorage';
 
     return {
-      NEXT_PUBLIC_STORAGE_TYPE: storageType,
+      STORAGE_TYPE: storageType,
     };
   })(),
 
