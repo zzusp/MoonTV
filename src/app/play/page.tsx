@@ -463,14 +463,6 @@ function PlayPageClient() {
               maxBufferLength: 30, // 前向缓冲最大 30s，过大容易导致高延迟
               backBufferLength: 30, // 仅保留 30s 已播放内容，避免内存占用
               maxBufferSize: 60 * 1000 * 1000, // 约 60MB，超出后触发清理
-
-              /* Live 同步及追帧 */
-              liveSyncDuration: 3, // 播放点保持在直播边缘 3s
-              liveMaxLatencyDuration: 10, // 超过 10s 向前跳
-              maxLiveSyncPlaybackRate: 1.5, // 延迟过高时 1.5x 加速追帧
-
-              /* 码率自适应优化 */
-              capLevelToPlayerSize: true, // 根据视频窗口大小限制清晰度，减少带宽消耗
             });
 
             hls.loadSource(url);
