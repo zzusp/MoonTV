@@ -1209,7 +1209,16 @@ function PlayPageClient() {
   const handleTouchStart = (e: TouchEvent) => {
     // 防止在控制栏区域触发
     const target = e.target as HTMLElement;
-    if (target.closest('.art-controls') || target.closest('.art-contextmenu')) {
+    if (
+      target.closest('.art-controls') ||
+      target.closest('.art-contextmenu') ||
+      target.closest('.art-layer')
+    ) {
+      return;
+    }
+
+    // 仅在播放时触发
+    if (artPlayerRef.current?.video?.paused) {
       return;
     }
 
