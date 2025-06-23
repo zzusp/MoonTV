@@ -118,6 +118,33 @@ function PlayPageClient() {
   const episodeLayerRef = useRef<HTMLElement | null>(null);
   const sourceLayerRef = useRef<HTMLElement | null>(null);
 
+  // 缓存业务层节点的引用，避免在销毁重建过程中丢失
+  const cachedNodesRef = useRef<{
+    topDom: HTMLElement | null;
+    episodeDom: HTMLElement | null;
+    sourceDom: HTMLElement | null;
+  }>({ topDom: null, episodeDom: null, sourceDom: null });
+
+  /**
+   * 在销毁旧播放器实例之前，将业务层节点缓存起来，防止节点随播放器一起被移除。
+   */
+  const cacheBusinessNodes = () => {
+    // 直接从文档中查找业务层节点并缓存引用
+    const topDom = document.querySelector('[data-top-bar]') as HTMLElement;
+    const episodeDom = document.querySelector(
+      '[data-episode-panel]'
+    ) as HTMLElement;
+    const sourceDom = document.querySelector(
+      '[data-source-panel]'
+    ) as HTMLElement;
+
+    cachedNodesRef.current = {
+      topDom,
+      episodeDom,
+      sourceDom,
+    };
+  };
+
   // 解决 iOS Safari 100vh 不准确的问题：将视口高度写入 CSS 变量 --vh
   useEffect(() => {
     const setVH = () => {
@@ -411,6 +438,9 @@ function PlayPageClient() {
 
     // WebKit浏览器或首次创建：销毁之前的播放器实例并创建新的
     if (artPlayerRef.current) {
+      // 先缓存业务层 DOM，避免被销毁
+      cacheBusinessNodes();
+
       if (artPlayerRef.current.video && artPlayerRef.current.video.hls) {
         artPlayerRef.current.video.hls.destroy();
       }
@@ -602,19 +632,33 @@ function PlayPageClient() {
       episodeLayerRef.current = episodeLayerEl;
       sourceLayerRef.current = sourceLayerEl;
 
-      // 将现有节点移动到对应业务层容器
+      // 将业务层节点移动到对应图层容器
       setTimeout(() => {
-        const topDom = document.querySelector('[data-top-bar]');
+        // 优先使用缓存的节点，如果没有则从 document 获取（首次创建时）
+        let { topDom, episodeDom, sourceDom } = cachedNodesRef.current;
+
+        if (!topDom) {
+          topDom = document.querySelector('[data-top-bar]') as HTMLElement;
+        }
+        if (!episodeDom) {
+          episodeDom = document.querySelector(
+            '[data-episode-panel]'
+          ) as HTMLElement;
+        }
+        if (!sourceDom) {
+          sourceDom = document.querySelector(
+            '[data-source-panel]'
+          ) as HTMLElement;
+        }
+
         if (topDom && !topLayerEl.contains(topDom)) {
-          topLayerEl.appendChild(topDom as HTMLElement);
+          topLayerEl.appendChild(topDom);
         }
-        const episodeDom = document.querySelector('[data-episode-panel]');
         if (episodeDom && !episodeLayerEl.contains(episodeDom)) {
-          episodeLayerEl.appendChild(episodeDom as HTMLElement);
+          episodeLayerEl.appendChild(episodeDom);
         }
-        const sourceDom = document.querySelector('[data-source-panel]');
         if (sourceDom && !sourceLayerEl.contains(sourceDom)) {
-          sourceLayerEl.appendChild(sourceDom as HTMLElement);
+          sourceLayerEl.appendChild(sourceDom);
         }
       }, 0);
     } catch (err) {
