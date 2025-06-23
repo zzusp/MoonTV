@@ -177,7 +177,7 @@ export default function VideoCard({
                 <PlayCircleSolid fillColor={playHover ? '#22c55e' : 'none'} />
               </div>
             </div>
-            <div className='absolute bottom-4 right-4 flex items-center gap-6'>
+            <div className='absolute bottom-2 right-2 sm:bottom-4 sm:right-4 flex items-center gap-6'>
               {!hideCheckCircle && (
                 <span
                   onClick={handleDeleteRecord}
@@ -188,7 +188,7 @@ export default function VideoCard({
                 </span>
               )}
               {favorited && (
-                <span className='inline-flex w-6 h-6 pointer-events-none' />
+                <span className='inline-flex w-4 h-4 sm:w-6 sm:h-6 pointer-events-none' />
               )}
               {!favorited && (
                 <span
@@ -197,7 +197,7 @@ export default function VideoCard({
                   className='inline-flex items-center justify-center pointer-events-auto'
                 >
                   <Heart
-                    className={`h-6 w-6 stroke-[2] ${
+                    className={`h-4 w-4 sm:h-6 sm:w-6 stroke-[2] ${
                       favorited ? 'text-red-500' : 'text-white/90'
                     }`}
                     fill={favorited ? 'currentColor' : 'none'}
@@ -209,8 +209,10 @@ export default function VideoCard({
 
           {/* 集数指示器 - 绿色小圆球 */}
           {episodes && episodes > 1 && (
-            <div className='absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center'>
-              <span className='text-white text-xs font-bold'>{episodes}</span>
+            <div className='absolute top-2 right-2 w-4 h-4 sm:w-6 sm:h-6 bg-green-500 rounded-full flex items-center justify-center'>
+              <span className='text-white text-[0.5rem] sm:text-xs font-bold'>
+                {episodes}
+              </span>
             </div>
           )}
 
@@ -226,8 +228,8 @@ export default function VideoCard({
 
           {/* 当前播放集数 */}
           {currentEpisode && episodes && episodes > 1 && (
-            <div className='absolute top-2 left-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center'>
-              <span className='text-white text-xs font-bold'>
+            <div className='absolute top-2 left-2 w-4 h-4 sm:w-6 sm:h-6 bg-blue-500 rounded-full flex items-center justify-center'>
+              <span className='text-white text-[0.5rem] sm:text-xs font-bold'>
                 {currentEpisode}
               </span>
             </div>
@@ -237,11 +239,11 @@ export default function VideoCard({
         {/* 信息层 */}
         <div className='absolute top-[calc(100%+0.2rem)] left-0 right-0'>
           <div className='flex flex-col items-center justify-center'>
-            <span className='text-gray-900 font-semibold truncate w-full text-center'>
+            <span className='text-gray-900 font-semibold truncate w-full text-center text-xs sm:text-sm'>
               {title}
             </span>
             {source && (
-              <span className='text-gray-500 text-xs w-full text-center mt-1'>
+              <span className='text-gray-500 text-[0.5rem] sm:text-xs w-full text-center mt-1'>
                 <span className='inline-block border border-gray-500/60 rounded px-2 py-[1px]'>
                   {source_name}
                 </span>
@@ -252,14 +254,14 @@ export default function VideoCard({
 
         {/* 收藏夹始终显示红心 */}
         {favorited && (
-          <div className='absolute bottom-4 right-4 flex items-center'>
+          <div className='absolute bottom-2 right-2 sm:bottom-4 sm:right-4 flex items-center'>
             <span
               onClick={handleToggleFavorite}
               title={favorited ? '移除收藏' : '加入收藏'}
               className='inline-flex items-center justify-center'
             >
               <Heart
-                className={`h-6 w-6 stroke-[2] ${
+                className={`h-4 w-4 sm:h-6 sm:w-6 stroke-[2] ${
                   favorited ? 'text-red-500' : 'text-white/90'
                 }`}
                 fill={favorited ? 'currentColor' : 'none'}

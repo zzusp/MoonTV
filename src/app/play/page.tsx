@@ -90,6 +90,12 @@ function PlayPageClient() {
   // 是否显示旋转提示（5s 后自动隐藏）
   const [showOrientationTip, setShowOrientationTip] = useState(false);
   const orientationTipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // 当前是否处于竖屏，用于控制"强制横屏"按钮显隐
+  const [isPortrait, setIsPortrait] = useState(
+    typeof window !== 'undefined'
+      ? window.matchMedia('(orientation: portrait)').matches
+      : true
+  );
 
   // 长按三倍速相关状态
   const [isLongPressing, setIsLongPressing] = useState(false);
@@ -1029,6 +1035,9 @@ function PlayPageClient() {
     const update = () => {
       const portrait = mql.matches;
 
+      // 更新竖屏状态
+      setIsPortrait(portrait);
+
       // 在进入竖屏时显示提示，5 秒后自动隐藏
       if (portrait) {
         setShowOrientationTip(true);
@@ -1068,7 +1077,25 @@ function PlayPageClient() {
     };
   }, []);
 
-  // 进入/退出全屏时锁定/解锁横屏
+  // 用户点击悬浮按钮 -> 请求全屏并锁定横屏
+  const handleForceLandscape = async () => {
+    try {
+      const el: any = artRef.current || document.documentElement;
+      if (el.requestFullscreen) {
+        await el.requestFullscreen();
+      } else if (el.webkitRequestFullscreen) {
+        el.webkitRequestFullscreen();
+      }
+
+      if (screen.orientation && (screen.orientation as any).lock) {
+        await (screen.orientation as any).lock('landscape');
+      }
+    } catch (err) {
+      console.warn('强制横屏失败:', err);
+    }
+  };
+
+  // 进入/退出全屏时锁定/解锁横屏（保持原有逻辑）
   useEffect(() => {
     if (typeof document === 'undefined') return;
 
@@ -1291,6 +1318,28 @@ function PlayPageClient() {
           </svg>
           <span className='text-sm'>请横屏观看</span>
         </div>
+      )}
+
+      {/* 强制横屏按钮：仅在移动端竖屏时显示 */}
+      {isPortrait && (
+        <button
+          onClick={handleForceLandscape}
+          className='fixed bottom-16 left-4 z-[195] w-10 h-10 rounded-full bg-gray-800 text-white flex items-center justify-center md:hidden'
+        >
+          <svg
+            className='w-6 h-6'
+            fill='none'
+            stroke='currentColor'
+            viewBox='0 0 24 24'
+          >
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth={2}
+              d='M3 18v-6a3 3 0 013-3h12M21 6v6a3 3 0 01-3 3H6'
+            />
+          </svg>
+        </button>
       )}
 
       {/* 换源加载遮罩 */}

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
 import { Search } from 'lucide-react';
@@ -37,8 +38,10 @@ function SearchPageClient() {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // 自动聚焦搜索框
-    searchInputRef.current?.focus();
+    // 自动聚焦搜索框：仅当 URL 中没有搜索参数时
+    if (!searchParams.get('q')) {
+      searchInputRef.current?.focus();
+    }
 
     // 加载搜索历史
     (async () => {
@@ -125,7 +128,7 @@ function SearchPageClient() {
             </div>
           ) : showResults ? (
             // 搜索结果
-            <div className='justify-start grid grid-cols-2 gap-x-2 gap-y-20 px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8 sm:px-4'>
+            <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8 sm:px-4'>
               {searchResults.map((item) => (
                 <div key={item.id} className='w-full'>
                   <VideoCard {...item} from='search' />

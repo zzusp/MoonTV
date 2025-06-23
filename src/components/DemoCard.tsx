@@ -92,7 +92,7 @@ const DemoCard = ({ title, poster }: DemoCardProps) => {
       {/* 信息层 */}
       <div className='absolute top-[calc(100%+0.2rem)] left-0 right-0'>
         <div className='flex flex-col items-center justify-center'>
-          <span className='text-gray-900 font-semibold truncate w-full text-center'>
+          <span className='text-gray-900 font-semibold truncate w-full text-center text-xs sm:text-sm'>
             {title}
           </span>
         </div>
