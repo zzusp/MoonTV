@@ -8,18 +8,6 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
 
-  /**
-   * 在编译阶段将 STORAGE_TYPE 写入环境变量，供浏览器端与服务端统一读取。
-   */
-  env: (function () {
-    // 编译阶段优先使用传入的环境变量；默认 localstorage
-    const storageType = process.env.STORAGE_TYPE || 'localstorage';
-
-    return {
-      STORAGE_TYPE: storageType,
-    };
-  })(),
-
   // Uncoment to add domain whitelist
   images: {
     remotePatterns: [

@@ -3,6 +3,8 @@ import { Inter } from 'next/font/google';
 
 import './globals.css';
 
+import AuthProvider from '../components/AuthProvider';
+
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
@@ -18,7 +20,7 @@ export default function RootLayout({
   return (
     <html lang='zh-CN'>
       <body className={`${inter.className} min-h-screen text-gray-900`}>
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

@@ -2,8 +2,10 @@
 
 // storage type 常量: 'localstorage' | 'database'，默认 'localstorage'
 const STORAGE_TYPE =
-  (process.env.STORAGE_TYPE as 'localstorage' | 'database' | undefined) ||
-  'localstorage';
+  (process.env.NEXT_PUBLIC_STORAGE_TYPE as
+    | 'localstorage'
+    | 'database'
+    | undefined) || 'localstorage';
 
 // 播放记录数据结构
 export interface PlayRecord {
