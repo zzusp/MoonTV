@@ -99,3 +99,7 @@ body {
   background-repeat: no-repeat !important; /* 防止重复 */
   background-color: #000 !important; /* 其余区域填充为黑色 */
 }
+
+.art-video-player .art-layers {
+  z-index: 100 !important;
+}

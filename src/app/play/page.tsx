@@ -113,6 +113,11 @@ function PlayPageClient() {
     Hls: any | null;
   }>({ Artplayer: null, Hls: null });
 
+  // 新增：业务层容器引用
+  const topLayerRef = useRef<HTMLElement | null>(null);
+  const episodeLayerRef = useRef<HTMLElement | null>(null);
+  const sourceLayerRef = useRef<HTMLElement | null>(null);
+
   // 解决 iOS Safari 100vh 不准确的问题：将视口高度写入 CSS 变量 --vh
   useEffect(() => {
     const setVH = () => {
@@ -518,9 +523,6 @@ function PlayPageClient() {
             html: '选集',
             tooltip: '选择集数',
             click: function () {
-              if (artPlayerRef.current && artPlayerRef.current.fullscreen) {
-                artPlayerRef.current.fullscreen = false;
-              }
               setShowEpisodePanel(true);
             },
           },
@@ -574,6 +576,47 @@ function PlayPageClient() {
           videoUrl
         );
       }
+
+      // ===== 在创建完成后，注入业务层并搬运 DOM =====
+      const topLayerEl = document.createElement('div');
+      const episodeLayerEl = document.createElement('div');
+      const sourceLayerEl = document.createElement('div');
+
+      artPlayerRef.current.layers.add({
+        name: 'topbar',
+        html: topLayerEl,
+        index: 3,
+      });
+      artPlayerRef.current.layers.add({
+        name: 'episodepanel',
+        html: episodeLayerEl,
+        index: 2,
+      });
+      artPlayerRef.current.layers.add({
+        name: 'sourcepanel',
+        html: sourceLayerEl,
+        index: 1,
+      });
+
+      topLayerRef.current = topLayerEl;
+      episodeLayerRef.current = episodeLayerEl;
+      sourceLayerRef.current = sourceLayerEl;
+
+      // 将现有节点移动到对应业务层容器
+      setTimeout(() => {
+        const topDom = document.querySelector('[data-top-bar]');
+        if (topDom && !topLayerEl.contains(topDom)) {
+          topLayerEl.appendChild(topDom as HTMLElement);
+        }
+        const episodeDom = document.querySelector('[data-episode-panel]');
+        if (episodeDom && !episodeLayerEl.contains(episodeDom)) {
+          episodeLayerEl.appendChild(episodeDom as HTMLElement);
+        }
+        const sourceDom = document.querySelector('[data-source-panel]');
+        if (sourceDom && !sourceLayerEl.contains(sourceDom)) {
+          sourceLayerEl.appendChild(sourceDom as HTMLElement);
+        }
+      }, 0);
     } catch (err) {
       console.error('创建播放器失败:', err);
       setError('播放器初始化失败');
@@ -1358,7 +1401,8 @@ function PlayPageClient() {
 
         {/* 顶栏 */}
         <div
-          className={`absolute top-0 left-0 right-0 z-40 transition-opacity duration-300 ${
+          data-top-bar
+          className={`absolute top-0 left-0 right-0 transition-opacity duration-300 ${
             showTopBar ? 'opacity-100' : 'opacity-0'
           }`}
         >
@@ -1395,12 +1439,7 @@ function PlayPageClient() {
                   }}
                   className='flex-shrink-0'
                 >
-                  <Heart
-                    className={`h-5 w-5 stroke-[2] ${
-                      favorited ? 'text-red-500' : 'text-gray-300'
-                    }`}
-                    fill={favorited ? 'currentColor' : 'none'}
-                  />
+                  <FavoriteIcon filled={favorited} />
                 </button>
               </div>
 
@@ -1500,18 +1539,18 @@ function PlayPageClient() {
 
       {/* 选集侧拉面板 */}
       {totalEpisodes > 1 && (
-        <>
+        <div data-episode-panel>
           {/* 遮罩层 */}
           {showEpisodePanel && (
             <div
-              className='fixed inset-0 bg-black/50 z-[90]'
+              className='fixed inset-0 bg-black/50 z-[110]'
               onClick={() => setShowEpisodePanel(false)}
             />
           )}
 
           {/* 侧拉面板 */}
           <div
-            className={`fixed top-0 right-0 h-full w-full md:w-80 bg-black/40 backdrop-blur-xl z-[100] transform transition-transform duration-300 ${
+            className={`fixed top-0 right-0 h-full w-full md:w-80 bg-black/40 backdrop-blur-xl z-[110] transform transition-transform duration-300 ${
               showEpisodePanel ? 'translate-x-0' : 'translate-x-full'
             }`}
           >
@@ -1561,22 +1600,22 @@ function PlayPageClient() {
               </div>
             </div>
           </div>
-        </>
+        </div>
       )}
 
       {/* 换源侧拉面板 */}
-      <>
+      <div data-source-panel>
         {/* 遮罩层 */}
         {showSourcePanel && (
           <div
-            className='fixed inset-0 bg-black/50 z-[90]'
+            className='fixed inset-0 bg-black/50 z-[110]'
             onClick={() => setShowSourcePanel(false)}
           />
         )}
 
         {/* 侧拉面板 */}
         <div
-          className={`fixed top-0 right-0 h-full w-full md:w-96 bg-black/40 backdrop-blur-xl z-[100] transform transition-transform duration-300 ${
+          className={`fixed top-0 right-0 h-full w-full md:w-96 bg-black/40 backdrop-blur-xl z-[110] transform transition-transform duration-300 ${
             showSourcePanel ? 'translate-x-0' : 'translate-x-full'
           }`}
         >
@@ -1706,10 +1745,32 @@ function PlayPageClient() {
             </div>
           </div>
         </div>
-      </>
+      </div>
     </div>
   );
 }
+
+const FavoriteIcon = ({ filled }: { filled: boolean }) => {
+  if (filled) {
+    return (
+      <svg
+        className='h-5 w-5'
+        viewBox='0 0 24 24'
+        xmlns='http://www.w3.org/2000/svg'
+      >
+        <path
+          d='M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z'
+          fill='#ef4444' /* Tailwind red-500 */
+          stroke='#ef4444'
+          strokeWidth='2'
+          strokeLinecap='round'
+          strokeLinejoin='round'
+        />
+      </svg>
+    );
+  }
+  return <Heart className='h-5 w-5 stroke-[2] text-gray-300' />;
+};
 
 export default function PlayPage() {
   return (
