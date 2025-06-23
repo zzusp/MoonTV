@@ -36,7 +36,7 @@ function DoubanPageClient() {
   const tag = searchParams.get('tag');
 
   // 生成骨架屏数据
-  const skeletonData = Array.from({ length: 20 }, (_, index) => index);
+  const skeletonData = Array.from({ length: 25 }, (_, index) => index);
 
   useEffect(() => {
     if (!type || !tag) {
@@ -217,7 +217,13 @@ function DoubanPageClient() {
               {/* 加载更多指示器 */}
               {hasMore && !loading && (
                 <div
-                  ref={loadingRef}
+                  ref={(el) => {
+                    if (el && el.offsetParent !== null) {
+                      (
+                        loadingRef as React.MutableRefObject<HTMLDivElement | null>
+                      ).current = el;
+                    }
+                  }}
                   className='flex justify-center mt-12 py-8'
                 >
                   {isLoadingMore && (
