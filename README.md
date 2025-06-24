@@ -1,133 +1,194 @@
-# Next.js + Tailwind CSS + TypeScript Starter and Boilerplate
+# MoonTV
 
 <div align="center">
-  <h2>🔋 ts-nextjs-tailwind-starter</h2>
-  <p>Next.js + Tailwind CSS + TypeScript starter packed with useful development features.</p>
-  <p>Made by <a href="https://theodorusclarence.com">Theodorus Clarence</a></p>
+  <img src="public/logo.png" alt="LibreTV Logo" width="120">
+</div>
 
-[![GitHub Repo stars](https://img.shields.io/github/stars/theodorusclarence/ts-nextjs-tailwind-starter)](https://github.com/theodorusclarence/ts-nextjs-tailwind-starter/stargazers)
-[![Depfu](https://badges.depfu.com/badges/fc6e730632ab9dacaf7df478a08684a7/overview.svg)](https://depfu.com/github/theodorusclarence/ts-nextjs-tailwind-starter?project_id=30160)
-[![Last Update](https://img.shields.io/badge/deps%20update-every%20sunday-blue.svg)](https://shields.io/)
+> 🎬 **MoonTV** 是一个开箱即用的、跨平台的影视聚合播放器。它基于 **Next.js 14** + **Tailwind&nbsp;CSS** + **TypeScript** 构建，支持多资源搜索、在线播放、收藏同步、播放记录、本地/云端存储，让你可以随时随地畅享海量免费影视内容。
+
+<div align="center">
+
+![Next.js](https://img.shields.io/badge/Next.js-14-000?logo=nextdotjs)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3-38bdf8?logo=tailwindcss)
+![TypeScript](https://img.shields.io/badge/TypeScript-4.x-3178c6?logo=typescript)
+![License](https://img.shields.io/badge/License-MIT-green)
+![Docker Ready](https://img.shields.io/badge/Docker-ready-blue?logo=docker)
 
 </div>
 
-## Features
+---
 
-This repository is 🔋 battery packed with:
+## ✨ 功能特性
 
-- ⚡️ Next.js 14 with App Router
-- ⚛️ React 18
-- ✨ TypeScript
-- 💨 Tailwind CSS 3 — Configured with CSS Variables to extend the **primary** color
-- 💎 Pre-built Components — Components that will **automatically adapt** with your brand color, [check here for the demo](https://tsnext-tw.thcl.dev/components)
-- 🃏 Jest — Configured for unit testing
-- 📈 Absolute Import and Path Alias — Import components using `@/` prefix
-- 📏 ESLint — Find and fix problems in your code, also will **auto sort** your imports
-- 💖 Prettier — Format your code consistently
-- 🐶 Husky & Lint Staged — Run scripts on your staged files before they are committed
-- 🤖 Conventional Commit Lint — Make sure you & your teammates follow conventional commit
-- ⏰ Release Please — Generate your changelog by activating the `release-please` workflow
-- 👷 Github Actions — Lint your code on PR
-- 🚘 Automatic Branch and Issue Autolink — Branch will be automatically created on issue **assign**, and auto linked on PR
-- 🔥 Snippets — A collection of useful snippets
-- 👀 Open Graph Helper Function — Awesome open graph generated using [og](https://github.com/theodorusclarence/og), fork it and deploy!
-- 🗺 Site Map — Automatically generate sitemap.xml
-- 📦 Expansion Pack — Easily install common libraries, additional components, and configs.
+- 🔍 **多源聚合搜索**：内置数十个免费资源站点，一次搜索立刻返回全源结果。
+- 📄 **丰富详情页**：支持剧集列表、演员、年份、简介等完整信息展示。
+- ▶️ **流畅在线播放**：集成 HLS.js & ArtPlayer。
+- ❤️ **收藏 + 继续观看**：LocalStorage 存储，后续扩展 DB 存储。
+- 📱 **PWA**：离线缓存、安装到桌面/主屏，移动端原生体验。
+- 🌗 **响应式布局**：桌面侧边栏 + 移动底部导航，自适应各种屏幕尺寸。
+- 🚀 **极简部署**：一条 Docker 命令即可将完整服务跑起来，或免费部署到 Vercel。
 
-See the 👉 [feature details and changelog](https://github.com/theodorusclarence/ts-nextjs-tailwind-starter/blob/main/CHANGELOG.md) 👈 for more.
+<details>
+  <summary>点击查看项目截图</summary>
+  <img src="public/screenshot.png" alt="项目截图" style="max-width:600px">
+</details>
 
-You can also check all of the **details and demos** on my blog post:
+## 🗺 目录
 
-- [One-stop Starter to Maximize Efficiency on Next.js & Tailwind CSS Projects](https://theodorusclarence.com/blog/one-stop-starter)
+- [技术栈](#技术栈)
+- [部署](#部署)
+- [配置说明](#配置说明)
+- [Roadmap](#roadmap)
+- [安全与隐私提醒](#安全与隐私提醒)
+- [License](#license)
+- [致谢](#致谢)
 
-## Getting Started
+## 技术栈
 
-### 1. Clone this template using one of the three ways
+| 分类      | 主要依赖                                                                             |
+| --------- | ------------------------------------------------------------------------------------ |
+| 前端框架  | [Next.js 14](https://nextjs.org/) · App Router                                       |
+| UI & 样式 | [Tailwind&nbsp;CSS 3](https://tailwindcss.com/)                                      |
+| 语言      | TypeScript 4                                                                         |
+| 播放器    | [ArtPlayer](https://artplayer.org/) · [HLS.js](https://github.com/video-dev/hls.js/) |
+| 代码质量  | ESLint · Prettier · Jest                                                             |
+| 部署      | Docker · Vercel                                                                      |
 
-1. Use this repository as template
+## 部署
 
-   **Disclosure:** by using this repository as a template, there will be an attribution on your repository.
+本项目支持 Vercel 和 Docker 部署，注意**不支持 Cloudflare**，后续亦无支持计划。
 
-   I'll appreciate if you do, so this template can be known by others too 😄
+### Vercel 部署
 
-   ![Use as template](https://user-images.githubusercontent.com/55318172/129183039-1a61e68d-dd90-4548-9489-7b3ccbb35810.png)
+> 推荐使用，零运维成本，免费额度足够个人使用。
 
-2. Using `create-next-app`
+1. **Fork** 本仓库到你的 GitHub 账户。
+2. 登陆 [Vercel](https://vercel.com/)，点击 **Add New → Project**，选择 Fork 后的仓库。
+3. （强烈建议）设置 PASSWORD 环境变量。
+4. 保持默认设置完成首次部署。
+5. 如需自定义 `config.json`，请直接修改 Fork 后仓库中该文件。
+6. 每次 Push 到 `main` 分支将自动触发重新构建。
 
-   ```bash
-   pnpm create next-app  -e https://github.com/theodorusclarence/ts-nextjs-tailwind-starter ts-pnpm
-   ```
+部署完成后即可通过分配的域名访问，也可以绑定自定义域名。
 
-   If you still want to use **pages directory** (_is not actively maintained_) you can use this command
+### Docker 部署
 
-   ```bash
-   npx create-next-app -e https://github.com/theodorusclarence/ts-nextjs-tailwind-starter/tree/pages-directory project-name
-   ```
+> 适用于自建服务器 / NAS / 群晖等场景。
 
-3. Using `degit`
-
-   ```bash
-   npx degit theodorusclarence/ts-nextjs-tailwind-starter YOUR_APP_NAME
-   ```
-
-4. Deploy to Vercel
-
-   [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/external?repository-url=https%3A%2F%2Fgithub.com%2Ftheodorusclarence%2Fts-nextjs-tailwind-starter)
-
-### 2. Install dependencies
-
-It is encouraged to use **pnpm** so the husky hooks can work properly.
+#### 1. 直接运行（最简单）
 
 ```bash
-pnpm install
+# 拉取预构建镜像
+docker pull ghcr.io/senshinya/moontv:latest
+
+# 运行容器
+# -d: 后台运行  -p: 映射端口 3000 -> 3000
+docker run -d --name moontv -p 3000:3000 ghcr.io/senshinya/moontv:latest
 ```
 
-### 3. Run the development server
+访问 `http://服务器 IP:3000` 即可。
 
-You can start the server using this command:
+#### 2. docker-compose 示例
+
+```yaml
+version: '3.9'
+services:
+  moontv:
+    image: ghcr.io/senshinya/moontv:latest
+    container_name: moontv
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      - PASSWORD=your_password
+    # 如需自定义配置，可挂载文件
+    # volumes:
+    #   - ./config.json:/app/config.json:ro
+```
+
+执行：
 
 ```bash
-pnpm dev
+docker compose up -d
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result. You can start editing the page by modifying `src/pages/index.tsx`.
+随后同样访问 `http://服务器 IP:3000`。
 
-### 4. Change defaults
+### **请勿使用 Pull Bot 自动同步**
 
-There are some things you need to change including title, urls, favicons, etc.
+Pull Bot 会反复触发无效的 PR 和垃圾邮件，严重干扰项目维护。作者可能会直接拉黑所有 Pull Bot 自动发起的同步请求的仓库所有者。
 
-Find all comments with !STARTERCONF, then follow the guide.
+**推荐做法：**
 
-Don't forget to change the package name in package.json
+建议在 fork 的仓库中启用本仓库自带的 GitHub Actions 自动同步功能（见 `.github/workflows/sync.yml`）。
 
-### 5. Commit Message Convention
+如需手动同步主仓库更新，也可以使用 GitHub 官方的 [Sync fork](https://docs.github.com/cn/github/collaborating-with-issues-and-pull-requests/syncing-a-fork) 功能。
 
-This starter is using [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/), it is mandatory to use it to commit changes.
+## 配置说明
 
-## Projects using ts-nextjs-tailwind-starter
+所有可自定义项集中在根目录的 `config.json` 中：
 
-<!--
-TEMPLATE
-- [sitename](https://sitelink.com) ([Source](https://github.com/githublink))
-- [sitename](https://sitelink.com)
--->
+```json
+{
+  "cache_time": 7200,
+  "api_site": {
+    "dyttzy": {
+      "api": "http://caiji.dyttzyapi.com/api.php/provide/vod",
+      "name": "电影天堂资源",
+      "detail": "http://caiji.dyttzyapi.com"
+    }
+    // ...更多站点
+  }
+}
+```
 
-- [theodorusclarence.com](https://theodorusclarence.com) ([Source](https://github.com/theodorusclarence/theodorusclarence.com))
-- [Notiolink](https://notiolink.thcl.dev/) ([Source](https://github.com/theodorusclarence/notiolink))
-- [NextJs + Materia UI + Typescript](https://github.com/AlexStack/nextjs-materia-mui-typescript-hook-form-scaffold-boilerplate-starter)
+- `cache_time`：接口缓存时间（秒）。
+- `api_site`：你可以增删或替换任何资源站，字段说明：
+  - `key`：唯一标识，保持小写字母/数字。
+  - `api`：资源站提供的 `vod` JSON API 根地址。
+  - `name`：在人机界面中展示的名称。
+  - `detail`：（可选）部分无法通过 API 获取剧集详情的站点，需要提供网页详情根 URL，用于爬取。
 
-Are you using this starter? Please add your page (and repo) to the end of the list via a [Pull Request](https://github.com/theodorusclarence/ts-nextjs-tailwind-starter/edit/main/README.md). 😃
+MoonTV 支持标准的苹果 CMS V10 API 格式。
 
-## Expansion Pack 📦
+修改后 **无需重新构建**，服务会在启动时读取一次。
 
-This starter is now equipped with an [expansion pack](https://github.com/theodorusclarence/expansion-pack).
+## Roadmap
 
-You can easily add expansion such as React Hook Form + Components, Storybook, and more just using a single command line.
+- [ ] DB 存储
+- [ ] 深色模式
 
-<https://user-images.githubusercontent.com/55318172/146631994-e1cac137-1664-4cfe-950b-a96decc1eaa6.mp4>
+## 安全与隐私提醒
 
-Check out the [expansion pack repository](https://github.com/theodorusclarence/expansion-pack) for the commands
+### 强烈建议设置密码保护
 
-### App Router Update
+为了您的安全和避免潜在的法律风险，我们**强烈建议**在部署时设置密码保护：
 
-Due to App Router update, the expansion pack is currently **outdated**. It will be updated in the future. You can still use them by copy and pasting the files.
+- **避免公开访问**：不设置密码的实例任何人都可以访问，可能被恶意利用
+- **防范版权风险**：公开的视频搜索服务可能面临版权方的投诉举报
+- **保护个人隐私**：设置密码可以限制访问范围，保护您的使用记录
+
+### 部署建议
+
+1. **设置环境变量 `PASSWORD`**：为您的实例设置一个强密码
+2. **仅供个人使用**：请勿将您的实例链接公开分享或传播
+3. **遵守当地法律**：请确保您的使用行为符合当地法律法规
+
+### 重要声明
+
+- 本项目仅供学习和个人使用
+- 请勿将部署的实例用于商业用途或公开服务
+- 如因公开分享导致的任何法律问题，用户需自行承担责任
+- 项目开发者不对用户的使用行为承担任何法律责任
+
+## License
+
+[MIT](LICENSE) © 2025 MoonTV & Contributors
+
+## 致谢
+
+- [ts-nextjs-tailwind-starter](https://github.com/theodorusclarence/ts-nextjs-tailwind-starter) — 项目最初基于该脚手架。
+- [LibreTV](https://github.com/LibreSpark/LibreTV) — 由此启发，站在巨人的肩膀上。
+- [ArtPlayer](https://github.com/artplayer-org/artplayer) — 提供强大的网页视频播放器。
+- [HLS.js](https://github.com/video-dev/hls.js) — 实现 HLS 流媒体在浏览器中的播放支持。
+- 感谢所有提供免费影视接口的站点。
