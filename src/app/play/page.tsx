@@ -467,7 +467,7 @@ function PlayPageClient() {
         setting: false,
         loop: false,
         flip: false,
-        playbackRate: false,
+        playbackRate: true,
         aspectRatio: false,
         fullscreen: true,
         fullscreenWeb: false,

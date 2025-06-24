@@ -1,10 +1,12 @@
 # MoonTV
 
+<div align="center">
+  <img src="public/logo.png" alt="LibreTV Logo" width="120">
+</div>
+
 > 🎬 **MoonTV** 是一个开箱即用的、跨平台的影视聚合播放器。它基于 **Next.js 14** + **Tailwind&nbsp;CSS** + **TypeScript** 构建，支持多资源搜索、在线播放、收藏同步、播放记录、本地/云端存储，让你可以随时随地畅享海量免费影视内容。
 
 <div align="center">
-
-![screenshot](https://user-images.githubusercontent.com/yourname/moontv-preview.png)
 
 ![Next.js](https://img.shields.io/badge/Next.js-14-000?logo=nextdotjs)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3-38bdf8?logo=tailwindcss)
@@ -20,68 +22,107 @@
 
 - 🔍 **多源聚合搜索**：内置数十个免费资源站点，一次搜索立刻返回全源结果。
 - 📄 **丰富详情页**：支持剧集列表、演员、年份、简介等完整信息展示。
-- ▶️ **流畅在线播放**：集成 HLS.js & ArtPlayer，自动选源、倍速、字幕及弹幕。
-- ❤️ **收藏 + 继续观看**：本地 IndexedDB 持久化，支持跨设备同步（可拓展至远端数据库）。
+- ▶️ **流畅在线播放**：集成 HLS.js & ArtPlayer。
+- ❤️ **收藏 + 继续观看**：LocalStorage 存储，后续扩展 DB 存储。
 - 📱 **PWA**：离线缓存、安装到桌面/主屏，移动端原生体验。
 - 🌗 **响应式布局**：桌面侧边栏 + 移动底部导航，自适应各种屏幕尺寸。
 - 🚀 **极简部署**：一条 Docker 命令即可将完整服务跑起来，或免费部署到 Vercel。
 
+<details>
+  <summary>点击查看项目截图</summary>
+  <img src="public/screenshot.png" alt="项目截图" style="max-width:600px">
+</details>
+
 ## 🗺 目录
 
 - [技术栈](#技术栈)
-- [快速开始](#快速开始)
+- [部署](#部署)
 - [配置说明](#配置说明)
-- [构建与部署](#构建与部署)
 - [Roadmap](#roadmap)
-- [Contributing](#contributing)
+- [安全与隐私提醒](#安全与隐私提醒)
 - [License](#license)
 - [致谢](#致谢)
 
 ## 技术栈
 
-| 分类       | 主要依赖                                                                             |
-| ---------- | ------------------------------------------------------------------------------------ |
-| 前端框架   | [Next.js 14](https://nextjs.org/) · App Router                                       |
-| UI & 样式  | [Tailwind&nbsp;CSS 3](https://tailwindcss.com/)                                      |
-| 语言       | TypeScript 4                                                                         |
-| 播放器     | [ArtPlayer](https://artplayer.org/) · [HLS.js](https://github.com/video-dev/hls.js/) |
-| 状态持久化 | IndexedDB (封装于 `src/lib/db.client.ts`)                                            |
-| 代码质量   | ESLint · Prettier · Jest                                                             |
-| 部署       | Docker · Vercel                                                                      |
+| 分类      | 主要依赖                                                                             |
+| --------- | ------------------------------------------------------------------------------------ |
+| 前端框架  | [Next.js 14](https://nextjs.org/) · App Router                                       |
+| UI & 样式 | [Tailwind&nbsp;CSS 3](https://tailwindcss.com/)                                      |
+| 语言      | TypeScript 4                                                                         |
+| 播放器    | [ArtPlayer](https://artplayer.org/) · [HLS.js](https://github.com/video-dev/hls.js/) |
+| 代码质量  | ESLint · Prettier · Jest                                                             |
+| 部署      | Docker · Vercel                                                                      |
 
-## 快速开始
+## 部署
 
-### 先决条件
+本项目支持 Vercel 和 Docker 部署，注意**不支持 Cloudflare**，后续亦无支持计划。
 
-- **Node.js ≥18** (推荐 20 LTS)
-- **pnpm ≥8** (项目使用 Corepack 自动安装)
+### Vercel 部署
 
-### 克隆仓库
+> 推荐使用，零运维成本，免费额度足够个人使用。
 
-```bash
-git clone https://github.com/yourname/moontv.git
-cd MoonTV
-```
+1. **Fork** 本仓库到你的 GitHub 账户。
+2. 登陆 [Vercel](https://vercel.com/)，点击 **Add New → Project**，选择 Fork 后的仓库。
+3. （强烈建议）设置 PASSWORD 环境变量。
+4. 保持默认设置完成首次部署。
+5. 如需自定义 `config.json`，请直接修改 Fork 后仓库中该文件。
+6. 每次 Push 到 `main` 分支将自动触发重新构建。
 
-### 安装依赖
+部署完成后即可通过分配的域名访问，也可以绑定自定义域名。
 
-```bash
-pnpm install
-```
+### Docker 部署
 
-### 本地开发
+> 适用于自建服务器 / NAS / 群晖等场景。
 
-```bash
-pnpm dev  # 默认 0.0.0.0:3000，可局域网访问
-```
-
-打开 <http://localhost:3000> 即可开始体验。
-
-### 单元测试
+#### 1. 直接运行（最简单）
 
 ```bash
-pnpm test
+# 拉取预构建镜像
+docker pull ghcr.io/senshinya/moontv:latest
+
+# 运行容器
+# -d: 后台运行  -p: 映射端口 3000 -> 3000
+docker run -d --name moontv -p 3000:3000 ghcr.io/senshinya/moontv:latest
 ```
+
+访问 `http://服务器 IP:3000` 即可。
+
+#### 2. docker-compose 示例
+
+```yaml
+version: '3.9'
+services:
+  moontv:
+    image: ghcr.io/senshinya/moontv:latest
+    container_name: moontv
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      - PASSWORD=your_password
+    # 如需自定义配置，可挂载文件
+    # volumes:
+    #   - ./config.json:/app/config.json:ro
+```
+
+执行：
+
+```bash
+docker compose up -d
+```
+
+随后同样访问 `http://服务器 IP:3000`。
+
+### **请勿使用 Pull Bot 自动同步**
+
+Pull Bot 会反复触发无效的 PR 和垃圾邮件，严重干扰项目维护。作者可能会直接拉黑所有 Pull Bot 自动发起的同步请求的仓库所有者。
+
+**推荐做法：**
+
+建议在 fork 的仓库中启用本仓库自带的 GitHub Actions 自动同步功能（见 `.github/workflows/sync.yml`）。
+
+如需手动同步主仓库更新，也可以使用 GitHub 官方的 [Sync fork](https://docs.github.com/cn/github/collaborating-with-issues-and-pull-requests/syncing-a-fork) 功能。
 
 ## 配置说明
 
@@ -106,60 +147,48 @@ pnpm test
   - `key`：唯一标识，保持小写字母/数字。
   - `api`：资源站提供的 `vod` JSON API 根地址。
   - `name`：在人机界面中展示的名称。
-  - `detail`：部分无法通过 API 获取剧集详情的站点，需要提供网页详情根 URL，用于爬取。
+  - `detail`：（可选）部分无法通过 API 获取剧集详情的站点，需要提供网页详情根 URL，用于爬取。
+
+MoonTV 支持标准的苹果 CMS V10 API 格式。
 
 修改后 **无需重新构建**，服务会在启动时读取一次。
 
-## 构建与部署
-
-### 生产构建
-
-```bash
-pnpm build  # 生成 .next 产物
-pnpm start  # 以生产模式启动 (PORT=3000)
-```
-
-### Docker 一键启动
-
-```bash
-# 构建镜像
-docker build -t moontv .
-
-# 运行容器
-docker run -dp 3000:3000 --name moontv moontv
-```
-
-随后访问 <http://localhost:3000>。
-
-### Vercel 部署
-
-1. 在 Vercel 仪表盘点击 **New Project**。
-2. 选择本仓库，保持默认设置即可完成部署。
-3. 如果需要自定义 `config.json`，可在构建前上传新文件或利用 [Environment Files](https://vercel.com/docs/projects/environment-variables#files)。
-
 ## Roadmap
 
-- [ ] 第三方账号登录 / 云端同步
-- [ ] 弹幕 / 在线字幕匹配
-- [ ] 多语言国际化 (i18n)
-- [ ] 主题切换（暗黑模式）
-- [ ] 更丰富的播放器设置
+- [ ] DB 存储
+- [ ] 深色模式
 
-## Contributing
+## 安全与隐私提醒
 
-欢迎任何形式的贡献！
+### 强烈建议设置密码保护
 
-1. Fork 本仓库并创建分支。
-2. 提交前请运行 `pnpm lint` & `pnpm test` 确保无错误。
-3. 提交 Pull Request，描述你的修改目的。
+为了您的安全和避免潜在的法律风险，我们**强烈建议**在部署时设置密码保护：
 
-> 本项目采用 **[Conventional Commits](https://www.conventionalcommits.org/)** 约定，提交信息不符合规范的 PR 会被 CI 拒绝。
+- **避免公开访问**：不设置密码的实例任何人都可以访问，可能被恶意利用
+- **防范版权风险**：公开的视频搜索服务可能面临版权方的投诉举报
+- **保护个人隐私**：设置密码可以限制访问范围，保护您的使用记录
+
+### 部署建议
+
+1. **设置环境变量 `PASSWORD`**：为您的实例设置一个强密码
+2. **仅供个人使用**：请勿将您的实例链接公开分享或传播
+3. **遵守当地法律**：请确保您的使用行为符合当地法律法规
+
+### 重要声明
+
+- 本项目仅供学习和个人使用
+- 请勿将部署的实例用于商业用途或公开服务
+- 如因公开分享导致的任何法律问题，用户需自行承担责任
+- 项目开发者不对用户的使用行为承担任何法律责任
 
 ## License
 
-[MIT](LICENSE) © 2024 MoonTV & Contributors
+[MIT](LICENSE) © 2025 MoonTV & Contributors
 
 ## 致谢
 
 - [ts-nextjs-tailwind-starter](https://github.com/theodorusclarence/ts-nextjs-tailwind-starter) — 项目最初基于该脚手架。
+- [LibreTV](https://github.com/LibreSpark/LibreTV) — 由此启发，站在巨人的肩膀上。
+- [ArtPlayer](https://github.com/artplayer-org/artplayer) — 提供强大的网页视频播放器。
+- [HLS.js](https://github.com/video-dev/hls.js) — 实现 HLS 流媒体在浏览器中的播放支持。
 - 感谢所有提供免费影视接口的站点。
