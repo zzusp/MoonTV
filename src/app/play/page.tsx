@@ -773,9 +773,16 @@ function PlayPageClient() {
 
   // 处理返回按钮点击
   const handleBack = () => {
-    window.location.href = `/detail?source=${currentSource}&id=${currentId}&title=${encodeURIComponent(
-      videoTitle
-    )}`;
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromAggregate = urlParams.get('from') === 'aggregate';
+
+    if (fromAggregate) {
+      window.location.href = `/aggregate?q=${encodeURIComponent(videoTitle)}`;
+    } else {
+      window.location.href = `/detail?source=${currentSource}&id=${currentId}&title=${encodeURIComponent(
+        videoTitle
+      )}`;
+    }
   };
 
   // 处理上一集

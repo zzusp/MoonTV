@@ -222,9 +222,11 @@ function AggregatePageClient() {
                     return (
                       <a
                         key={src.source}
-                        href={`/detail?source=${src.source}&id=${
+                        href={`/play?source=${src.source}&id=${
                           src.id
-                        }&title=${encodeURIComponent(src.title)}`}
+                        }&title=${encodeURIComponent(
+                          src.title
+                        )}&from=aggregate`}
                         className='relative flex items-center justify-center w-full h-14 bg-gray-500/80 hover:bg-green-500 rounded-lg transition-colors'
                       >
                         {/* 名称 */}
@@ -233,7 +235,7 @@ function AggregatePageClient() {
                         </span>
                         {/* 集数徽标 */}
                         {epCount && epCount > 1 ? (
-                          <span className='absolute top-1 right-1 text-[10px] font-semibold text-green-900 bg-green-300/90 rounded-full px-1 pointer-events-none'>
+                          <span className='absolute top-[2px] right-1 text-[10px] font-semibold text-green-900 bg-green-300/90 rounded-full px-1 pointer-events-none'>
                             {epCount}集
                           </span>
                         ) : null}

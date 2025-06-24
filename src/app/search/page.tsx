@@ -3,8 +3,7 @@
 
 import { Search } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   addSearchHistory,
@@ -12,6 +11,7 @@ import {
   getSearchHistory,
 } from '@/lib/db.client';
 
+import AggregateCard from '@/components/AggregateCard';
 import PageLayout from '@/components/PageLayout';
 import VideoCard from '@/components/VideoCard';
 
@@ -36,6 +36,20 @@ function SearchPageClient() {
   const [showResults, setShowResults] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // 视图模式：聚合(agg) 或 全部(all)
+  const [viewMode, setViewMode] = useState<'agg' | 'all'>('agg');
+
+  // 聚合后的结果（按标题分组）
+  const aggregatedResults = useMemo(() => {
+    const map = new Map<string, SearchResult[]>();
+    searchResults.forEach((item) => {
+      const arr = map.get(item.title) || [];
+      arr.push(item);
+      map.set(item.title, arr);
+    });
+    return Array.from(map.values());
+  }, [searchResults]);
 
   useEffect(() => {
     // 自动聚焦搜索框：仅当 URL 中没有搜索参数时
@@ -127,19 +141,49 @@ function SearchPageClient() {
               <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-green-500'></div>
             </div>
           ) : showResults ? (
-            // 搜索结果
-            <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8 sm:px-4'>
-              {searchResults.map((item) => (
-                <div key={item.id} className='w-full'>
-                  <VideoCard {...item} from='search' />
-                </div>
-              ))}
-              {searchResults.length === 0 && (
-                <div className='col-span-full text-center text-gray-500 py-8'>
-                  未找到相关结果
-                </div>
-              )}
-            </div>
+            <section className='mb-12'>
+              {/* 标题 + 聚合开关 */}
+              <div className='mb-8 flex items-center justify-between'>
+                <h2 className='text-xl font-bold text-gray-800'>搜索结果</h2>
+                {/* 聚合开关 */}
+                <label className='flex items-center gap-2 cursor-pointer select-none'>
+                  <span className='text-sm text-gray-700'>聚合</span>
+                  <div className='relative'>
+                    <input
+                      type='checkbox'
+                      className='sr-only peer'
+                      checked={viewMode === 'agg'}
+                      onChange={() =>
+                        setViewMode(viewMode === 'agg' ? 'all' : 'agg')
+                      }
+                    />
+                    <div className='w-9 h-5 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors'></div>
+                    <div className='absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4'></div>
+                  </div>
+                </label>
+              </div>
+              <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8 sm:px-4'>
+                {viewMode === 'agg'
+                  ? aggregatedResults.map((group) => {
+                      const key = group[0].title;
+                      return (
+                        <div key={key} className='w-full'>
+                          <AggregateCard items={group} />
+                        </div>
+                      );
+                    })
+                  : searchResults.map((item) => (
+                      <div key={item.id} className='w-full'>
+                        <VideoCard {...item} from='search' />
+                      </div>
+                    ))}
+                {searchResults.length === 0 && (
+                  <div className='col-span-full text-center text-gray-500 py-8'>
+                    未找到相关结果
+                  </div>
+                )}
+              </div>
+            </section>
           ) : searchHistory.length > 0 ? (
             // 搜索历史
             <section className='mb-12'>
