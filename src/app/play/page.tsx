@@ -1269,7 +1269,7 @@ function PlayPageClient() {
     }
 
     // 仅在播放时触发
-    if (artPlayerRef.current?.video?.paused) {
+    if (!artPlayerRef.current?.playing) {
       return;
     }
 
