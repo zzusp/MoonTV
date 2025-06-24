@@ -29,7 +29,7 @@ const PageLayout = ({ children, activePath = '/' }: PageLayoutProps) => {
       <div className='md:hidden flex flex-col min-h-screen w-full'>
         <MobileHeader />
         <main
-          className='flex-1 pb-14'
+          className='flex-1 mb-14'
           style={{
             paddingBottom: 'calc(3.5rem + env(safe-area-inset-bottom))',
           }}
