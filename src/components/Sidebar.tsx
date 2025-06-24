@@ -1,4 +1,5 @@
 import {
+  Clover,
   Film,
   Home,
   Menu,
@@ -141,6 +142,11 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
       icon: Star,
       label: '豆瓣 Top250',
       href: '/douban?type=movie&tag=top250&title=豆瓣 Top250',
+    },
+    {
+      icon: Clover,
+      label: '综艺',
+      href: '/douban?type=tv&tag=综艺&title=综艺',
     },
     { icon: Swords, label: '美剧', href: '/douban?type=tv&tag=美剧' },
     {
