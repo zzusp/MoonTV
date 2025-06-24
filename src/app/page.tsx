@@ -1,5 +1,7 @@
 'use client';
 
+import { ChevronRight } from 'lucide-react';
+import Link from 'next/link';
 import { Suspense, useEffect, useState } from 'react';
 
 // 客户端收藏 API
@@ -139,9 +141,16 @@ function HomeClient() {
 
               {/* 热门电影 */}
               <section className='mb-8'>
-                <h2 className='mb-4 text-xl font-bold text-gray-800 text-left'>
-                  热门电影
-                </h2>
+                <div className='mb-4 flex items-center justify-between'>
+                  <h2 className='text-xl font-bold text-gray-800'>热门电影</h2>
+                  <Link
+                    href='/douban?type=movie&tag=热门&title=热门电影'
+                    className='flex items-center text-sm text-gray-500 hover:text-gray-700'
+                  >
+                    查看更多
+                    <ChevronRight className='w-4 h-4 ml-1' />
+                  </Link>
+                </div>
                 <ScrollableRow>
                   {loading
                     ? // 加载状态显示灰色占位数据
@@ -174,9 +183,16 @@ function HomeClient() {
 
               {/* 热门剧集 */}
               <section className='mb-8'>
-                <h2 className='mb-4 text-xl font-bold text-gray-800 text-left'>
-                  热门剧集
-                </h2>
+                <div className='mb-4 flex items-center justify-between'>
+                  <h2 className='text-xl font-bold text-gray-800'>热门剧集</h2>
+                  <Link
+                    href='/douban?type=tv&tag=热门&title=热门剧集'
+                    className='flex items-center text-sm text-gray-500 hover:text-gray-700'
+                  >
+                    查看更多
+                    <ChevronRight className='w-4 h-4 ml-1' />
+                  </Link>
+                </div>
                 <ScrollableRow>
                   {loading
                     ? // 加载状态显示灰色占位数据
