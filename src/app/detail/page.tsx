@@ -309,7 +309,7 @@ function DetailPageClient() {
                     共 {detail.episodes.length} 集
                   </div>
                 </div>
-                <div className='grid grid-cols-3 gap-2 sm:grid-cols-[repeat(auto-fit,_minmax(6rem,_1fr))] sm:gap-4'>
+                <div className='grid grid-cols-3 gap-2 sm:grid-cols-[repeat(auto-fill,_minmax(6rem,_6rem))] sm:gap-4 justify-start'>
                   {detail.episodes.map((episode, idx) => (
                     <a
                       key={idx}
