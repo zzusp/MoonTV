@@ -1,12 +1,8 @@
+import fs from 'fs';
+import path from 'path';
+
 export interface ApiSite {
   key: string;
-  api: string;
-  name: string;
-  detail?: string;
-}
-
-// 配置文件中的 API 站点类型（不包含 key 属性）
-export interface ApiSiteConfig {
   api: string;
   name: string;
   detail?: string;
@@ -26,7 +22,7 @@ export interface StorageConfig {
 export interface Config {
   cache_time?: number;
   api_site: {
-    [key: string]: ApiSiteConfig;
+    [key: string]: ApiSite;
   };
   storage?: StorageConfig;
 }
@@ -52,103 +48,24 @@ export const API_CONFIG = {
   },
 };
 
-// 配置数据，直接嵌入不再从文件读取
-const CONFIG_DATA: Config = {
-  cache_time: 7200,
-  api_site: {
-    dyttzy: {
-      api: 'http://caiji.dyttzyapi.com/api.php/provide/vod',
-      name: '电影天堂资源',
-      detail: 'http://caiji.dyttzyapi.com',
-    },
-    ruyi: {
-      api: 'https://cj.rycjapi.com/api.php/provide/vod',
-      name: '如意资源',
-    },
-    bfzy: {
-      api: 'https://bfzyapi.com/api.php/provide/vod',
-      name: '暴风资源',
-    },
-    tyyszy: {
-      api: 'https://tyyszy.com/api.php/provide/vod',
-      name: '天涯资源',
-    },
-    ffzy: {
-      api: 'http://ffzy5.tv/api.php/provide/vod',
-      name: '非凡影视',
-      detail: 'http://ffzy5.tv',
-    },
-    heimuer: {
-      api: 'https://json.heimuer.xyz/api.php/provide/vod',
-      name: '黑木耳',
-      detail: 'https://heimuer.tv',
-    },
-    zy360: {
-      api: 'https://360zy.com/api.php/provide/vod',
-      name: '360资源',
-    },
-    iqiyi: {
-      api: 'https://www.iqiyizyapi.com/api.php/provide/vod',
-      name: 'iqiyi资源',
-    },
-    wolong: {
-      api: 'https://wolongzyw.com/api.php/provide/vod',
-      name: '卧龙资源',
-    },
-    hwba: {
-      api: 'https://cjhwba.com/api.php/provide/vod',
-      name: '华为吧资源',
-    },
-    jisu: {
-      api: 'https://jszyapi.com/api.php/provide/vod',
-      name: '极速资源',
-      detail: 'https://jszyapi.com',
-    },
-    dbzy: {
-      api: 'https://dbzy.tv/api.php/provide/vod',
-      name: '豆瓣资源',
-    },
-    mozhua: {
-      api: 'https://mozhuazy.com/api.php/provide/vod',
-      name: '魔爪资源',
-    },
-    mdzy: {
-      api: 'https://www.mdzyapi.com/api.php/provide/vod',
-      name: '魔都资源',
-    },
-    zuid: {
-      api: 'https://api.zuidapi.com/api.php/provide/vod',
-      name: '最大资源',
-    },
-    yinghua: {
-      api: 'https://m3u8.apiyhzy.com/api.php/provide/vod',
-      name: '樱花资源',
-    },
-    wujin: {
-      api: 'https://api.wujinapi.me/api.php/provide/vod',
-      name: '无尽资源',
-    },
-    wwzy: {
-      api: 'https://wwzy.tv/api.php/provide/vod',
-      name: '旺旺短剧',
-    },
-    ikun: {
-      api: 'https://ikunzyapi.com/api.php/provide/vod',
-      name: 'iKun资源',
-    },
-  },
-};
+// 在模块加载时立即读取配置文件并缓存到内存，后续调用直接返回缓存内容，避免重复文件 I/O
+const configPath = path.join(process.cwd(), 'config.json');
+const cachedConfig: Config = JSON.parse(
+  fs.readFileSync(configPath, 'utf-8')
+) as Config;
 
 export function getConfig(): Config {
-  return CONFIG_DATA;
+  return cachedConfig;
 }
 
 export function getCacheTime(): number {
-  return CONFIG_DATA.cache_time || 300; // 默认5分钟缓存
+  const config = getConfig();
+  return config.cache_time || 300; // 默认5分钟缓存
 }
 
 export function getApiSites(): ApiSite[] {
-  return Object.entries(CONFIG_DATA.api_site).map(([key, site]) => ({
+  const config = getConfig();
+  return Object.entries(config.api_site).map(([key, site]) => ({
     ...site,
     key,
   }));
