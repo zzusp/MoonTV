@@ -1456,7 +1456,9 @@ function PlayPageClient() {
         <div
           data-top-bar
           className={`absolute top-0 left-0 right-0 transition-opacity duration-300 ${
-            showTopBar ? 'opacity-100' : 'opacity-0'
+            showTopBar
+              ? 'opacity-100 pointer-events-auto'
+              : 'opacity-0 pointer-events-none'
           }`}
         >
           <div className='bg-black/60 backdrop-blur-sm px-0 sm:px-6 py-4 relative flex items-center sm:justify-center'>
