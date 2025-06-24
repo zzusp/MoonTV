@@ -21,6 +21,8 @@ html,
 body {
   height: 100%;
   overflow-x: hidden;
+  /* 阻止 iOS Safari 拉动回弹 */
+  overscroll-behavior: none;
 }
 
 body {
