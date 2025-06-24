@@ -5,6 +5,7 @@ import { getCacheTime } from '@/lib/config';
 interface DoubanItem {
   title: string;
   poster: string;
+  rate: string;
 }
 
 interface DoubanResponse {
@@ -17,6 +18,7 @@ interface DoubanApiResponse {
   subjects: Array<{
     title: string;
     cover: string;
+    rate: string;
   }>;
 }
 
@@ -104,6 +106,7 @@ export async function GET(request: Request) {
     const list: DoubanItem[] = doubanData.subjects.map((item) => ({
       title: item.title,
       poster: item.cover,
+      rate: item.rate,
     }));
 
     const response: DoubanResponse = {
@@ -157,13 +160,14 @@ function handleTop250(pageStart: number) {
 
       // 使用正则表达式提取电影信息
       const moviePattern =
-        /<div class="item">[\s\S]*?<img.*?alt="([^"]*)"[\s\S]*?src="([^"]*)"[\s\S]*?<\/div>/g;
+        /<div class="item">[\s\S]*?<img[^>]+alt="([^"]+)"[^>]*src="([^"]+)"[\s\S]*?<span class="rating_num"[^>]*>([^<]+)<\/span>[\s\S]*?<\/div>/g;
       const movies: DoubanItem[] = [];
       let match;
 
       while ((match = moviePattern.exec(html)) !== null) {
         const title = match[1];
         const cover = match[2];
+        const rate = match[3] || '';
 
         // 处理图片 URL，确保使用 HTTPS
         const processedCover = cover.replace(/^http:/, 'https:');
@@ -171,6 +175,7 @@ function handleTop250(pageStart: number) {
         movies.push({
           title: title,
           poster: processedCover,
+          rate: rate,
         });
       }
 

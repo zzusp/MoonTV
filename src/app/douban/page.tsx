@@ -12,6 +12,7 @@ import PageLayout from '@/components/PageLayout';
 interface DoubanItem {
   title: string;
   poster: string;
+  rate?: string;
 }
 
 // 定义豆瓣响应类型
@@ -209,7 +210,11 @@ function DoubanPageClient() {
                   : // 显示实际数据
                     doubanData.map((item, index) => (
                       <div key={`${item.title}-${index}`} className='w-full'>
-                        <DemoCard title={item.title} poster={item.poster} />
+                        <DemoCard
+                          title={item.title}
+                          poster={item.poster}
+                          rate={item.rate}
+                        />
                       </div>
                     ))}
               </div>

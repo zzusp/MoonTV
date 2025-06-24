@@ -15,6 +15,7 @@ import VideoCard from '@/components/VideoCard';
 interface DoubanItem {
   title: string;
   poster: string;
+  rate?: string;
 }
 
 interface DoubanResponse {
@@ -161,7 +162,11 @@ function HomeClient() {
                           key={index}
                           className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
                         >
-                          <DemoCard title={movie.title} poster={movie.poster} />
+                          <DemoCard
+                            title={movie.title}
+                            poster={movie.poster}
+                            rate={movie.rate}
+                          />
                         </div>
                       ))}
                 </ScrollableRow>
@@ -192,7 +197,11 @@ function HomeClient() {
                           key={index}
                           className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
                         >
-                          <DemoCard title={show.title} poster={show.poster} />
+                          <DemoCard
+                            title={show.title}
+                            poster={show.poster}
+                            rate={show.rate}
+                          />
                         </div>
                       ))}
                 </ScrollableRow>

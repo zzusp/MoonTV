@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 interface DemoCardProps {
   title: string;
   poster: string;
+  rate?: string;
 }
 
 function SearchCircle({
@@ -52,12 +53,12 @@ function SearchCircle({
   );
 }
 
-const DemoCard = ({ title, poster }: DemoCardProps) => {
+const DemoCard = ({ title, poster, rate }: DemoCardProps) => {
   const [hover, setHover] = useState(false);
   const router = useRouter();
 
   const handleClick = () => {
-    router.push(`/search?q=${encodeURIComponent(title)}`);
+    router.push(`/aggregate?q=${encodeURIComponent(title)}`);
   };
 
   return (
@@ -74,6 +75,14 @@ const DemoCard = ({ title, poster }: DemoCardProps) => {
           className='object-cover'
           referrerPolicy='no-referrer'
         />
+        {/* 评分徽章 */}
+        {rate && (
+          <div className='absolute top-2 right-2 min-w-[1.25rem] h-4 sm:min-w-[1.5rem] sm:h-6 bg-pink-500 rounded-full flex items-center justify-center px-1'>
+            <span className='text-white text-[0.5rem] sm:text-xs font-bold leading-none'>
+              {rate}
+            </span>
+          </div>
+        )}
         {/* Hover 效果 */}
         <div className='absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center group'>
           <div className='absolute inset-0 flex items-center justify-center'>
