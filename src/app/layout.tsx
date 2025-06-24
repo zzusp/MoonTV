@@ -8,8 +8,10 @@ import AuthProvider from '../components/AuthProvider';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: '聚合视频站',
-  description: '一个聚合多个视频源的现代化视频网站',
+  title: 'MoonTV',
+  description: '影视聚合',
+  manifest: '/manifest.json',
+  themeColor: '#0f172a',
 };
 
 export default function RootLayout({
