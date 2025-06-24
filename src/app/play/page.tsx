@@ -556,6 +556,14 @@ function PlayPageClient() {
               setShowEpisodePanel(true);
             },
           },
+          {
+            position: 'right',
+            html: '换源',
+            tooltip: '更换视频源',
+            click: function () {
+              handleSourcePanelOpen();
+            },
+          },
         ],
       });
 
