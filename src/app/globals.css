@@ -88,6 +88,16 @@ body {
   }
 }
 
+/* 隐藏所有滚动条（兼容 WebKit、Firefox、IE/Edge） */
+* {
+  -ms-overflow-style: none; /* IE & Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
 /* 隐藏 Artplayer 顶部提示 */
 .art-notice {
   display: none !important;
