@@ -10,7 +10,7 @@ import {
 import { Heart } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import React from 'react';
 
 import 'vidstack/styles/defaults.css';
@@ -48,6 +48,7 @@ function PlayPageClient() {
   const searchParams = useSearchParams();
   // @ts-ignore
   const playerRef = useRef<any>(null);
+  const playerContainerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -100,6 +101,7 @@ function PlayPageClient() {
       ? window.matchMedia('(orientation: portrait)').matches
       : true
   );
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // 长按三倍速相关状态
   const [isLongPressing, setIsLongPressing] = useState(false);
@@ -122,31 +124,23 @@ function PlayPageClient() {
   useEffect(() => {
     currentSourceRef.current = currentSource;
     currentIdRef.current = currentId;
-  }, [currentSource, currentId]);
-
-  useEffect(() => {
-    videoTitleRef.current = videoTitle;
-  }, [videoTitle]);
-
-  // 保持引用最新
-  useEffect(() => {
-    currentEpisodeIndexRef.current = currentEpisodeIndex;
-  }, [currentEpisodeIndex]);
-
-  useEffect(() => {
     detailRef.current = detail;
-  }, [detail]);
+    currentEpisodeIndexRef.current = currentEpisodeIndex;
+    videoTitleRef.current = videoTitle;
+  }, [currentSource, currentId, detail, currentEpisodeIndex, videoTitle]);
+
+  // 解决 iOS Safari 100vh 不准确的问题：将视口高度写入 CSS 变量 --vh
+  const setVH = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      document.documentElement.style.setProperty(
+        '--vh',
+        `${window.innerHeight * 0.01}px`
+      );
+    }
+  }, []);
 
   // 解决 iOS Safari 100vh 不准确的问题：将视口高度写入 CSS 变量 --vh
   useEffect(() => {
-    const setVH = () => {
-      if (typeof window !== 'undefined') {
-        document.documentElement.style.setProperty(
-          '--vh',
-          `${window.innerHeight * 0.01}px`
-        );
-      }
-    };
     setVH();
     window.addEventListener('resize', setVH);
     window.addEventListener('orientationchange', setVH);
@@ -154,7 +148,7 @@ function PlayPageClient() {
       window.removeEventListener('resize', setVH);
       window.removeEventListener('orientationchange', setVH);
     };
-  }, []);
+  }, [setVH]);
 
   // 根据 detail 和集数索引更新视频地址（仅当地址真正变化时）
   const updateVideoUrl = (
@@ -172,6 +166,7 @@ function PlayPageClient() {
     const newUrl = detailData?.episodes[episodeIndex] || '';
     if (newUrl !== videoUrl) {
       setVideoUrl(newUrl);
+      playerContainerRef.current?.focus();
     }
   };
 
@@ -293,7 +288,6 @@ function PlayPageClient() {
     };
 
     initFromHistory();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 播放器事件处理
@@ -554,6 +548,7 @@ function PlayPageClient() {
   // 处理播放源面板展开
   const handleSourcePanelOpen = () => {
     setShowSourcePanel(true);
+    playerContainerRef.current?.focus();
     // 只在第一次展开时搜索
     if (videoTitle && !hasSearchedRef.current) {
       handleSearch(videoTitle);
@@ -592,8 +587,10 @@ function PlayPageClient() {
       if (detailRef.current && currentEpisodeIndexRef.current > 0) {
         handlePreviousEpisode();
         displayShortcutHint('上一集', 'left');
-        e.preventDefault();
+      } else {
+        displayShortcutHint('已经是第一集了', 'error');
       }
+      e.preventDefault();
     }
 
     // Alt + 右箭头 = 下一集
@@ -603,8 +600,10 @@ function PlayPageClient() {
       if (d && idx < d.episodes.length - 1) {
         handleNextEpisode();
         displayShortcutHint('下一集', 'right');
-        e.preventDefault();
+      } else {
+        displayShortcutHint('已经是最后一集了', 'error');
       }
+      e.preventDefault();
     }
 
     if (!playerRef.current) return;
@@ -615,8 +614,8 @@ function PlayPageClient() {
       if (player.currentTime > 5) {
         player.currentTime -= 10;
         displayShortcutHint('快退', 'left');
-        e.preventDefault();
       }
+      e.preventDefault();
     }
 
     // 右箭头 = 快进
@@ -624,8 +623,8 @@ function PlayPageClient() {
       if (player.currentTime < player.duration - 5) {
         player.currentTime += 10;
         displayShortcutHint('快进', 'right');
-        e.preventDefault();
       }
+      e.preventDefault();
     }
 
     // 上箭头 = 音量+
@@ -633,8 +632,10 @@ function PlayPageClient() {
       if (player.volume < 1) {
         player.volume += 0.1;
         displayShortcutHint(`音量 ${Math.round(player.volume * 100)}`, 'up');
-        e.preventDefault();
+      } else {
+        displayShortcutHint('音量 100', 'up');
       }
+      e.preventDefault();
     }
 
     // 下箭头 = 音量-
@@ -642,14 +643,21 @@ function PlayPageClient() {
       if (player.volume > 0) {
         player.volume -= 0.1;
         displayShortcutHint(`音量 ${Math.round(player.volume * 100)}`, 'down');
-        e.preventDefault();
+      } else {
+        displayShortcutHint('音量 0', 'down');
       }
+      e.preventDefault();
     }
 
     // 空格 = 播放/暂停
     if (e.key === ' ') {
-      if (player.paused) player.play();
-      else player.pause();
+      if (playerRef.current.paused) {
+        playerRef.current.play();
+        displayShortcutHint('播放', 'play');
+      } else {
+        playerRef.current.pause();
+        displayShortcutHint('暂停', 'pause');
+      }
       e.preventDefault();
     }
 
@@ -836,13 +844,23 @@ function PlayPageClient() {
     if (!player) return;
 
     return player.subscribe(({ fullscreen }: any) => {
+      setIsFullscreen(fullscreen);
       if (fullscreen) {
         lockLandscape();
       } else {
         unlock();
+        // 强制重绘逻辑，解决退出全屏的黑屏/白边问题
+        const playerEl = playerRef.current?.el as HTMLElement | null;
+        if (playerEl) {
+          playerEl.style.display = 'none';
+          setTimeout(() => {
+            playerEl.style.display = '';
+            setVH();
+          }, 0);
+        }
       }
     });
-  }, [playerRef.current]);
+  }, [playerRef.current, setVH]);
 
   useEffect(() => {
     // 播放页挂载时，锁定页面滚动并消除 body 100vh 带来的额外空白
@@ -952,22 +970,16 @@ function PlayPageClient() {
       e.stopPropagation();
     };
 
-    // @ts-ignore
     playerEl.addEventListener('touchstart', handleTouchStart, {
       passive: true,
     });
-    // @ts-ignore
     playerEl.addEventListener('touchend', handleTouchEnd, { passive: true });
-    // @ts-ignore
     playerEl.addEventListener('touchcancel', handleTouchEnd, { passive: true });
     playerEl.addEventListener('contextmenu', disableContextMenu);
 
     return () => {
-      // @ts-ignore
       playerEl.removeEventListener('touchstart', handleTouchStart);
-      // @ts-ignore
       playerEl.removeEventListener('touchend', handleTouchEnd);
-      // @ts-ignore
       playerEl.removeEventListener('touchcancel', handleTouchEnd);
       playerEl.removeEventListener('contextmenu', disableContextMenu);
     };
@@ -1027,6 +1039,7 @@ function PlayPageClient() {
     sourceName,
     onToggleFavorite,
     onOpenSourcePanel,
+    isFullscreen,
   }: {
     videoTitle: string;
     favorited: boolean;
@@ -1035,6 +1048,7 @@ function PlayPageClient() {
     sourceName: string;
     onToggleFavorite: () => void;
     onOpenSourcePanel: () => void;
+    isFullscreen: boolean;
   }) => {
     return (
       <div
@@ -1043,31 +1057,37 @@ function PlayPageClient() {
       >
         <div className='bg-black/60 backdrop-blur-sm px-0 sm:px-6 py-4 relative flex items-center sm:justify-center'>
           {/* 返回按钮 */}
-          <button
-            onClick={() => {
-              if (playerRef.current?.fullscreen) {
-                playerRef.current?.exitFullscreen();
-              }
-              window.history.back();
-            }}
-            className='absolute left-0 sm:left-6 text-white hover:text-gray-300 transition-colors p-2'
-          >
-            <svg
-              width='24'
-              height='24'
-              viewBox='0 0 24 24'
-              fill='none'
-              xmlns='http://www.w3.org/2000/svg'
+          {!isFullscreen && (
+            <button
+              onClick={() => {
+                if (playerRef.current?.fullscreen) {
+                  playerRef.current?.exitFullscreen();
+                }
+                window.history.back();
+              }}
+              className='absolute left-0 sm:left-6 text-white hover:text-gray-300 transition-colors p-2'
             >
-              <path
-                d='M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z'
-                fill='currentColor'
-              />
-            </svg>
-          </button>
+              <svg
+                width='24'
+                height='24'
+                viewBox='0 0 24 24'
+                fill='none'
+                xmlns='http://www.w3.org/2000/svg'
+              >
+                <path
+                  d='M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z'
+                  fill='currentColor'
+                />
+              </svg>
+            </button>
+          )}
 
           {/* 中央标题及集数信息 */}
-          <div className='ml-10 sm:ml-0 text-left sm:text-center'>
+          <div
+            className={`sm:text-center ${
+              !isFullscreen ? 'ml-10 sm:ml-0 text-left' : 'w-full text-center'
+            }`}
+          >
             <div className='flex items-center justify-center gap-2 max-w-xs mx-auto'>
               <span className='text-white font-semibold text-lg truncate'>
                 {videoTitle}
@@ -1106,6 +1126,8 @@ function PlayPageClient() {
 
   return (
     <div
+      ref={playerContainerRef}
+      tabIndex={-1}
       className='bg-black fixed inset-0 overflow-hidden overscroll-contain'
       style={{ height: 'calc(var(--vh, 1vh) * 100)' }}
     >
@@ -1187,6 +1209,7 @@ function PlayPageClient() {
           sourceName={detail?.videoInfo.source_name || ''}
           onToggleFavorite={handleToggleFavorite}
           onOpenSourcePanel={handleSourcePanelOpen}
+          isFullscreen={isFullscreen}
         />
         <DefaultVideoLayout
           icons={defaultLayoutIcons}
@@ -1195,41 +1218,23 @@ function PlayPageClient() {
             airPlayButton: null,
             pipButton: null,
             settingsMenu: null,
-            beforeMuteButton:
-              totalEpisodes > 1 ? (
-                // Desktop-only next button
-                <button
-                  className='vds-button hidden sm:flex'
-                  onClick={handleNextEpisode}
-                  aria-label='Next Episode'
-                >
-                  <svg
-                    className='vds-icon'
-                    viewBox='0 0 24 24'
-                    xmlns='http://www.w3.org/2000/svg'
-                  >
-                    <path
-                      d='M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z'
-                      fill='currentColor'
-                    />
-                  </svg>
-                </button>
-              ) : null,
+            muteButton: null, // 隐藏静音按钮
+            volumeSlider: null, // 隐藏音量条
             beforeCurrentTime:
               totalEpisodes > 1 ? (
-                // Mobile-only next button
+                // 下一集按钮放在时间显示前
                 <button
-                  className='vds-button sm:hidden'
+                  className='vds-button mr-2'
                   onClick={handleNextEpisode}
                   aria-label='Next Episode'
                 >
                   <svg
                     className='vds-icon'
-                    viewBox='0 0 24 24'
+                    viewBox='0 0 32 32'
                     xmlns='http://www.w3.org/2000/svg'
                   >
                     <path
-                      d='M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z'
+                      d='M6 24l12-8L6 8v16zM22 8v16h3V8h-3z'
                       fill='currentColor'
                     />
                   </svg>
@@ -1240,7 +1245,10 @@ function PlayPageClient() {
                 {totalEpisodes > 1 && (
                   <button
                     className='vds-button mr-2'
-                    onClick={() => setShowEpisodePanel(true)}
+                    onClick={() => {
+                      setShowEpisodePanel(true);
+                      playerContainerRef.current?.focus();
+                    }}
                   >
                     选集
                   </button>
@@ -1258,13 +1266,16 @@ function PlayPageClient() {
             {showEpisodePanel && (
               <div
                 className='fixed inset-0 bg-black/50 z-[110]'
-                onClick={() => setShowEpisodePanel(false)}
+                onClick={() => {
+                  setShowEpisodePanel(false);
+                  playerContainerRef.current?.focus();
+                }}
               />
             )}
 
             {/* 侧拉面板 */}
             <div
-              className={`fixed top-0 right-0 h-full w-full md:w-80 bg-black/40 backdrop-blur-xl z-[110] transform transition-transform duration-300 ${
+              className={`fixed top-0 right-0 h-full w-full mobile-landscape:w-1/2 md:w-80 bg-black/40 backdrop-blur-xl z-[110] transform transition-transform duration-300 ${
                 showEpisodePanel ? 'translate-x-0' : 'translate-x-full'
               }`}
             >
@@ -1272,7 +1283,10 @@ function PlayPageClient() {
                 <div className='flex items-center justify-between mb-6'>
                   <h3 className='text-white text-xl font-semibold'>选集列表</h3>
                   <button
-                    onClick={() => setShowEpisodePanel(false)}
+                    onClick={() => {
+                      setShowEpisodePanel(false);
+                      playerContainerRef.current?.focus();
+                    }}
                     className='text-gray-400 hover:text-white transition-colors'
                   >
                     <svg
@@ -1323,13 +1337,16 @@ function PlayPageClient() {
           {showSourcePanel && (
             <div
               className='fixed inset-0 bg-black/50 z-[110]'
-              onClick={() => setShowSourcePanel(false)}
+              onClick={() => {
+                setShowSourcePanel(false);
+                playerContainerRef.current?.focus();
+              }}
             />
           )}
 
           {/* 侧拉面板 */}
           <div
-            className={`fixed top-0 right-0 h-full w-full md:w-96 bg-black/40 backdrop-blur-xl z-[110] transform transition-transform duration-300 ${
+            className={`fixed top-0 right-0 h-full w-full mobile-landscape:w-1/2 md:w-96 bg-black/40 backdrop-blur-xl z-[110] transform transition-transform duration-300 ${
               showSourcePanel ? 'translate-x-0' : 'translate-x-full'
             }`}
           >
@@ -1337,7 +1354,10 @@ function PlayPageClient() {
               <div className='flex items-center justify-between mb-6'>
                 <h3 className='text-white text-xl font-semibold'>播放源</h3>
                 <button
-                  onClick={() => setShowSourcePanel(false)}
+                  onClick={() => {
+                    setShowSourcePanel(false);
+                    playerContainerRef.current?.focus();
+                  }}
                   className='text-gray-400 hover:text-white transition-colors'
                 >
                   <svg
@@ -1506,6 +1526,30 @@ function PlayPageClient() {
                   strokeLinejoin='round'
                   strokeWidth='2'
                   d='M19 9l-7 7-7-7'
+                ></path>
+              )}
+              {shortcutDirection === 'play' && (
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth='2'
+                  d='M8 5v14l11-7L8 5z'
+                ></path>
+              )}
+              {shortcutDirection === 'pause' && (
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth='2'
+                  d='M6 6h4v12H6zm8 0h4v12h-4z'
+                ></path>
+              )}
+              {shortcutDirection === 'error' && (
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth='2'
+                  d='M6 18L18 6M6 6l12 12'
                 ></path>
               )}
             </svg>
