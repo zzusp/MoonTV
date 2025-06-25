@@ -125,6 +125,32 @@ function PlayPageClient() {
     sourceDom: HTMLElement | null;
   }>({ topDom: null, episodeDom: null, sourceDom: null });
 
+  const currentEpisodeIndexRef = useRef(currentEpisodeIndex);
+  const detailRef = useRef<VideoDetail | null>(detail);
+
+  const currentSourceRef = useRef(currentSource);
+  const currentIdRef = useRef(currentId);
+  const videoTitleRef = useRef(videoTitle);
+
+  // 同步最新值到 refs
+  useEffect(() => {
+    currentSourceRef.current = currentSource;
+    currentIdRef.current = currentId;
+  }, [currentSource, currentId]);
+
+  useEffect(() => {
+    videoTitleRef.current = videoTitle;
+  }, [videoTitle]);
+
+  // 保持引用最新
+  useEffect(() => {
+    currentEpisodeIndexRef.current = currentEpisodeIndex;
+  }, [currentEpisodeIndex]);
+
+  useEffect(() => {
+    detailRef.current = detail;
+  }, [detail]);
+
   /**
    * 在销毁旧播放器实例之前，将业务层节点缓存起来，防止节点随播放器一起被移除。
    */
@@ -258,6 +284,7 @@ function PlayPageClient() {
 
         // 确保集数索引在有效范围内
         if (currentEpisodeIndex >= data.episodes.length) {
+          console.log('currentEpisodeIndex', currentEpisodeIndex);
           setCurrentEpisodeIndex(0);
         }
 
@@ -588,13 +615,11 @@ function PlayPageClient() {
 
       // 监听视频播放结束事件，自动播放下一集
       artPlayerRef.current.on('video:ended', () => {
-        if (
-          detail &&
-          detail.episodes &&
-          currentEpisodeIndex < detail.episodes.length - 1
-        ) {
+        const d = detailRef.current;
+        const idx = currentEpisodeIndexRef.current;
+        if (d && d.episodes && idx < d.episodes.length - 1) {
           setTimeout(() => {
-            setCurrentEpisodeIndex(currentEpisodeIndex + 1);
+            setCurrentEpisodeIndex(idx + 1);
           }, 1000);
         }
       });
@@ -729,13 +754,13 @@ function PlayPageClient() {
     }
   }, [videoTitle]);
 
-  // 添加键盘事件监听器
+  // 添加键盘事件监听器 (使用 refs 避免重复绑定)
   useEffect(() => {
     document.addEventListener('keydown', handleKeyboardShortcuts);
     return () => {
       document.removeEventListener('keydown', handleKeyboardShortcuts);
     };
-  }, [currentEpisodeIndex, detail, artPlayerRef.current]);
+  }, []);
 
   // 处理选集切换
   const handleEpisodeChange = (episodeIndex: number) => {
@@ -755,12 +780,9 @@ function PlayPageClient() {
 
   // 处理下一集
   const handleNextEpisode = () => {
-    if (
-      detail &&
-      detail.episodes &&
-      currentEpisodeIndex < detail.episodes.length - 1
-    ) {
-      // 在更换集数前保存当前播放进度
+    const d = detailRef.current;
+    const idx = currentEpisodeIndexRef.current;
+    if (d && d.episodes && idx < d.episodes.length - 1) {
       if (
         artPlayerRef.current &&
         artPlayerRef.current.video &&
@@ -768,27 +790,14 @@ function PlayPageClient() {
       ) {
         saveCurrentPlayProgress();
       }
-      setCurrentEpisodeIndex(currentEpisodeIndex + 1);
-    }
-  };
-
-  // 处理返回按钮点击
-  const handleBack = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const fromAggregate = urlParams.get('from') === 'aggregate';
-
-    if (fromAggregate) {
-      window.location.href = `/aggregate?q=${encodeURIComponent(videoTitle)}`;
-    } else {
-      window.location.href = `/detail?source=${currentSource}&id=${currentId}&title=${encodeURIComponent(
-        videoTitle
-      )}`;
+      setCurrentEpisodeIndex(idx + 1);
     }
   };
 
   // 处理上一集
   const handlePreviousEpisode = () => {
-    if (detail && currentEpisodeIndex > 0) {
+    const idx = currentEpisodeIndexRef.current;
+    if (detailRef.current && idx > 0) {
       if (
         artPlayerRef.current &&
         artPlayerRef.current.video &&
@@ -796,7 +805,7 @@ function PlayPageClient() {
       ) {
         saveCurrentPlayProgress();
       }
-      setCurrentEpisodeIndex(currentEpisodeIndex - 1);
+      setCurrentEpisodeIndex(idx - 1);
     }
   };
 
@@ -955,7 +964,7 @@ function PlayPageClient() {
 
     // Alt + 左箭头 = 上一集
     if (e.altKey && e.key === 'ArrowLeft') {
-      if (detail && currentEpisodeIndex > 0) {
+      if (detailRef.current && currentEpisodeIndexRef.current > 0) {
         handlePreviousEpisode();
         displayShortcutHint('上一集', 'left');
         e.preventDefault();
@@ -964,7 +973,9 @@ function PlayPageClient() {
 
     // Alt + 右箭头 = 下一集
     if (e.altKey && e.key === 'ArrowRight') {
-      if (detail && currentEpisodeIndex < detail.episodes.length - 1) {
+      const d = detailRef.current;
+      const idx = currentEpisodeIndexRef.current;
+      if (d && idx < d.episodes.length - 1) {
         handleNextEpisode();
         displayShortcutHint('下一集', 'right');
         e.preventDefault();
@@ -1051,10 +1062,10 @@ function PlayPageClient() {
   const saveCurrentPlayProgress = async () => {
     if (
       !artPlayerRef.current?.video ||
-      !currentSource ||
-      !currentId ||
-      !videoTitle ||
-      !detail?.videoInfo?.source_name
+      !currentSourceRef.current ||
+      !currentIdRef.current ||
+      !videoTitleRef.current ||
+      !detailRef.current?.videoInfo?.source_name
     ) {
       return;
     }
@@ -1069,11 +1080,11 @@ function PlayPageClient() {
     }
 
     try {
-      await savePlayRecord(currentSource, currentId, {
-        title: videoTitle,
-        source_name: detail.videoInfo.source_name,
+      await savePlayRecord(currentSourceRef.current, currentIdRef.current, {
+        title: videoTitleRef.current,
+        source_name: detailRef.current?.videoInfo.source_name,
         cover: videoCover,
-        index: currentEpisodeIndex + 1, // 转换为1基索引
+        index: currentEpisodeIndexRef.current + 1, // 转换为1基索引
         total_episodes: totalEpisodes,
         play_time: Math.floor(currentTime),
         total_time: Math.floor(duration),
@@ -1082,8 +1093,8 @@ function PlayPageClient() {
 
       lastSaveTimeRef.current = Date.now();
       console.log('播放进度已保存:', {
-        title: videoTitle,
-        episode: currentEpisodeIndex + 1,
+        title: videoTitleRef.current,
+        episode: currentEpisodeIndexRef.current + 1,
         progress: `${Math.floor(currentTime)}/${Math.floor(duration)}`,
       });
     } catch (err) {
@@ -1472,7 +1483,7 @@ function PlayPageClient() {
           <div className='bg-black/60 backdrop-blur-sm px-0 sm:px-6 py-4 relative flex items-center sm:justify-center'>
             {/* 返回按钮 */}
             <button
-              onClick={handleBack}
+              onClick={() => window.history.back()}
               className='absolute left-0 sm:left-6 text-white hover:text-gray-300 transition-colors p-2'
             >
               <svg
