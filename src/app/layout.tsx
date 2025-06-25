@@ -11,7 +11,6 @@ export const metadata: Metadata = {
   title: 'MoonTV',
   description: '影视聚合',
   manifest: '/manifest.json',
-  themeColor: '#0f172a',
 };
 
 export default function RootLayout({
@@ -21,6 +20,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang='zh-CN'>
+      <head>
+        <meta name='theme-color' content='#ffffffb3' />
+      </head>
       <body className={`${inter.className} min-h-screen text-gray-900`}>
         <AuthProvider>{children}</AuthProvider>
       </body>
