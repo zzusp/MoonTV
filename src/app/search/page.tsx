@@ -26,7 +26,11 @@ function SearchPageClient() {
     poster: string;
     source: string;
     source_name: string;
-    episodes?: number;
+    episodes: string[];
+    year: string;
+    class?: string;
+    type_name?: string;
+    desc?: string;
   };
 
   const router = useRouter();
@@ -40,13 +44,15 @@ function SearchPageClient() {
   // 视图模式：聚合(agg) 或 全部(all)
   const [viewMode, setViewMode] = useState<'agg' | 'all'>('agg');
 
-  // 聚合后的结果（按标题分组）
+  // 聚合后的结果（按标题和年份分组）
   const aggregatedResults = useMemo(() => {
     const map = new Map<string, SearchResult[]>();
     searchResults.forEach((item) => {
-      const arr = map.get(item.title) || [];
+      // 使用 title + year 作为键，若 year 不存在则使用 'unknown'
+      const key = `${item.title}-${item.year || 'unknown'}`;
+      const arr = map.get(key) || [];
       arr.push(item);
-      map.set(item.title, arr);
+      map.set(key, arr);
     });
     return Array.from(map.values());
   }, [searchResults]);
@@ -104,6 +110,7 @@ function SearchPageClient() {
     setIsLoading(true);
     setShowResults(true);
 
+    router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
     // 直接发请求
     fetchSearchResults(searchQuery);
 
@@ -165,16 +172,30 @@ function SearchPageClient() {
               <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8 sm:px-4'>
                 {viewMode === 'agg'
                   ? aggregatedResults.map((group) => {
-                      const key = group[0].title;
+                      const key = `${group[0].title}-${
+                        group[0].year || 'unknown'
+                      }`;
                       return (
                         <div key={key} className='w-full'>
-                          <AggregateCard items={group} />
+                          <AggregateCard
+                            items={group}
+                            query={searchQuery}
+                            year={group[0].year}
+                          />
                         </div>
                       );
                     })
                   : searchResults.map((item) => (
                       <div key={item.id} className='w-full'>
-                        <VideoCard {...item} from='search' />
+                        <VideoCard
+                          id={item.id}
+                          title={item.title}
+                          poster={item.poster}
+                          episodes={item.episodes.length}
+                          source={item.source}
+                          source_name={item.source_name}
+                          from='search'
+                        />
                       </div>
                     ))}
                 {searchResults.length === 0 && (

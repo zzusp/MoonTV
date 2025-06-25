@@ -89,6 +89,7 @@ function HomeClient() {
             id,
             source,
             title: fav.title,
+            year: fav.year,
             poster: fav.cover,
             episodes: fav.total_episodes,
             source_name: fav.source_name,

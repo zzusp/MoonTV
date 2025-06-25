@@ -17,6 +17,7 @@
 export interface PlayRecord {
   title: string;
   source_name: string;
+  year: string;
   cover: string;
   index: number; // 第几集
   total_episodes: number; // 总集数
@@ -270,6 +271,7 @@ export async function clearSearchHistory(): Promise<void> {
 export interface Favorite {
   title: string;
   source_name: string;
+  year: string;
   cover: string;
   total_episodes: number;
   save_time: number;

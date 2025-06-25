@@ -14,6 +14,7 @@ interface VideoCardProps {
   episodes?: number;
   source_name: string;
   progress?: number;
+  year?: string;
   from?: string;
   currentEpisode?: number;
   onDelete?: () => void;
@@ -79,6 +80,7 @@ export default function VideoCard({
   source,
   source_name,
   progress,
+  year,
   from,
   currentEpisode,
   onDelete,
@@ -112,6 +114,7 @@ export default function VideoCard({
       const newState = await toggleFavorite(source, id, {
         title,
         source_name,
+        year: year || '',
         cover: poster,
         total_episodes: episodes ?? 1,
         save_time: Date.now(),
@@ -147,7 +150,7 @@ export default function VideoCard({
     <Link
       href={`/detail?source=${source}&id=${id}&title=${encodeURIComponent(
         title
-      )}${from ? `&from=${from}` : ''}`}
+      )}${year ? `&year=${year}` : ''}${from ? `&from=${from}` : ''}`}
     >
       <div className='group relative w-full rounded-lg bg-transparent shadow-none flex flex-col'>
         {/* 海报图片 - 2:3 比例 */}
@@ -174,7 +177,7 @@ export default function VideoCard({
                   router.push(
                     `/play?source=${source}&id=${id}&title=${encodeURIComponent(
                       title
-                    )}`
+                    )}${year ? `&year=${year}` : ''}`
                   );
                 }}
                 onMouseEnter={() => setPlayHover(true)}

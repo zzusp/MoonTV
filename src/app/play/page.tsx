@@ -33,7 +33,7 @@ import {
   savePlayRecord,
   toggleFavorite,
 } from '@/lib/db.client';
-import { VideoDetail } from '@/lib/types';
+import { type VideoDetail, fetchVideoDetail } from '@/lib/fetchVideoDetail';
 
 // 扩展 HTMLVideoElement 类型以支持 hls 属性
 declare global {
@@ -47,9 +47,10 @@ interface SearchResult {
   id: string;
   title: string;
   poster: string;
-  episodes?: number;
+  episodes: string[];
   source: string;
   source_name: string;
+  year: string;
 }
 
 function PlayPageClient() {
@@ -65,6 +66,7 @@ function PlayPageClient() {
 
   // 初始标题：如果 URL 中携带 title 参数，则优先使用
   const [videoTitle, setVideoTitle] = useState(searchParams.get('title') || '');
+  const videoYear = searchParams.get('year') || '';
   const [videoCover, setVideoCover] = useState('');
 
   const [currentSource, setCurrentSource] = useState(
@@ -205,21 +207,20 @@ function PlayPageClient() {
 
     const fetchDetail = async () => {
       try {
-        const response = await fetch(
-          `/api/detail?source=${currentSource}&id=${currentId}`
-        );
-        if (!response.ok) {
-          throw new Error('获取视频详情失败');
-        }
-        const data = await response.json();
+        const detailData = await fetchVideoDetail({
+          source: currentSource,
+          id: currentId,
+          fallbackTitle: videoTitle,
+          fallbackYear: videoYear,
+        });
 
         // 更新状态保存详情
-        setVideoTitle(data.videoInfo.title || videoTitle);
-        setVideoCover(data.videoInfo.cover);
-        setDetail(data);
+        setVideoTitle(detailData.title || videoTitle);
+        setVideoCover(detailData.poster);
+        setDetail(detailData);
 
         // 确保集数索引在有效范围内
-        if (currentEpisodeIndex >= data.episodes.length) {
+        if (currentEpisodeIndex >= detailData.episodes.length) {
           console.log('currentEpisodeIndex', currentEpisodeIndex);
           setCurrentEpisodeIndex(0);
         }
@@ -474,14 +475,19 @@ function PlayPageClient() {
       sourceMap.forEach((results) => {
         if (results.length === 0) return;
 
-        // 优先选择与当前视频标题完全匹配的结果
+        // 只选择和当前视频标题完全匹配的结果，如果有年份，还需要年份完全匹配
         const exactMatch = results.find(
-          (result) => result.title.toLowerCase() === videoTitle.toLowerCase()
+          (result) =>
+            result.title.toLowerCase() === videoTitle.toLowerCase() &&
+            (videoYear
+              ? result.year.toLowerCase() === videoYear.toLowerCase()
+              : true)
         );
 
-        // 如果没有完全匹配，选择第一个结果
-        const selectedResult = exactMatch || results[0];
-        processedResults.push(selectedResult);
+        if (exactMatch) {
+          processedResults.push(exactMatch);
+          return;
+        }
       });
 
       setSearchResults(processedResults);
@@ -515,13 +521,12 @@ function PlayPageClient() {
       }
 
       // 获取新源的详情
-      const response = await fetch(
-        `/api/detail?source=${newSource}&id=${newId}`
-      );
-      if (!response.ok) {
-        throw new Error('获取新源详情失败');
-      }
-      const newDetail = await response.json();
+      const newDetail = await fetchVideoDetail({
+        source: newSource,
+        id: newId,
+        fallbackTitle: newTitle,
+        fallbackYear: videoYear,
+      });
 
       // 尝试跳转到当前正在播放的集数
       let targetIndex = currentEpisodeIndex;
@@ -540,8 +545,8 @@ function PlayPageClient() {
       // 关闭换源面板
       setShowSourcePanel(false);
 
-      setVideoTitle(newDetail.videoInfo.title || newTitle);
-      setVideoCover(newDetail.videoInfo.cover);
+      setVideoTitle(newDetail.title || newTitle);
+      setVideoCover(newDetail.poster);
       setCurrentSource(newSource);
       setCurrentId(newId);
       setDetail(newDetail);
@@ -687,7 +692,7 @@ function PlayPageClient() {
       !currentSourceRef.current ||
       !currentIdRef.current ||
       !videoTitleRef.current ||
-      !detailRef.current?.videoInfo?.source_name
+      !detailRef.current?.source_name
     ) {
       return;
     }
@@ -704,8 +709,9 @@ function PlayPageClient() {
     try {
       await savePlayRecord(currentSourceRef.current, currentIdRef.current, {
         title: videoTitleRef.current,
-        source_name: detailRef.current?.videoInfo.source_name,
+        source_name: detailRef.current?.source_name,
         cover: videoCover,
+        year: detailRef.current?.year || videoYear || '',
         index: currentEpisodeIndexRef.current + 1, // 转换为1基索引
         total_episodes: totalEpisodes,
         play_time: Math.floor(currentTime),
@@ -744,7 +750,8 @@ function PlayPageClient() {
     try {
       const newState = await toggleFavorite(currentSource, currentId, {
         title: videoTitle,
-        source_name: detail?.videoInfo.source_name || '',
+        source_name: detail?.source_name || '',
+        year: detail?.year || videoYear || '',
         cover: videoCover || '',
         total_episodes: totalEpisodes || 1,
         save_time: Date.now(),
@@ -1253,7 +1260,7 @@ function PlayPageClient() {
           favorited={favorited}
           totalEpisodes={totalEpisodes}
           currentEpisodeIndex={currentEpisodeIndex}
-          sourceName={detail?.videoInfo.source_name || ''}
+          sourceName={detail?.source_name || ''}
           onToggleFavorite={handleToggleFavorite}
           onOpenSourcePanel={handleSourcePanelOpen}
           isFullscreen={isFullscreen}
@@ -1499,7 +1506,7 @@ function PlayPageClient() {
                             {result.episodes && (
                               <div className='absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center'>
                                 <span className='text-white text-xs font-bold'>
-                                  {result.episodes}
+                                  {result.episodes.length}
                                 </span>
                               </div>
                             )}

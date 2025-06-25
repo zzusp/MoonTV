@@ -3,10 +3,8 @@
 'use client';
 
 import Image from 'next/image';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
-
-import type { VideoDetail } from '@/lib/types';
 
 import PageLayout from '@/components/PageLayout';
 
@@ -14,20 +12,25 @@ interface SearchResult {
   id: string;
   title: string;
   poster: string;
-  episodes?: number;
+  episodes: string[];
   source: string;
   source_name: string;
+  class?: string;
+  year: string;
+  desc?: string;
+  type_name?: string;
 }
 
 function AggregatePageClient() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q')?.trim() || '';
+  const title = searchParams.get('title')?.trim() || '';
+  const year = searchParams.get('year')?.trim() || '';
 
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [details, setDetails] = useState<VideoDetail[]>([]);
-  const [detailLoading, setDetailLoading] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     if (!query) {
@@ -44,8 +47,27 @@ function AggregatePageClient() {
         }
         const data = await res.json();
         const all: SearchResult[] = data.results || [];
-        const exact = all.filter((r) => r.title === query);
-        setResults(exact);
+        const map = new Map<string, SearchResult[]>();
+        all.forEach((r) => {
+          // 根据传入参数进行精确匹配：
+          // 1. 如果提供了 title，则按 title 精确匹配，否则按 query 精确匹配；
+          // 2. 如果还提供了 year，则额外按 year 精确匹配。
+          const titleMatch = title ? r.title === title : r.title === query;
+          const yearMatch = year ? r.year === year : true;
+          if (!titleMatch || !yearMatch) {
+            return;
+          }
+          const key = `${r.title}-${r.year}`;
+          const arr = map.get(key) || [];
+          arr.push(r);
+          map.set(key, arr);
+        });
+        if (map.size == 1) {
+          setResults(Array.from(map.values()).flat());
+        } else if (map.size > 1) {
+          // 存在多个匹配，跳转到搜索页
+          router.push(`/search?q=${encodeURIComponent(query)}`);
+        }
       } catch (e) {
         setError(e instanceof Error ? e.message : '搜索失败');
       } finally {
@@ -54,37 +76,7 @@ function AggregatePageClient() {
     };
 
     fetchData();
-  }, [query]);
-
-  useEffect(() => {
-    if (results.length === 0) return;
-
-    const fetchDetails = async () => {
-      setDetailLoading(true);
-      try {
-        const promises = results.map(async (r) => {
-          try {
-            const res = await fetch(
-              `/api/detail?source=${r.source}&id=${r.id}`
-            );
-            if (!res.ok) throw new Error('');
-            const data: VideoDetail = await res.json();
-            return data;
-          } catch {
-            return null;
-          }
-        });
-        const dts = (await Promise.all(promises)).filter(
-          (d): d is VideoDetail => d !== null
-        );
-        setDetails(dts);
-      } finally {
-        setDetailLoading(false);
-      }
-    };
-
-    fetchDetails();
-  }, [results]);
+  }, [query, router]);
 
   // 选出信息最完整的字段
   const chooseString = (vals: (string | undefined)[]): string | undefined => {
@@ -96,12 +88,12 @@ function AggregatePageClient() {
   };
 
   const aggregatedInfo = {
-    title: query,
-    cover: chooseString(details.map((d) => d.videoInfo.cover)),
-    desc: chooseString(details.map((d) => d.videoInfo.desc)),
-    type: chooseString(details.map((d) => d.videoInfo.type)),
-    year: chooseString(details.map((d) => d.videoInfo.year)),
-    remarks: chooseString(details.map((d) => d.videoInfo.remarks)),
+    title: title || query,
+    cover: chooseString(results.map((d) => d.poster)),
+    desc: chooseString(results.map((d) => d.desc)),
+    type: chooseString(results.map((d) => d.type_name)),
+    year: chooseString(results.map((d) => d.year)),
+    remarks: chooseString(results.map((d) => d.class)),
   };
 
   const infoReady = Boolean(
@@ -117,7 +109,7 @@ function AggregatePageClient() {
   );
 
   // 详情映射，便于快速获取每个源的集数
-  const sourceDetailMap = new Map(details.map((d) => [d.videoInfo.source, d]));
+  const sourceDetailMap = new Map(results.map((d) => [d.source, d]));
 
   return (
     <PageLayout activePath='/aggregate'>
@@ -132,10 +124,6 @@ function AggregatePageClient() {
               <div className='text-lg font-semibold mb-2'>加载失败</div>
               <div className='text-sm'>{error}</div>
             </div>
-          </div>
-        ) : !infoReady && detailLoading ? (
-          <div className='flex items-center justify-center min-h-[60vh]'>
-            <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500'></div>
           </div>
         ) : !infoReady ? (
           <div className='flex items-center justify-center min-h-[60vh]'>
@@ -219,15 +207,15 @@ function AggregatePageClient() {
                 <div className='grid grid-cols-3 gap-2 sm:grid-cols-[repeat(auto-fill,_minmax(6rem,_1fr))] sm:gap-4 justify-start'>
                   {uniqueSources.map((src) => {
                     const d = sourceDetailMap.get(src.source);
-                    const epCount = d ? d.episodes.length : src.episodes;
+                    const epCount = d ? d.episodes.length : src.episodes.length;
                     return (
                       <a
                         key={src.source}
                         href={`/play?source=${src.source}&id=${
                           src.id
-                        }&title=${encodeURIComponent(
-                          src.title
-                        )}&from=aggregate`}
+                        }&title=${encodeURIComponent(src.title)}${
+                          src.year ? `&year=${src.year}` : ''
+                        }&from=aggregate`}
                         className='relative flex items-center justify-center w-full h-14 bg-gray-500/80 hover:bg-green-500 rounded-lg transition-colors'
                       >
                         {/* 名称 */}
