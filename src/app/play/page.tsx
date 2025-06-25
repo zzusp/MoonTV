@@ -311,7 +311,13 @@ function PlayPageClient() {
       resumeTimeRef.current > 0
     ) {
       try {
-        playerRef.current.currentTime = resumeTimeRef.current;
+        const duration = playerRef.current.duration || 0;
+        let target = resumeTimeRef.current;
+        // 如果目标时间距离结尾过近，为避免自动触发下一集，向前偏移 5 秒
+        if (duration && target >= duration - 2) {
+          target = Math.max(0, duration - 5);
+        }
+        playerRef.current.currentTime = target;
       } catch (err) {
         console.warn('恢复播放进度失败:', err);
       }
@@ -506,6 +512,9 @@ function PlayPageClient() {
     newTitle: string
   ) => {
     try {
+      // 记录当前播放进度（仅在同一集数切换时恢复）
+      const currentPlayTime = playerRef.current?.currentTime || 0;
+
       // 显示换源加载状态
       setSourceChanging(true);
       setError(null);
@@ -534,6 +543,14 @@ function PlayPageClient() {
       // 如果当前集数超出新源的范围，则跳转到第一集
       if (!newDetail.episodes || targetIndex >= newDetail.episodes.length) {
         targetIndex = 0;
+      }
+
+      // 如果仍然是同一集数且播放进度有效，则在播放器就绪后恢复到原始进度
+      if (targetIndex === currentEpisodeIndex && currentPlayTime > 1) {
+        resumeTimeRef.current = currentPlayTime;
+      } else {
+        // 否则从头开始播放，防止影响后续选集逻辑
+        resumeTimeRef.current = 0;
       }
 
       // 更新URL参数（不刷新页面）
