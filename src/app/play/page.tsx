@@ -2,11 +2,19 @@
 
 'use client';
 
-import { MediaPlayer, MediaProvider } from '@vidstack/react';
+import {
+  type MediaProviderAdapter,
+  AirPlayButton,
+  isHLSProvider,
+  MediaPlayer,
+  MediaProvider,
+} from '@vidstack/react';
+import { AirPlayIcon } from '@vidstack/react/icons';
 import {
   defaultLayoutIcons,
   DefaultVideoLayout,
 } from '@vidstack/react/player/layouts/default';
+import Hls from 'hls.js';
 import { Heart } from 'lucide-react';
 import Head from 'next/head';
 import { useSearchParams } from 'next/navigation';
@@ -1125,6 +1133,20 @@ function PlayPageClient() {
     );
   };
 
+  const onProviderChange = (provider: MediaProviderAdapter | null) => {
+    class extendedHls extends Hls {
+      attachMedia(media: HTMLMediaElement): void {
+        super.attachMedia(media);
+
+        media.disableRemotePlayback = false;
+        media.autoplay = true;
+      }
+    }
+    if (isHLSProvider(provider)) {
+      provider.library = extendedHls;
+    }
+  };
+
   return (
     <>
       <Head>
@@ -1204,6 +1226,7 @@ function PlayPageClient() {
           onTimeUpdate={onTimeUpdate}
           onPause={saveCurrentPlayProgress}
           onError={handlePlayerError}
+          onProviderChange={onProviderChange}
         >
           <MediaProvider />
           <PlayerUITopbar
@@ -1220,11 +1243,11 @@ function PlayPageClient() {
             icons={defaultLayoutIcons}
             slots={{
               googleCastButton: null,
-              airPlayButton: null,
               pipButton: null,
               settingsMenu: null,
               muteButton: null, // 隐藏静音按钮
               volumeSlider: null, // 隐藏音量条
+              airPlayButton: null, // 隐藏默认 AirPlay 按钮
               beforeCurrentTime:
                 totalEpisodes > 1 ? (
                   // 下一集按钮放在时间显示前
@@ -1259,6 +1282,10 @@ function PlayPageClient() {
                     </button>
                   )}
                   <PlaybackRateButton playerRef={playerRef} />
+                  {/* 自定义 AirPlay 按钮 */}
+                  <AirPlayButton className='vds-button'>
+                    <AirPlayIcon className='vds-icon' />
+                  </AirPlayButton>
                 </>
               ),
             }}
@@ -1623,7 +1650,7 @@ const PlaybackRateButton = ({
   };
 
   return (
-    <button className='vds-button' onClick={cycleRate}>
+    <button className='vds-button mr-2' onClick={cycleRate}>
       {rate === 1 ? '倍速' : `${rate.toFixed(2)}x`}
     </button>
   );
