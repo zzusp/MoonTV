@@ -2,11 +2,20 @@
 
 'use client';
 
+import { MediaPlayer, MediaProvider } from '@vidstack/react';
+import {
+  defaultLayoutIcons,
+  DefaultVideoLayout,
+} from '@vidstack/react/player/layouts/default';
 import { Heart } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import React from 'react';
+
+import 'vidstack/styles/defaults.css';
+import '@vidstack/react/player/styles/default/theme.css';
+import '@vidstack/react/player/styles/default/layouts/video.css';
 
 import {
   deletePlayRecord,
@@ -37,8 +46,8 @@ interface SearchResult {
 
 function PlayPageClient() {
   const searchParams = useSearchParams();
-  const artRef = useRef<HTMLDivElement>(null);
-  const artPlayerRef = useRef<any>(null);
+  // @ts-ignore
+  const playerRef = useRef<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,7 +68,6 @@ function PlayPageClient() {
   const [currentEpisodeIndex, setCurrentEpisodeIndex] = useState(initialIndex);
   const [showEpisodePanel, setShowEpisodePanel] = useState(false);
   const [showSourcePanel, setShowSourcePanel] = useState(false);
-  const [showTopBar, setShowTopBar] = useState(true);
   const [showShortcutHint, setShowShortcutHint] = useState(false);
   const [shortcutText, setShortcutText] = useState('');
   const [shortcutDirection, setShortcutDirection] = useState('');
@@ -77,10 +85,6 @@ function PlayPageClient() {
   // 播放进度保存相关
   const saveIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastSaveTimeRef = useRef<number>(0);
-  const videoEventListenersRef = useRef<{
-    video: HTMLVideoElement;
-    listeners: Array<{ event: string; handler: EventListener }>;
-  } | null>(null);
 
   // 总集数：从 detail 中获取，保证随 detail 更新而变化
   const totalEpisodes = detail?.episodes?.length || 0;
@@ -106,24 +110,6 @@ function PlayPageClient() {
 
   // 用于记录是否需要在播放器 ready 后跳转到指定进度
   const resumeTimeRef = useRef<number | null>(null);
-
-  // 动态导入的 Artplayer 与 Hls 实例
-  const [{ Artplayer, Hls }, setPlayers] = useState<{
-    Artplayer: any | null;
-    Hls: any | null;
-  }>({ Artplayer: null, Hls: null });
-
-  // 新增：业务层容器引用
-  const topLayerRef = useRef<HTMLElement | null>(null);
-  const episodeLayerRef = useRef<HTMLElement | null>(null);
-  const sourceLayerRef = useRef<HTMLElement | null>(null);
-
-  // 缓存业务层节点的引用，避免在销毁重建过程中丢失
-  const cachedNodesRef = useRef<{
-    topDom: HTMLElement | null;
-    episodeDom: HTMLElement | null;
-    sourceDom: HTMLElement | null;
-  }>({ topDom: null, episodeDom: null, sourceDom: null });
 
   const currentEpisodeIndexRef = useRef(currentEpisodeIndex);
   const detailRef = useRef<VideoDetail | null>(detail);
@@ -151,26 +137,6 @@ function PlayPageClient() {
     detailRef.current = detail;
   }, [detail]);
 
-  /**
-   * 在销毁旧播放器实例之前，将业务层节点缓存起来，防止节点随播放器一起被移除。
-   */
-  const cacheBusinessNodes = () => {
-    // 直接从文档中查找业务层节点并缓存引用
-    const topDom = document.querySelector('[data-top-bar]') as HTMLElement;
-    const episodeDom = document.querySelector(
-      '[data-episode-panel]'
-    ) as HTMLElement;
-    const sourceDom = document.querySelector(
-      '[data-source-panel]'
-    ) as HTMLElement;
-
-    cachedNodesRef.current = {
-      topDom,
-      episodeDom,
-      sourceDom,
-    };
-  };
-
   // 解决 iOS Safari 100vh 不准确的问题：将视口高度写入 CSS 变量 --vh
   useEffect(() => {
     const setVH = () => {
@@ -195,30 +161,17 @@ function PlayPageClient() {
     detailData: VideoDetail | null,
     episodeIndex: number
   ) => {
+    if (
+      !detailData ||
+      !detailData.episodes ||
+      episodeIndex >= detailData.episodes.length
+    ) {
+      setVideoUrl('');
+      return;
+    }
     const newUrl = detailData?.episodes[episodeIndex] || '';
-    if (newUrl != videoUrl) {
+    if (newUrl !== videoUrl) {
       setVideoUrl(newUrl);
-    }
-  };
-
-  // 在指定 video 元素内确保存在 <source src="...">，供部分浏览器兼容
-  const ensureVideoSource = (video: HTMLVideoElement | null, url: string) => {
-    if (!video || !url) return;
-    const sources = Array.from(video.getElementsByTagName('source'));
-    const existed = sources.some((s) => s.src === url);
-    if (!existed) {
-      // 移除旧的 source，保持唯一
-      sources.forEach((s) => s.remove());
-      const sourceEl = document.createElement('source');
-      sourceEl.src = url;
-      video.appendChild(sourceEl);
-    }
-
-    // 始终允许远程播放（AirPlay / Cast）
-    video.disableRemotePlayback = false;
-    // 如果曾经有禁用属性，移除之
-    if (video.hasAttribute('disableRemotePlayback')) {
-      video.removeAttribute('disableRemotePlayback');
     }
   };
 
@@ -239,26 +192,6 @@ function PlayPageClient() {
       setCurrentId(urlId);
     }
   }, [searchParams, currentSource, currentId]);
-
-  // 动态加载 Artplayer 与 Hls 并保存到 state
-  useEffect(() => {
-    (async () => {
-      try {
-        const [ArtplayerModule, HlsModule] = await Promise.all([
-          import('artplayer'),
-          import('hls.js'),
-        ]);
-        setPlayers({
-          Artplayer: ArtplayerModule.default,
-          Hls: HlsModule.default,
-        });
-      } catch (err) {
-        console.error('Failed to load players:', err);
-        setError('播放器加载失败');
-        setLoading(false);
-      }
-    })();
-  }, []);
 
   useEffect(() => {
     if (!currentSource || !currentId) {
@@ -363,335 +296,48 @@ function PlayPageClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const attachVideoEventListeners = (video: HTMLVideoElement) => {
-    if (!video) return;
+  // 播放器事件处理
+  const onCanPlay = () => {
+    console.log('播放器准备就绪');
+    setError(null);
 
-    // 移除旧监听器（如果存在）
-    if (videoEventListenersRef.current) {
-      const { video: oldVideo, listeners } = videoEventListenersRef.current;
-      listeners.forEach(({ event, handler }) => {
-        oldVideo.removeEventListener(event, handler);
-      });
-      videoEventListenersRef.current = null;
-    }
-
-    // 暂停时立即保存
-    const pauseHandler = () => {
-      saveCurrentPlayProgress();
-    };
-
-    // 阻止移动端长按弹出系统菜单
-    const contextMenuHandler = (e: Event) => {
-      e.preventDefault();
-      e.stopPropagation();
-    };
-
-    // timeupdate 节流（5 秒）保存
-    let lastSave = 0;
-    const timeUpdateHandler = () => {
-      const now = Date.now();
-      if (now - lastSave > 5000) {
-        saveCurrentPlayProgress();
-        lastSave = now;
+    // 若存在需要恢复的播放进度，则跳转
+    if (
+      playerRef.current &&
+      resumeTimeRef.current &&
+      resumeTimeRef.current > 0
+    ) {
+      try {
+        playerRef.current.currentTime = resumeTimeRef.current;
+      } catch (err) {
+        console.warn('恢复播放进度失败:', err);
       }
-    };
-
-    video.addEventListener('pause', pauseHandler);
-    video.addEventListener('timeupdate', timeUpdateHandler);
-    video.addEventListener('contextmenu', contextMenuHandler);
-
-    videoEventListenersRef.current = {
-      video,
-      listeners: [
-        { event: 'pause', handler: pauseHandler },
-        { event: 'timeupdate', handler: timeUpdateHandler },
-        { event: 'contextmenu', handler: contextMenuHandler },
-      ],
-    };
+      resumeTimeRef.current = null;
+    }
   };
 
-  // 播放器创建/切换逻辑，只依赖视频URL和集数索引
-  useEffect(() => {
-    if (
-      !Artplayer ||
-      !Hls ||
-      !videoUrl ||
-      loading ||
-      currentEpisodeIndex === null ||
-      !artRef.current
-    )
-      return;
-
-    // 确保选集索引有效
-    if (
-      !detail ||
-      !detail.episodes ||
-      currentEpisodeIndex >= detail.episodes.length ||
-      currentEpisodeIndex < 0
-    ) {
-      setError(`选集索引无效，当前共 ${totalEpisodes} 集`);
-      return;
-    }
-
-    if (!videoUrl) {
-      setError('视频地址无效');
-      return;
-    }
-    console.log(videoUrl);
-
-    // 检测是否为WebKit浏览器
-    const isWebkit =
-      typeof window !== 'undefined' &&
-      typeof (window as any).webkitConvertPointFromNodeToPage === 'function';
-
-    // 非WebKit浏览器且播放器已存在，使用switch方法切换
-    if (!isWebkit && artPlayerRef.current) {
-      artPlayerRef.current.switch = videoUrl;
-      artPlayerRef.current.title = `${videoTitle} - 第${
-        currentEpisodeIndex + 1
-      }集`;
-      artPlayerRef.current.poster = videoCover;
-      if (artPlayerRef.current?.video) {
-        attachVideoEventListeners(
-          artPlayerRef.current.video as HTMLVideoElement
-        );
-        ensureVideoSource(
-          artPlayerRef.current.video as HTMLVideoElement,
-          videoUrl
-        );
-      }
-      return;
-    }
-
-    // WebKit浏览器或首次创建：销毁之前的播放器实例并创建新的
-    if (artPlayerRef.current) {
-      // 先缓存业务层 DOM，避免被销毁
-      cacheBusinessNodes();
-
-      if (artPlayerRef.current.video && artPlayerRef.current.video.hls) {
-        artPlayerRef.current.video.hls.destroy();
-      }
-      // 销毁播放器实例
-      artPlayerRef.current.destroy();
-      artPlayerRef.current = null;
-    }
-
-    try {
-      // 创建新的播放器实例
-      Artplayer.PLAYBACK_RATE = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
-      artPlayerRef.current = new Artplayer({
-        container: artRef.current,
-        url: videoUrl,
-        title: `${videoTitle} - 第${currentEpisodeIndex + 1}集`,
-        poster: videoCover,
-        volume: 0.7,
-        isLive: false,
-        muted: false,
-        autoplay: true,
-        pip: false,
-        autoSize: false,
-        autoMini: false,
-        screenshot: false,
-        setting: true,
-        loop: false,
-        flip: false,
-        playbackRate: true,
-        aspectRatio: false,
-        fullscreen: true,
-        fullscreenWeb: false,
-        subtitleOffset: false,
-        miniProgressBar: false,
-        mutex: true,
-        backdrop: true,
-        playsInline: true,
-        autoPlayback: false,
-        airplay: true,
-        theme: '#23ade5',
-        lang: 'zh-cn',
-        hotkey: false,
-        moreVideoAttr: {
-          crossOrigin: 'anonymous',
-        },
-        // HLS 支持配置
-        customType: {
-          m3u8: function (video: HTMLVideoElement, url: string) {
-            if (!Hls) {
-              console.error('HLS.js 未加载');
-              return;
-            }
-
-            if (video.hls) {
-              video.hls.destroy();
-            }
-            const hls = new Hls({
-              debug: false, // 关闭日志
-              enableWorker: true, // WebWorker 解码，降低主线程压力
-              lowLatencyMode: true, // 开启低延迟 LL-HLS
-
-              /* 缓冲/内存相关 */
-              maxBufferLength: 30, // 前向缓冲最大 30s，过大容易导致高延迟
-              backBufferLength: 30, // 仅保留 30s 已播放内容，避免内存占用
-              maxBufferSize: 60 * 1000 * 1000, // 约 60MB，超出后触发清理
-            });
-
-            hls.loadSource(url);
-            hls.attachMedia(video);
-            video.hls = hls;
-
-            ensureVideoSource(video, url);
-
-            hls.on(Hls.Events.ERROR, function (event: any, data: any) {
-              console.error('HLS Error:', event, data);
-              if (data.fatal) {
-                switch (data.type) {
-                  case Hls.ErrorTypes.NETWORK_ERROR:
-                    console.log('网络错误，尝试恢复...');
-                    hls.startLoad();
-                    break;
-                  case Hls.ErrorTypes.MEDIA_ERROR:
-                    console.log('媒体错误，尝试恢复...');
-                    hls.recoverMediaError();
-                    break;
-                  default:
-                    console.log('无法恢复的错误');
-                    hls.destroy();
-                    break;
-                }
-              }
-            });
-          },
-        },
-        icons: {
-          loading:
-            '<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCIgdmlld0JveD0iMCAwIDUwIDUwIj48cGF0aCBkPSJNMjUuMjUxIDYuNDYxYy0xMC4zMTggMC0xOC42ODMgOC4zNjUtMTguNjgzIDE4LjY4M2g0LjA2OGMwLTguMDcgNi41NDUtMTQuNjE1IDE0LjYxNS0xNC42MTVWNi40NjF6IiBmaWxsPSIjMDA5Njg4Ij48YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGF0dHJpYnV0ZVR5cGU9IlhNTCIgZHVyPSIxcyIgZnJvbT0iMCAyNSAyNSIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiIHRvPSIzNjAgMjUgMjUiIHR5cGU9InJvdGF0ZSIvPjwvcGF0aD48L3N2Zz4=">',
-        },
-        // 控制栏配置
-        controls: [
-          {
-            position: 'left',
-            index: 13,
-            html: '<i class="art-icon flex"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" fill="currentColor"/></svg></i>',
-            tooltip: '播放下一集',
-            click: function () {
-              handleNextEpisode();
-            },
-          },
-          {
-            position: 'right',
-            html: '选集',
-            tooltip: '选择集数',
-            click: function () {
-              setShowEpisodePanel(true);
-            },
-          },
-        ],
-      });
-
-      // 监听播放器事件
-      artPlayerRef.current.on('ready', () => {
-        console.log('播放器准备就绪');
-        setError(null);
-
-        // 若存在需要恢复的播放进度，则跳转
-        if (resumeTimeRef.current && resumeTimeRef.current > 0) {
-          try {
-            artPlayerRef.current.video.currentTime = resumeTimeRef.current;
-          } catch (err) {
-            console.warn('恢复播放进度失败:', err);
-          }
-          resumeTimeRef.current = null;
-        }
-      });
-
-      artPlayerRef.current.on('error', (err: any) => {
-        console.error('播放器错误:', err);
-        setError('视频播放失败');
-      });
-
-      // 监听控制栏显隐事件，同步 topbar 的显隐
-      artPlayerRef.current.on('control', (visible: boolean) => {
-        setShowTopBar(visible);
-      });
-
-      // 监听视频播放结束事件，自动播放下一集
-      artPlayerRef.current.on('video:ended', () => {
-        const d = detailRef.current;
-        const idx = currentEpisodeIndexRef.current;
-        if (d && d.episodes && idx < d.episodes.length - 1) {
-          setTimeout(() => {
-            setCurrentEpisodeIndex(idx + 1);
-          }, 1000);
-        }
-      });
-      if (artPlayerRef.current?.video) {
-        attachVideoEventListeners(
-          artPlayerRef.current.video as HTMLVideoElement
-        );
-        ensureVideoSource(
-          artPlayerRef.current.video as HTMLVideoElement,
-          videoUrl
-        );
-      }
-
-      // ===== 在创建完成后，注入业务层并搬运 DOM =====
-      const topLayerEl = document.createElement('div');
-      const episodeLayerEl = document.createElement('div');
-      const sourceLayerEl = document.createElement('div');
-
-      artPlayerRef.current.layers.add({
-        name: 'topbar',
-        html: topLayerEl,
-        index: 3,
-      });
-      artPlayerRef.current.layers.add({
-        name: 'episodepanel',
-        html: episodeLayerEl,
-        index: 2,
-      });
-      artPlayerRef.current.layers.add({
-        name: 'sourcepanel',
-        html: sourceLayerEl,
-        index: 1,
-      });
-
-      topLayerRef.current = topLayerEl;
-      episodeLayerRef.current = episodeLayerEl;
-      sourceLayerRef.current = sourceLayerEl;
-
-      // 将业务层节点移动到对应图层容器
+  const onEnded = () => {
+    const d = detailRef.current;
+    const idx = currentEpisodeIndexRef.current;
+    if (d && d.episodes && idx < d.episodes.length - 1) {
       setTimeout(() => {
-        // 优先使用缓存的节点，如果没有则从 document 获取（首次创建时）
-        let { topDom, episodeDom, sourceDom } = cachedNodesRef.current;
-
-        if (!topDom) {
-          topDom = document.querySelector('[data-top-bar]') as HTMLElement;
-        }
-        if (!episodeDom) {
-          episodeDom = document.querySelector(
-            '[data-episode-panel]'
-          ) as HTMLElement;
-        }
-        if (!sourceDom) {
-          sourceDom = document.querySelector(
-            '[data-source-panel]'
-          ) as HTMLElement;
-        }
-
-        if (topDom && !topLayerEl.contains(topDom)) {
-          topLayerEl.appendChild(topDom);
-        }
-        if (episodeDom && !episodeLayerEl.contains(episodeDom)) {
-          episodeLayerEl.appendChild(episodeDom);
-        }
-        if (sourceDom && !sourceLayerEl.contains(sourceDom)) {
-          sourceLayerEl.appendChild(sourceDom);
-        }
-      }, 0);
-    } catch (err) {
-      console.error('创建播放器失败:', err);
-      setError('播放器初始化失败');
+        setCurrentEpisodeIndex(idx + 1);
+      }, 1000);
     }
-  }, [Artplayer, Hls, videoUrl]);
+  };
+
+  const onTimeUpdate = () => {
+    const now = Date.now();
+    if (now - lastSaveTimeRef.current > 5000) {
+      saveCurrentPlayProgress();
+      lastSaveTimeRef.current = now;
+    }
+  };
+
+  const handlePlayerError = (e: any) => {
+    console.error('播放器错误:', e);
+    setError('视频播放失败');
+  };
 
   // 页面卸载和隐藏时保存播放进度
   useEffect(() => {
@@ -716,7 +362,7 @@ function PlayPageClient() {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [currentEpisodeIndex, detail, artPlayerRef.current]);
+  }, [currentEpisodeIndex, detail, playerRef.current]);
 
   // 清理定时器
   useEffect(() => {
@@ -732,15 +378,6 @@ function PlayPageClient() {
       }
       if (speedTipTimeoutRef.current) {
         clearTimeout(speedTipTimeoutRef.current);
-      }
-
-      // 清理视频事件监听器
-      if (videoEventListenersRef.current) {
-        const { video, listeners } = videoEventListenersRef.current;
-        listeners.forEach(({ event, handler }) => {
-          video.removeEventListener(event, handler);
-        });
-        videoEventListenersRef.current = null;
       }
     };
   }, []);
@@ -766,11 +403,7 @@ function PlayPageClient() {
   const handleEpisodeChange = (episodeIndex: number) => {
     if (episodeIndex >= 0 && episodeIndex < totalEpisodes) {
       // 在更换集数前保存当前播放进度
-      if (
-        artPlayerRef.current &&
-        artPlayerRef.current.video &&
-        !artPlayerRef.current.video.paused
-      ) {
+      if (playerRef.current && !playerRef.current.paused) {
         saveCurrentPlayProgress();
       }
       setCurrentEpisodeIndex(episodeIndex);
@@ -783,11 +416,7 @@ function PlayPageClient() {
     const d = detailRef.current;
     const idx = currentEpisodeIndexRef.current;
     if (d && d.episodes && idx < d.episodes.length - 1) {
-      if (
-        artPlayerRef.current &&
-        artPlayerRef.current.video &&
-        !artPlayerRef.current.video.paused
-      ) {
+      if (playerRef.current && !playerRef.current.paused) {
         saveCurrentPlayProgress();
       }
       setCurrentEpisodeIndex(idx + 1);
@@ -798,11 +427,7 @@ function PlayPageClient() {
   const handlePreviousEpisode = () => {
     const idx = currentEpisodeIndexRef.current;
     if (detailRef.current && idx > 0) {
-      if (
-        artPlayerRef.current &&
-        artPlayerRef.current.video &&
-        !artPlayerRef.current.video.paused
-      ) {
+      if (playerRef.current && !playerRef.current.paused) {
         saveCurrentPlayProgress();
       }
       setCurrentEpisodeIndex(idx - 1);
@@ -982,14 +607,13 @@ function PlayPageClient() {
       }
     }
 
+    if (!playerRef.current) return;
+    const player = playerRef.current;
+
     // 左箭头 = 快退
     if (!e.altKey && e.key === 'ArrowLeft') {
-      if (
-        artPlayerRef.current &&
-        artPlayerRef.current.video &&
-        artPlayerRef.current.video.currentTime > 5
-      ) {
-        artPlayerRef.current.video.currentTime -= 10;
+      if (player.currentTime > 5) {
+        player.currentTime -= 10;
         displayShortcutHint('快退', 'left');
         e.preventDefault();
       }
@@ -997,13 +621,8 @@ function PlayPageClient() {
 
     // 右箭头 = 快进
     if (!e.altKey && e.key === 'ArrowRight') {
-      if (
-        artPlayerRef.current &&
-        artPlayerRef.current.video &&
-        artPlayerRef.current.video.currentTime <
-          artPlayerRef.current.video.duration - 5
-      ) {
-        artPlayerRef.current.video.currentTime += 10;
+      if (player.currentTime < player.duration - 5) {
+        player.currentTime += 10;
         displayShortcutHint('快进', 'right');
         e.preventDefault();
       }
@@ -1011,57 +630,44 @@ function PlayPageClient() {
 
     // 上箭头 = 音量+
     if (e.key === 'ArrowUp') {
-      if (
-        artPlayerRef.current &&
-        artPlayerRef.current.video &&
-        artPlayerRef.current.video.volume < 1
-      ) {
-        artPlayerRef.current.video.volume += 0.1;
-        displayShortcutHint(
-          `音量 ${Math.round(artPlayerRef.current.video.volume * 100)}`,
-          'up'
-        );
+      if (player.volume < 1) {
+        player.volume += 0.1;
+        displayShortcutHint(`音量 ${Math.round(player.volume * 100)}`, 'up');
         e.preventDefault();
       }
     }
 
     // 下箭头 = 音量-
     if (e.key === 'ArrowDown') {
-      if (
-        artPlayerRef.current &&
-        artPlayerRef.current.video &&
-        artPlayerRef.current.video.volume > 0
-      ) {
-        artPlayerRef.current.video.volume -= 0.1;
-        displayShortcutHint(
-          `音量 ${Math.round(artPlayerRef.current.video.volume * 100)}`,
-          'down'
-        );
+      if (player.volume > 0) {
+        player.volume -= 0.1;
+        displayShortcutHint(`音量 ${Math.round(player.volume * 100)}`, 'down');
         e.preventDefault();
       }
     }
 
     // 空格 = 播放/暂停
     if (e.key === ' ') {
-      if (artPlayerRef.current) {
-        artPlayerRef.current.toggle();
-        e.preventDefault();
-      }
+      if (player.paused) player.play();
+      else player.pause();
+      e.preventDefault();
     }
 
     // f 键 = 切换全屏
     if (e.key === 'f' || e.key === 'F') {
-      if (artPlayerRef.current) {
-        artPlayerRef.current.fullscreen = !artPlayerRef.current.fullscreen;
-        e.preventDefault();
+      if (player.state.fullscreen) {
+        player.exitFullscreen();
+      } else {
+        player.enterFullscreen();
       }
+      e.preventDefault();
     }
   };
 
   // 保存播放进度的函数
   const saveCurrentPlayProgress = async () => {
     if (
-      !artPlayerRef.current?.video ||
+      !playerRef.current ||
       !currentSourceRef.current ||
       !currentIdRef.current ||
       !videoTitleRef.current ||
@@ -1070,9 +676,9 @@ function PlayPageClient() {
       return;
     }
 
-    const video = artPlayerRef.current.video;
-    const currentTime = video.currentTime || 0;
-    const duration = video.duration || 0;
+    const player = playerRef.current;
+    const currentTime = player.currentTime || 0;
+    const duration = player.duration || 0;
 
     // 如果播放时间太短（少于5秒）或者视频时长无效，不保存
     if (currentTime < 1 || !duration) {
@@ -1186,7 +792,7 @@ function PlayPageClient() {
   // 用户点击悬浮按钮 -> 请求全屏并锁定横屏
   const handleForceLandscape = async () => {
     try {
-      const el: any = artRef.current || document.documentElement;
+      const el: any = document.documentElement;
       if (el.requestFullscreen) {
         await el.requestFullscreen();
       } else if (el.webkitRequestFullscreen) {
@@ -1226,21 +832,17 @@ function PlayPageClient() {
       }
     };
 
-    const handleFsChange = () => {
-      const isFs = !!document.fullscreenElement;
-      if (isFs) {
+    const player = playerRef.current;
+    if (!player) return;
+
+    return player.subscribe(({ fullscreen }: any) => {
+      if (fullscreen) {
         lockLandscape();
       } else {
         unlock();
       }
-    };
-
-    document.addEventListener('fullscreenchange', handleFsChange);
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFsChange);
-      unlock();
-    };
-  }, []);
+    });
+  }, [playerRef.current]);
 
   useEffect(() => {
     // 播放页挂载时，锁定页面滚动并消除 body 100vh 带来的额外空白
@@ -1273,15 +875,15 @@ function PlayPageClient() {
     // 防止在控制栏区域触发
     const target = e.target as HTMLElement;
     if (
-      target.closest('.art-controls') ||
-      target.closest('.art-contextmenu') ||
-      target.closest('.art-layer')
+      target.closest('.vds-controls') ||
+      target.closest('.vds-context-menu') ||
+      target.closest('.vds-lazy-gesture')
     ) {
       return;
     }
 
     // 仅在播放时触发
-    if (!artPlayerRef.current?.playing) {
+    if (!playerRef.current?.playing) {
       return;
     }
 
@@ -1292,13 +894,12 @@ function PlayPageClient() {
 
     // 设置长按检测定时器（500ms）
     longPressTimeoutRef.current = setTimeout(() => {
-      if (artPlayerRef.current && artPlayerRef.current.video) {
+      if (playerRef.current) {
         // 保存原始播放速度
-        originalPlaybackRateRef.current =
-          artPlayerRef.current.video.playbackRate;
+        originalPlaybackRateRef.current = playerRef.current.playbackRate;
 
         // 设置三倍速
-        artPlayerRef.current.video.playbackRate = 3;
+        playerRef.current.playbackRate = 3;
 
         // 更新状态
         setIsLongPressing(true);
@@ -1328,8 +929,8 @@ function PlayPageClient() {
     }
 
     // 如果正在长按，恢复原始播放速度
-    if (isLongPressing && artPlayerRef.current && artPlayerRef.current.video) {
-      artPlayerRef.current.video.playbackRate = originalPlaybackRateRef.current;
+    if (isLongPressing && playerRef.current) {
+      playerRef.current.playbackRate = originalPlaybackRateRef.current;
       setIsLongPressing(false);
       setShowSpeedTip(false);
 
@@ -1343,26 +944,34 @@ function PlayPageClient() {
 
   // 添加触摸事件监听器
   useEffect(() => {
-    if (!artRef.current) return;
+    const playerEl = playerRef.current?.el;
+    if (!playerEl) return;
 
-    const element = artRef.current;
     const disableContextMenu = (e: Event) => {
       e.preventDefault();
       e.stopPropagation();
     };
 
-    element.addEventListener('touchstart', handleTouchStart, { passive: true });
-    element.addEventListener('touchend', handleTouchEnd, { passive: true });
-    element.addEventListener('touchcancel', handleTouchEnd, { passive: true });
-    element.addEventListener('contextmenu', disableContextMenu);
+    // @ts-ignore
+    playerEl.addEventListener('touchstart', handleTouchStart, {
+      passive: true,
+    });
+    // @ts-ignore
+    playerEl.addEventListener('touchend', handleTouchEnd, { passive: true });
+    // @ts-ignore
+    playerEl.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+    playerEl.addEventListener('contextmenu', disableContextMenu);
 
     return () => {
-      element.removeEventListener('touchstart', handleTouchStart);
-      element.removeEventListener('touchend', handleTouchEnd);
-      element.removeEventListener('touchcancel', handleTouchEnd);
-      element.removeEventListener('contextmenu', disableContextMenu);
+      // @ts-ignore
+      playerEl.removeEventListener('touchstart', handleTouchStart);
+      // @ts-ignore
+      playerEl.removeEventListener('touchend', handleTouchEnd);
+      // @ts-ignore
+      playerEl.removeEventListener('touchcancel', handleTouchEnd);
+      playerEl.removeEventListener('contextmenu', disableContextMenu);
     };
-  }, [artRef.current, isLongPressing]);
+  }, [playerRef.current, isLongPressing]);
 
   if (loading) {
     return (
@@ -1409,6 +1018,91 @@ function PlayPageClient() {
       </div>
     );
   }
+
+  const PlayerUITopbar = ({
+    videoTitle,
+    favorited,
+    totalEpisodes,
+    currentEpisodeIndex,
+    sourceName,
+    onToggleFavorite,
+    onOpenSourcePanel,
+  }: {
+    videoTitle: string;
+    favorited: boolean;
+    totalEpisodes: number;
+    currentEpisodeIndex: number;
+    sourceName: string;
+    onToggleFavorite: () => void;
+    onOpenSourcePanel: () => void;
+  }) => {
+    return (
+      <div
+        data-top-bar
+        className='absolute top-0 left-0 right-0 transition-opacity duration-300 z-10 opacity-0 pointer-events-none group-data-[controls]:opacity-100 group-data-[controls]:pointer-events-auto'
+      >
+        <div className='bg-black/60 backdrop-blur-sm px-0 sm:px-6 py-4 relative flex items-center sm:justify-center'>
+          {/* 返回按钮 */}
+          <button
+            onClick={() => {
+              if (playerRef.current?.fullscreen) {
+                playerRef.current?.exitFullscreen();
+              }
+              window.history.back();
+            }}
+            className='absolute left-0 sm:left-6 text-white hover:text-gray-300 transition-colors p-2'
+          >
+            <svg
+              width='24'
+              height='24'
+              viewBox='0 0 24 24'
+              fill='none'
+              xmlns='http://www.w3.org/2000/svg'
+            >
+              <path
+                d='M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z'
+                fill='currentColor'
+              />
+            </svg>
+          </button>
+
+          {/* 中央标题及集数信息 */}
+          <div className='ml-10 sm:ml-0 text-left sm:text-center'>
+            <div className='flex items-center justify-center gap-2 max-w-xs mx-auto'>
+              <span className='text-white font-semibold text-lg truncate'>
+                {videoTitle}
+              </span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleFavorite();
+                }}
+                className='flex-shrink-0'
+              >
+                <FavoriteIcon filled={favorited} />
+              </button>
+            </div>
+
+            {totalEpisodes > 1 && (
+              <div className='text-gray-300 text-sm mt-0.5'>
+                第 {currentEpisodeIndex + 1} 集 / 共 {totalEpisodes} 集
+              </div>
+            )}
+          </div>
+
+          {/* 数据源徽章放置在右侧，不影响标题居中 */}
+          {sourceName && (
+            <span
+              className='absolute right-2 sm:right-6 text-gray-300 text-sm border border-gray-500/60 px-2 py-[1px] rounded cursor-pointer hover:bg-gray-600/30 transition-colors'
+              onClick={onOpenSourcePanel}
+            >
+              {sourceName}
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div
@@ -1468,171 +1162,182 @@ function PlayPageClient() {
       )}
 
       {/* 播放器容器 */}
-      <div className='relative w-full h-full'>
-        <div ref={artRef} className='w-full h-full'></div>
-
-        {/* 顶栏 */}
-        <div
-          data-top-bar
-          className={`absolute top-0 left-0 right-0 transition-opacity duration-300 ${
-            showTopBar
-              ? 'opacity-100 pointer-events-auto'
-              : 'opacity-0 pointer-events-none'
-          }`}
-        >
-          <div className='bg-black/60 backdrop-blur-sm px-0 sm:px-6 py-4 relative flex items-center sm:justify-center'>
-            {/* 返回按钮 */}
-            <button
-              onClick={() => window.history.back()}
-              className='absolute left-0 sm:left-6 text-white hover:text-gray-300 transition-colors p-2'
-            >
-              <svg
-                width='24'
-                height='24'
-                viewBox='0 0 24 24'
-                fill='none'
-                xmlns='http://www.w3.org/2000/svg'
-              >
-                <path
-                  d='M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z'
-                  fill='currentColor'
-                />
-              </svg>
-            </button>
-
-            {/* 中央标题及集数信息 */}
-            <div className='ml-10 sm:ml-0 text-left sm:text-center'>
-              <div className='flex items-center justify-center gap-2 max-w-xs mx-auto'>
-                <span className='text-white font-semibold text-lg truncate'>
-                  {videoTitle}
-                </span>
+      <MediaPlayer
+        ref={playerRef}
+        className='w-full h-full group'
+        src={videoUrl}
+        poster={videoCover}
+        playsInline
+        autoPlay
+        crossOrigin='anonymous'
+        controlsDelay={3000}
+        keyDisabled
+        onCanPlay={onCanPlay}
+        onEnded={onEnded}
+        onTimeUpdate={onTimeUpdate}
+        onPause={saveCurrentPlayProgress}
+        onError={handlePlayerError}
+      >
+        <MediaProvider />
+        <PlayerUITopbar
+          videoTitle={videoTitle}
+          favorited={favorited}
+          totalEpisodes={totalEpisodes}
+          currentEpisodeIndex={currentEpisodeIndex}
+          sourceName={detail?.videoInfo.source_name || ''}
+          onToggleFavorite={handleToggleFavorite}
+          onOpenSourcePanel={handleSourcePanelOpen}
+        />
+        <DefaultVideoLayout
+          icons={defaultLayoutIcons}
+          slots={{
+            googleCastButton: null,
+            airPlayButton: null,
+            pipButton: null,
+            settingsMenu: null,
+            beforeMuteButton:
+              totalEpisodes > 1 ? (
+                // Desktop-only next button
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleToggleFavorite();
-                  }}
-                  className='flex-shrink-0'
+                  className='vds-button hidden sm:flex'
+                  onClick={handleNextEpisode}
+                  aria-label='Next Episode'
                 >
-                  <FavoriteIcon filled={favorited} />
+                  <svg
+                    className='vds-icon'
+                    viewBox='0 0 24 24'
+                    xmlns='http://www.w3.org/2000/svg'
+                  >
+                    <path
+                      d='M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z'
+                      fill='currentColor'
+                    />
+                  </svg>
                 </button>
-              </div>
+              ) : null,
+            beforeCurrentTime:
+              totalEpisodes > 1 ? (
+                // Mobile-only next button
+                <button
+                  className='vds-button sm:hidden'
+                  onClick={handleNextEpisode}
+                  aria-label='Next Episode'
+                >
+                  <svg
+                    className='vds-icon'
+                    viewBox='0 0 24 24'
+                    xmlns='http://www.w3.org/2000/svg'
+                  >
+                    <path
+                      d='M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z'
+                      fill='currentColor'
+                    />
+                  </svg>
+                </button>
+              ) : null,
+            beforeFullscreenButton: (
+              <>
+                {totalEpisodes > 1 && (
+                  <button
+                    className='vds-button mr-2'
+                    onClick={() => setShowEpisodePanel(true)}
+                  >
+                    选集
+                  </button>
+                )}
+                <PlaybackRateButton playerRef={playerRef} />
+              </>
+            ),
+          }}
+        />
 
-              {totalEpisodes > 1 && (
-                <div className='text-gray-300 text-sm mt-0.5'>
-                  第 {currentEpisodeIndex + 1} 集 / 共 {totalEpisodes} 集
+        {/* 选集侧拉面板 */}
+        {totalEpisodes > 1 && (
+          <div data-episode-panel>
+            {/* 遮罩层 */}
+            {showEpisodePanel && (
+              <div
+                className='fixed inset-0 bg-black/50 z-[110]'
+                onClick={() => setShowEpisodePanel(false)}
+              />
+            )}
+
+            {/* 侧拉面板 */}
+            <div
+              className={`fixed top-0 right-0 h-full w-full md:w-80 bg-black/40 backdrop-blur-xl z-[110] transform transition-transform duration-300 ${
+                showEpisodePanel ? 'translate-x-0' : 'translate-x-full'
+              }`}
+            >
+              <div className='p-6 h-full flex flex-col'>
+                <div className='flex items-center justify-between mb-6'>
+                  <h3 className='text-white text-xl font-semibold'>选集列表</h3>
+                  <button
+                    onClick={() => setShowEpisodePanel(false)}
+                    className='text-gray-400 hover:text-white transition-colors'
+                  >
+                    <svg
+                      className='w-6 h-6'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M6 18L18 6M6 6l12 12'
+                      />
+                    </svg>
+                  </button>
                 </div>
-              )}
+
+                <div className='text-gray-300 text-sm mb-4'>
+                  当前: 第 {currentEpisodeIndex + 1} 集 / 共 {totalEpisodes} 集
+                </div>
+
+                <div className='flex-1 overflow-y-auto'>
+                  <div className='grid grid-cols-4 gap-3'>
+                    {Array.from({ length: totalEpisodes }, (_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleEpisodeChange(idx)}
+                        className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+                          idx === currentEpisodeIndex
+                            ? 'bg-green-500 text-white'
+                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        }`}
+                      >
+                        {idx + 1}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
-
-            {/* 数据源徽章放置在右侧，不影响标题居中 */}
-            {detail?.videoInfo?.source_name && (
-              <span
-                className='absolute right-2 sm:right-6 text-gray-300 text-sm border border-gray-500/60 px-2 py-[1px] rounded cursor-pointer hover:bg-gray-600/30 transition-colors'
-                onClick={handleSourcePanelOpen}
-              >
-                {detail.videoInfo.source_name}
-              </span>
-            )}
           </div>
-        </div>
-      </div>
+        )}
 
-      {/* 快捷键提示 */}
-      <div
-        className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 transition-opacity duration-300 ${
-          showShortcutHint ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
-      >
-        <div className='bg-black/80 backdrop-blur-sm rounded p-4 flex items-center space-x-3'>
-          <svg
-            className='w-6 h-6 text-white'
-            fill='none'
-            stroke='currentColor'
-            viewBox='0 0 24 24'
-          >
-            {shortcutDirection === 'left' && (
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth='2'
-                d='M15 19l-7-7 7-7'
-              ></path>
-            )}
-            {shortcutDirection === 'right' && (
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth='2'
-                d='M9 5l7 7-7 7'
-              ></path>
-            )}
-            {shortcutDirection === 'up' && (
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth='2'
-                d='M5 15l7-7 7 7'
-              ></path>
-            )}
-            {shortcutDirection === 'down' && (
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth='2'
-                d='M19 9l-7 7-7-7'
-              ></path>
-            )}
-          </svg>
-          <span className='text-white font-medium'>{shortcutText}</span>
-        </div>
-      </div>
-
-      {/* 三倍速提示 */}
-      <div
-        className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 transition-opacity duration-300 ${
-          showSpeedTip ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
-      >
-        <div className='bg-black/60 backdrop-blur-sm rounded-lg p-4 flex items-center space-x-3'>
-          <svg
-            className='w-6 h-6 text-white animate-pulse'
-            fill='none'
-            stroke='currentColor'
-            viewBox='0 0 24 24'
-          >
-            <path
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              strokeWidth='2'
-              d='M13 10V3L4 14h7v7l9-11h-7z'
-            />
-          </svg>
-          <span className='text-white font-bold text-lg'>3x 倍速</span>
-        </div>
-      </div>
-
-      {/* 选集侧拉面板 */}
-      {totalEpisodes > 1 && (
-        <div data-episode-panel>
+        {/* 换源侧拉面板 */}
+        <div data-source-panel>
           {/* 遮罩层 */}
-          {showEpisodePanel && (
+          {showSourcePanel && (
             <div
               className='fixed inset-0 bg-black/50 z-[110]'
-              onClick={() => setShowEpisodePanel(false)}
+              onClick={() => setShowSourcePanel(false)}
             />
           )}
 
           {/* 侧拉面板 */}
           <div
-            className={`fixed top-0 right-0 h-full w-full md:w-80 bg-black/40 backdrop-blur-xl z-[110] transform transition-transform duration-300 ${
-              showEpisodePanel ? 'translate-x-0' : 'translate-x-full'
+            className={`fixed top-0 right-0 h-full w-full md:w-96 bg-black/40 backdrop-blur-xl z-[110] transform transition-transform duration-300 ${
+              showSourcePanel ? 'translate-x-0' : 'translate-x-full'
             }`}
           >
             <div className='p-6 h-full flex flex-col'>
               <div className='flex items-center justify-between mb-6'>
-                <h3 className='text-white text-xl font-semibold'>选集列表</h3>
+                <h3 className='text-white text-xl font-semibold'>播放源</h3>
                 <button
-                  onClick={() => setShowEpisodePanel(false)}
+                  onClick={() => setShowSourcePanel(false)}
                   className='text-gray-400 hover:text-white transition-colors'
                 >
                   <svg
@@ -1651,178 +1356,223 @@ function PlayPageClient() {
                 </button>
               </div>
 
-              <div className='text-gray-300 text-sm mb-4'>
-                当前: 第 {currentEpisodeIndex + 1} 集 / 共 {totalEpisodes} 集
-              </div>
-
+              {/* 搜索结果 */}
               <div className='flex-1 overflow-y-auto'>
-                <div className='grid grid-cols-4 gap-3'>
-                  {Array.from({ length: totalEpisodes }, (_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleEpisodeChange(idx)}
-                      className={`px-3 py-2 text-sm rounded-lg transition-colors ${
-                        idx === currentEpisodeIndex
-                          ? 'bg-green-500 text-white'
-                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                      }`}
-                    >
-                      {idx + 1}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+                {searchLoading && (
+                  <div className='flex items-center justify-center py-8'>
+                    <div className='animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500'></div>
+                    <span className='text-gray-300 ml-3'>搜索中...</span>
+                  </div>
+                )}
 
-      {/* 换源侧拉面板 */}
-      <div data-source-panel>
-        {/* 遮罩层 */}
-        {showSourcePanel && (
-          <div
-            className='fixed inset-0 bg-black/50 z-[110]'
-            onClick={() => setShowSourcePanel(false)}
-          />
-        )}
+                {searchError && (
+                  <div className='text-red-400 text-center py-4'>
+                    {searchError}
+                  </div>
+                )}
 
-        {/* 侧拉面板 */}
-        <div
-          className={`fixed top-0 right-0 h-full w-full md:w-96 bg-black/40 backdrop-blur-xl z-[110] transform transition-transform duration-300 ${
-            showSourcePanel ? 'translate-x-0' : 'translate-x-full'
-          }`}
-        >
-          <div className='p-6 h-full flex flex-col'>
-            <div className='flex items-center justify-between mb-6'>
-              <h3 className='text-white text-xl font-semibold'>播放源</h3>
-              <button
-                onClick={() => setShowSourcePanel(false)}
-                className='text-gray-400 hover:text-white transition-colors'
-              >
-                <svg
-                  className='w-6 h-6'
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M6 18L18 6M6 6l12 12'
-                  />
-                </svg>
-              </button>
-            </div>
+                {!searchLoading &&
+                  !searchError &&
+                  searchResults.length === 0 && (
+                    <div className='text-gray-400 text-center py-8'>
+                      未找到相关视频源
+                    </div>
+                  )}
 
-            {/* 搜索结果 */}
-            <div className='flex-1 overflow-y-auto'>
-              {searchLoading && (
-                <div className='flex items-center justify-center py-8'>
-                  <div className='animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500'></div>
-                  <span className='text-gray-300 ml-3'>搜索中...</span>
-                </div>
-              )}
-
-              {searchError && (
-                <div className='text-red-400 text-center py-4'>
-                  {searchError}
-                </div>
-              )}
-
-              {!searchLoading && !searchError && searchResults.length === 0 && (
-                <div className='text-gray-400 text-center py-8'>
-                  未找到相关视频源
-                </div>
-              )}
-
-              {!searchLoading && !searchError && searchResults.length > 0 && (
-                <div className='grid grid-cols-2 gap-4'>
-                  {[
-                    ...searchResults.filter(
-                      (r) =>
-                        r.source === currentSource &&
-                        String(r.id) === String(currentId)
-                    ),
-                    ...searchResults.filter(
-                      (r) =>
-                        !(
+                {!searchLoading && !searchError && searchResults.length > 0 && (
+                  <div className='grid grid-cols-2 gap-4'>
+                    {[
+                      ...searchResults.filter(
+                        (r) =>
                           r.source === currentSource &&
                           String(r.id) === String(currentId)
-                        )
-                    ),
-                  ].map((result) => {
-                    const isCurrentSource =
-                      result.source === currentSource &&
-                      String(result.id) === String(currentId);
-                    return (
-                      <div
-                        key={`${result.source}-${result.id}`}
-                        className={`rounded-lg transition-colors border-2 ${
-                          isCurrentSource
-                            ? 'border-green-500 bg-green-500/20 cursor-not-allowed opacity-60'
-                            : 'border-transparent bg-transparent hover:bg-gray-600/30 cursor-pointer'
-                        }`}
-                        onClick={() =>
-                          !isCurrentSource &&
-                          handleSourceChange(
-                            result.source,
-                            result.id,
-                            result.title
+                      ),
+                      ...searchResults.filter(
+                        (r) =>
+                          !(
+                            r.source === currentSource &&
+                            String(r.id) === String(currentId)
                           )
-                        }
-                      >
-                        {/* 视频封面 */}
-                        <div className='aspect-[2/3] rounded-t-lg overflow-hidden flex items-center justify-center p-1 relative'>
-                          <img
-                            src={result.poster}
-                            alt={result.title}
-                            className='w-full h-full object-cover rounded'
-                            referrerPolicy='no-referrer'
-                          />
+                      ),
+                    ].map((result) => {
+                      const isCurrentSource =
+                        result.source === currentSource &&
+                        String(result.id) === String(currentId);
+                      return (
+                        <div
+                          key={`${result.source}-${result.id}`}
+                          className={`rounded-lg transition-colors border-2 ${
+                            isCurrentSource
+                              ? 'border-green-500 bg-green-500/20 cursor-not-allowed opacity-60'
+                              : 'border-transparent bg-transparent hover:bg-gray-600/30 cursor-pointer'
+                          }`}
+                          onClick={() =>
+                            !isCurrentSource &&
+                            handleSourceChange(
+                              result.source,
+                              result.id,
+                              result.title
+                            )
+                          }
+                        >
+                          {/* 视频封面 */}
+                          <div className='aspect-[2/3] rounded-t-lg overflow-hidden flex items-center justify-center p-1 relative'>
+                            <img
+                              src={result.poster}
+                              alt={result.title}
+                              className='w-full h-full object-cover rounded'
+                              referrerPolicy='no-referrer'
+                            />
 
-                          {/* 集数圆形指示器 */}
-                          {result.episodes && (
-                            <div className='absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center'>
-                              <span className='text-white text-xs font-bold'>
-                                {result.episodes}
-                              </span>
-                            </div>
-                          )}
-
-                          {isCurrentSource && (
-                            <div className='absolute inset-0 flex items-center justify-center pointer-events-none'>
-                              <div className='bg-green-500 text-white text-xs px-3 py-1 rounded shadow-lg'>
-                                当前播放
+                            {/* 集数圆形指示器 */}
+                            {result.episodes && (
+                              <div className='absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center'>
+                                <span className='text-white text-xs font-bold'>
+                                  {result.episodes}
+                                </span>
                               </div>
-                            </div>
-                          )}
-                        </div>
+                            )}
 
-                        {/* 视频信息 */}
-                        <div className='p-2 bg-transparent text-center'>
-                          <h4 className='text-white font-medium text-sm line-clamp-2 mb-2 leading-tight'>
-                            {result.title}
-                          </h4>
-                          <div className='text-gray-400 text-xs space-y-1'>
-                            <div className='inline-block border border-gray-500/60 rounded px-2 py-[1px]'>
-                              {result.source_name}
+                            {isCurrentSource && (
+                              <div className='absolute inset-0 flex items-center justify-center pointer-events-none'>
+                                <div className='bg-green-500 text-white text-xs px-3 py-1 rounded shadow-lg'>
+                                  当前播放
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* 视频信息 */}
+                          <div className='p-2 bg-transparent text-center'>
+                            <h4 className='text-white font-medium text-sm line-clamp-2 mb-2 leading-tight'>
+                              {result.title}
+                            </h4>
+                            <div className='text-gray-400 text-xs space-y-1'>
+                              <div className='inline-block border border-gray-500/60 rounded px-2 py-[1px]'>
+                                {result.source_name}
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+
+        {/* 快捷键提示 */}
+        <div
+          className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 transition-opacity duration-300 ${
+            showShortcutHint ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
+        >
+          <div className='bg-black/80 backdrop-blur-sm rounded p-4 flex items-center space-x-3'>
+            <svg
+              className='w-6 h-6 text-white'
+              fill='none'
+              stroke='currentColor'
+              viewBox='0 0 24 24'
+            >
+              {shortcutDirection === 'left' && (
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth='2'
+                  d='M15 19l-7-7 7-7'
+                ></path>
+              )}
+              {shortcutDirection === 'right' && (
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth='2'
+                  d='M9 5l7 7-7 7'
+                ></path>
+              )}
+              {shortcutDirection === 'up' && (
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth='2'
+                  d='M5 15l7-7 7 7'
+                ></path>
+              )}
+              {shortcutDirection === 'down' && (
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth='2'
+                  d='M19 9l-7 7-7-7'
+                ></path>
+              )}
+            </svg>
+            <span className='text-white font-medium'>{shortcutText}</span>
+          </div>
+        </div>
+
+        {/* 三倍速提示 */}
+        <div
+          className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 transition-opacity duration-300 ${
+            showSpeedTip ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
+        >
+          <div className='bg-black/60 backdrop-blur-sm rounded-lg p-4 flex items-center space-x-3'>
+            <svg
+              className='w-6 h-6 text-white animate-pulse'
+              fill='none'
+              stroke='currentColor'
+              viewBox='0 0 24 24'
+            >
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth='2'
+                d='M13 10V3L4 14h7v7l9-11h-7z'
+              />
+            </svg>
+            <span className='text-white font-bold text-lg'>3x 倍速</span>
+          </div>
+        </div>
+      </MediaPlayer>
     </div>
   );
 }
+
+const PlaybackRateButton = ({
+  playerRef,
+}: {
+  playerRef: React.RefObject<any>;
+}) => {
+  const [rate, setRate] = useState(1);
+  const rates = [0.75, 1.0, 1.25, 1.5, 2.0, 3.0];
+
+  useEffect(() => {
+    const player = playerRef.current;
+    if (!player) return;
+    // @ts-ignore
+    const unsubscribe = player.subscribe(({ playbackRate }) => {
+      setRate(playbackRate);
+    });
+    return unsubscribe;
+  }, [playerRef]);
+
+  const cycleRate = () => {
+    const player = playerRef.current;
+    if (!player) return;
+    const currentIndex = rates.indexOf(rate);
+    const nextIndex = (currentIndex + 1) % rates.length;
+    player.playbackRate = rates[nextIndex];
+  };
+
+  return (
+    <button className='vds-button' onClick={cycleRate}>
+      {rate === 1 ? '倍速' : `${rate.toFixed(2)}x`}
+    </button>
+  );
+};
 
 const FavoriteIcon = ({ filled }: { filled: boolean }) => {
   if (filled) {
