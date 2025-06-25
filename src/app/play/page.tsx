@@ -16,7 +16,6 @@ import {
 } from '@vidstack/react/player/layouts/default';
 import Hls from 'hls.js';
 import { Heart } from 'lucide-react';
-import Head from 'next/head';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -994,6 +993,30 @@ function PlayPageClient() {
     };
   }, [playerRef.current, isLongPressing]);
 
+  /* -------------------- 设置 meta theme-color 为纯黑 -------------------- */
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    // 查找或创建 meta[name="theme-color"]
+    let metaTag = document.querySelector(
+      'meta[name="theme-color"]'
+    ) as HTMLMetaElement | null;
+
+    if (!metaTag) {
+      metaTag = document.createElement('meta');
+      metaTag.setAttribute('name', 'theme-color');
+      document.head.appendChild(metaTag);
+    }
+
+    // 记录原始颜色，并设置为纯黑
+    metaTag.setAttribute('content', '#000000');
+
+    // 卸载时恢复
+    return () => {
+      metaTag?.setAttribute('content', '#e6f3fb');
+    };
+  }, []);
+
   if (loading) {
     return (
       <div className='min-h-[100dvh] bg-black flex items-center justify-center overflow-hidden overscroll-contain'>
@@ -1148,232 +1171,154 @@ function PlayPageClient() {
   };
 
   return (
-    <>
-      <Head>
-        <meta name='theme-color' content='#000000' />
-      </Head>
-      <div
-        ref={playerContainerRef}
-        tabIndex={-1}
-        className='bg-black fixed inset-0 overflow-hidden overscroll-contain'
-        style={{ height: 'calc(var(--vh, 1vh) * 100)' }}
-      >
-        {/* 竖屏提示蒙层 */}
-        {showOrientationTip && (
-          <div className='fixed bottom-16 left-1/2 -translate-x-1/2 z-[190] flex items-center px-4 py-2 rounded bg-black/70 text-white space-x-2 pointer-events-none backdrop-blur-sm'>
-            <svg
-              className='w-5 h-5'
-              fill='none'
-              stroke='currentColor'
-              viewBox='0 0 24 24'
-            >
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth={2}
-                d='M12 4v16m8-8H4'
-              />
-            </svg>
-            <span className='text-sm'>请横屏观看</span>
-          </div>
-        )}
-
-        {/* 强制横屏按钮：仅在移动端竖屏时显示 */}
-        {isPortrait && (
-          <button
-            onClick={handleForceLandscape}
-            className='fixed bottom-16 left-4 z-[85] w-10 h-10 rounded-full bg-gray-800 text-white flex items-center justify-center md:hidden'
+    <div
+      ref={playerContainerRef}
+      tabIndex={-1}
+      className='bg-black fixed inset-0 overflow-hidden overscroll-contain'
+      style={{ height: 'calc(var(--vh, 1vh) * 100)' }}
+    >
+      {/* 竖屏提示蒙层 */}
+      {showOrientationTip && (
+        <div className='fixed bottom-16 left-1/2 -translate-x-1/2 z-[190] flex items-center px-4 py-2 rounded bg-black/70 text-white space-x-2 pointer-events-none backdrop-blur-sm'>
+          <svg
+            className='w-5 h-5'
+            fill='none'
+            stroke='currentColor'
+            viewBox='0 0 24 24'
           >
-            <svg
-              className='w-6 h-6'
-              fill='none'
-              stroke='currentColor'
-              viewBox='0 0 24 24'
-            >
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth={2}
-                d='M3 18v-6a3 3 0 013-3h12M21 6v6a3 3 0 01-3 3H6'
-              />
-            </svg>
-          </button>
-        )}
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth={2}
+              d='M12 4v16m8-8H4'
+            />
+          </svg>
+          <span className='text-sm'>请横屏观看</span>
+        </div>
+      )}
 
-        {/* 换源加载遮罩 */}
-        {sourceChanging && (
-          <div className='fixed inset-0 bg-black/50 z-[200] flex items-center justify-center'>
-            <div className='text-white text-center'>
-              <div className='animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto mb-2'></div>
-              <div className='text-sm'>换源中...</div>
-            </div>
-          </div>
-        )}
-
-        {/* 播放器容器 */}
-        <MediaPlayer
-          ref={playerRef}
-          className='w-full h-full group'
-          src={videoUrl}
-          poster={videoCover}
-          playsInline
-          autoPlay
-          crossOrigin='anonymous'
-          controlsDelay={3000}
-          keyDisabled
-          onCanPlay={onCanPlay}
-          onEnded={onEnded}
-          onTimeUpdate={onTimeUpdate}
-          onPause={saveCurrentPlayProgress}
-          onError={handlePlayerError}
-          onProviderChange={onProviderChange}
+      {/* 强制横屏按钮：仅在移动端竖屏时显示 */}
+      {isPortrait && (
+        <button
+          onClick={handleForceLandscape}
+          className='fixed bottom-16 left-4 z-[85] w-10 h-10 rounded-full bg-gray-800 text-white flex items-center justify-center md:hidden'
         >
-          <MediaProvider />
-          <PlayerUITopbar
-            videoTitle={videoTitle}
-            favorited={favorited}
-            totalEpisodes={totalEpisodes}
-            currentEpisodeIndex={currentEpisodeIndex}
-            sourceName={detail?.videoInfo.source_name || ''}
-            onToggleFavorite={handleToggleFavorite}
-            onOpenSourcePanel={handleSourcePanelOpen}
-            isFullscreen={isFullscreen}
-          />
-          <DefaultVideoLayout
-            icons={defaultLayoutIcons}
-            slots={{
-              googleCastButton: null,
-              pipButton: null,
-              settingsMenu: null,
-              muteButton: null, // 隐藏静音按钮
-              volumeSlider: null, // 隐藏音量条
-              airPlayButton: null, // 隐藏默认 AirPlay 按钮
-              beforeCurrentTime:
-                totalEpisodes > 1 ? (
-                  // 下一集按钮放在时间显示前
+          <svg
+            className='w-6 h-6'
+            fill='none'
+            stroke='currentColor'
+            viewBox='0 0 24 24'
+          >
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth={2}
+              d='M3 18v-6a3 3 0 013-3h12M21 6v6a3 3 0 01-3 3H6'
+            />
+          </svg>
+        </button>
+      )}
+
+      {/* 换源加载遮罩 */}
+      {sourceChanging && (
+        <div className='fixed inset-0 bg-black/50 z-[200] flex items-center justify-center'>
+          <div className='text-white text-center'>
+            <div className='animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto mb-2'></div>
+            <div className='text-sm'>换源中...</div>
+          </div>
+        </div>
+      )}
+
+      {/* 播放器容器 */}
+      <MediaPlayer
+        ref={playerRef}
+        className='w-full h-full group'
+        src={videoUrl}
+        poster={videoCover}
+        playsInline
+        autoPlay
+        crossOrigin='anonymous'
+        controlsDelay={3000}
+        keyDisabled
+        onCanPlay={onCanPlay}
+        onEnded={onEnded}
+        onTimeUpdate={onTimeUpdate}
+        onPause={saveCurrentPlayProgress}
+        onError={handlePlayerError}
+        onProviderChange={onProviderChange}
+      >
+        <MediaProvider />
+        <PlayerUITopbar
+          videoTitle={videoTitle}
+          favorited={favorited}
+          totalEpisodes={totalEpisodes}
+          currentEpisodeIndex={currentEpisodeIndex}
+          sourceName={detail?.videoInfo.source_name || ''}
+          onToggleFavorite={handleToggleFavorite}
+          onOpenSourcePanel={handleSourcePanelOpen}
+          isFullscreen={isFullscreen}
+        />
+        <DefaultVideoLayout
+          icons={defaultLayoutIcons}
+          slots={{
+            googleCastButton: null,
+            pipButton: null,
+            settingsMenu: null,
+            muteButton: null, // 隐藏静音按钮
+            volumeSlider: null, // 隐藏音量条
+            airPlayButton: null, // 隐藏默认 AirPlay 按钮
+            beforeCurrentTime:
+              totalEpisodes > 1 ? (
+                // 下一集按钮放在时间显示前
+                <button
+                  className='vds-button mr-2'
+                  onClick={handleNextEpisode}
+                  aria-label='Next Episode'
+                >
+                  <svg
+                    className='vds-icon'
+                    viewBox='0 0 32 32'
+                    xmlns='http://www.w3.org/2000/svg'
+                  >
+                    <path
+                      d='M6 24l12-8L6 8v16zM22 8v16h3V8h-3z'
+                      fill='currentColor'
+                    />
+                  </svg>
+                </button>
+              ) : null,
+            beforeFullscreenButton: (
+              <>
+                {totalEpisodes > 1 && (
                   <button
                     className='vds-button mr-2'
-                    onClick={handleNextEpisode}
-                    aria-label='Next Episode'
+                    onClick={() => {
+                      setShowEpisodePanel(true);
+                      playerContainerRef.current?.focus();
+                    }}
                   >
-                    <svg
-                      className='vds-icon'
-                      viewBox='0 0 32 32'
-                      xmlns='http://www.w3.org/2000/svg'
-                    >
-                      <path
-                        d='M6 24l12-8L6 8v16zM22 8v16h3V8h-3z'
-                        fill='currentColor'
-                      />
-                    </svg>
+                    选集
                   </button>
-                ) : null,
-              beforeFullscreenButton: (
-                <>
-                  {totalEpisodes > 1 && (
-                    <button
-                      className='vds-button mr-2'
-                      onClick={() => {
-                        setShowEpisodePanel(true);
-                        playerContainerRef.current?.focus();
-                      }}
-                    >
-                      选集
-                    </button>
-                  )}
-                  <PlaybackRateButton playerRef={playerRef} />
-                  {/* 自定义 AirPlay 按钮 */}
-                  <AirPlayButton className='vds-button'>
-                    <AirPlayIcon className='vds-icon' />
-                  </AirPlayButton>
-                </>
-              ),
-            }}
-          />
+                )}
+                <PlaybackRateButton playerRef={playerRef} />
+                {/* 自定义 AirPlay 按钮 */}
+                <AirPlayButton className='vds-button'>
+                  <AirPlayIcon className='vds-icon' />
+                </AirPlayButton>
+              </>
+            ),
+          }}
+        />
 
-          {/* 选集侧拉面板 */}
-          {totalEpisodes > 1 && (
-            <div data-episode-panel>
-              {/* 遮罩层 */}
-              {showEpisodePanel && (
-                <div
-                  className='fixed inset-0 bg-black/50 z-[110]'
-                  onClick={() => {
-                    setShowEpisodePanel(false);
-                    playerContainerRef.current?.focus();
-                  }}
-                />
-              )}
-
-              {/* 侧拉面板 */}
-              <div
-                className={`fixed top-0 right-0 h-full w-full mobile-landscape:w-1/2 md:w-80 bg-black/40 backdrop-blur-xl z-[110] transform transition-transform duration-300 ${
-                  showEpisodePanel ? 'translate-x-0' : 'translate-x-full'
-                }`}
-              >
-                <div className='p-6 h-full flex flex-col'>
-                  <div className='flex items-center justify-between mb-6'>
-                    <h3 className='text-white text-xl font-semibold'>
-                      选集列表
-                    </h3>
-                    <button
-                      onClick={() => {
-                        setShowEpisodePanel(false);
-                        playerContainerRef.current?.focus();
-                      }}
-                      className='text-gray-400 hover:text-white transition-colors'
-                    >
-                      <svg
-                        className='w-6 h-6'
-                        fill='none'
-                        stroke='currentColor'
-                        viewBox='0 0 24 24'
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={2}
-                          d='M6 18L18 6M6 6l12 12'
-                        />
-                      </svg>
-                    </button>
-                  </div>
-
-                  <div className='text-gray-300 text-sm mb-4'>
-                    当前: 第 {currentEpisodeIndex + 1} 集 / 共 {totalEpisodes}{' '}
-                    集
-                  </div>
-
-                  <div className='flex-1 overflow-y-auto'>
-                    <div className='grid grid-cols-4 gap-3'>
-                      {Array.from({ length: totalEpisodes }, (_, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => handleEpisodeChange(idx)}
-                          className={`px-3 py-2 text-sm rounded-lg transition-colors ${
-                            idx === currentEpisodeIndex
-                              ? 'bg-green-500 text-white'
-                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                          }`}
-                        >
-                          {idx + 1}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* 换源侧拉面板 */}
-          <div data-source-panel>
+        {/* 选集侧拉面板 */}
+        {totalEpisodes > 1 && (
+          <div data-episode-panel>
             {/* 遮罩层 */}
-            {showSourcePanel && (
+            {showEpisodePanel && (
               <div
                 className='fixed inset-0 bg-black/50 z-[110]'
                 onClick={() => {
-                  setShowSourcePanel(false);
+                  setShowEpisodePanel(false);
                   playerContainerRef.current?.focus();
                 }}
               />
@@ -1381,16 +1326,16 @@ function PlayPageClient() {
 
             {/* 侧拉面板 */}
             <div
-              className={`fixed top-0 right-0 h-full w-full mobile-landscape:w-1/2 md:w-96 bg-black/40 backdrop-blur-xl z-[110] transform transition-transform duration-300 ${
-                showSourcePanel ? 'translate-x-0' : 'translate-x-full'
+              className={`fixed top-0 right-0 h-full w-full mobile-landscape:w-1/2 md:w-80 bg-black/40 backdrop-blur-xl z-[110] transform transition-transform duration-300 ${
+                showEpisodePanel ? 'translate-x-0' : 'translate-x-full'
               }`}
             >
               <div className='p-6 h-full flex flex-col'>
                 <div className='flex items-center justify-between mb-6'>
-                  <h3 className='text-white text-xl font-semibold'>播放源</h3>
+                  <h3 className='text-white text-xl font-semibold'>选集列表</h3>
                   <button
                     onClick={() => {
-                      setShowSourcePanel(false);
+                      setShowEpisodePanel(false);
                       playerContainerRef.current?.focus();
                     }}
                     className='text-gray-400 hover:text-white transition-colors'
@@ -1411,215 +1356,283 @@ function PlayPageClient() {
                   </button>
                 </div>
 
-                {/* 搜索结果 */}
+                <div className='text-gray-300 text-sm mb-4'>
+                  当前: 第 {currentEpisodeIndex + 1} 集 / 共 {totalEpisodes} 集
+                </div>
+
                 <div className='flex-1 overflow-y-auto'>
-                  {searchLoading && (
-                    <div className='flex items-center justify-center py-8'>
-                      <div className='animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500'></div>
-                      <span className='text-gray-300 ml-3'>搜索中...</span>
-                    </div>
-                  )}
-
-                  {searchError && (
-                    <div className='text-red-400 text-center py-4'>
-                      {searchError}
-                    </div>
-                  )}
-
-                  {!searchLoading &&
-                    !searchError &&
-                    searchResults.length === 0 && (
-                      <div className='text-gray-400 text-center py-8'>
-                        未找到相关视频源
-                      </div>
-                    )}
-
-                  {!searchLoading &&
-                    !searchError &&
-                    searchResults.length > 0 && (
-                      <div className='grid grid-cols-2 gap-4'>
-                        {[
-                          ...searchResults.filter(
-                            (r) =>
-                              r.source === currentSource &&
-                              String(r.id) === String(currentId)
-                          ),
-                          ...searchResults.filter(
-                            (r) =>
-                              !(
-                                r.source === currentSource &&
-                                String(r.id) === String(currentId)
-                              )
-                          ),
-                        ].map((result) => {
-                          const isCurrentSource =
-                            result.source === currentSource &&
-                            String(result.id) === String(currentId);
-                          return (
-                            <div
-                              key={`${result.source}-${result.id}`}
-                              className={`rounded-lg transition-colors border-2 ${
-                                isCurrentSource
-                                  ? 'border-green-500 bg-green-500/20 cursor-not-allowed opacity-60'
-                                  : 'border-transparent bg-transparent hover:bg-gray-600/30 cursor-pointer'
-                              }`}
-                              onClick={() =>
-                                !isCurrentSource &&
-                                handleSourceChange(
-                                  result.source,
-                                  result.id,
-                                  result.title
-                                )
-                              }
-                            >
-                              {/* 视频封面 */}
-                              <div className='aspect-[2/3] rounded-t-lg overflow-hidden flex items-center justify-center p-1 relative'>
-                                <img
-                                  src={result.poster}
-                                  alt={result.title}
-                                  className='w-full h-full object-cover rounded'
-                                  referrerPolicy='no-referrer'
-                                />
-
-                                {/* 集数圆形指示器 */}
-                                {result.episodes && (
-                                  <div className='absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center'>
-                                    <span className='text-white text-xs font-bold'>
-                                      {result.episodes}
-                                    </span>
-                                  </div>
-                                )}
-
-                                {isCurrentSource && (
-                                  <div className='absolute inset-0 flex items-center justify-center pointer-events-none'>
-                                    <div className='bg-green-500 text-white text-xs px-3 py-1 rounded shadow-lg'>
-                                      当前播放
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* 视频信息 */}
-                              <div className='p-2 bg-transparent text-center'>
-                                <h4 className='text-white font-medium text-sm line-clamp-2 mb-2 leading-tight'>
-                                  {result.title}
-                                </h4>
-                                <div className='text-gray-400 text-xs space-y-1'>
-                                  <div className='inline-block border border-gray-500/60 rounded px-2 py-[1px]'>
-                                    {result.source_name}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                  <div className='grid grid-cols-4 gap-3'>
+                    {Array.from({ length: totalEpisodes }, (_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleEpisodeChange(idx)}
+                        className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+                          idx === currentEpisodeIndex
+                            ? 'bg-green-500 text-white'
+                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        }`}
+                      >
+                        {idx + 1}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+        )}
 
-          {/* 快捷键提示 */}
+        {/* 换源侧拉面板 */}
+        <div data-source-panel>
+          {/* 遮罩层 */}
+          {showSourcePanel && (
+            <div
+              className='fixed inset-0 bg-black/50 z-[110]'
+              onClick={() => {
+                setShowSourcePanel(false);
+                playerContainerRef.current?.focus();
+              }}
+            />
+          )}
+
+          {/* 侧拉面板 */}
           <div
-            className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 transition-opacity duration-300 ${
-              showShortcutHint ? 'opacity-100' : 'opacity-0 pointer-events-none'
+            className={`fixed top-0 right-0 h-full w-full mobile-landscape:w-1/2 md:w-96 bg-black/40 backdrop-blur-xl z-[110] transform transition-transform duration-300 ${
+              showSourcePanel ? 'translate-x-0' : 'translate-x-full'
             }`}
           >
-            <div className='bg-black/80 backdrop-blur-sm rounded p-4 flex items-center space-x-3'>
-              <svg
-                className='w-6 h-6 text-white'
-                fill='none'
-                stroke='currentColor'
-                viewBox='0 0 24 24'
-              >
-                {shortcutDirection === 'left' && (
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth='2'
-                    d='M15 19l-7-7 7-7'
-                  ></path>
+            <div className='p-6 h-full flex flex-col'>
+              <div className='flex items-center justify-between mb-6'>
+                <h3 className='text-white text-xl font-semibold'>播放源</h3>
+                <button
+                  onClick={() => {
+                    setShowSourcePanel(false);
+                    playerContainerRef.current?.focus();
+                  }}
+                  className='text-gray-400 hover:text-white transition-colors'
+                >
+                  <svg
+                    className='w-6 h-6'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M6 18L18 6M6 6l12 12'
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              {/* 搜索结果 */}
+              <div className='flex-1 overflow-y-auto'>
+                {searchLoading && (
+                  <div className='flex items-center justify-center py-8'>
+                    <div className='animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500'></div>
+                    <span className='text-gray-300 ml-3'>搜索中...</span>
+                  </div>
                 )}
-                {shortcutDirection === 'right' && (
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth='2'
-                    d='M9 5l7 7-7 7'
-                  ></path>
+
+                {searchError && (
+                  <div className='text-red-400 text-center py-4'>
+                    {searchError}
+                  </div>
                 )}
-                {shortcutDirection === 'up' && (
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth='2'
-                    d='M5 15l7-7 7 7'
-                  ></path>
+
+                {!searchLoading &&
+                  !searchError &&
+                  searchResults.length === 0 && (
+                    <div className='text-gray-400 text-center py-8'>
+                      未找到相关视频源
+                    </div>
+                  )}
+
+                {!searchLoading && !searchError && searchResults.length > 0 && (
+                  <div className='grid grid-cols-2 gap-4'>
+                    {[
+                      ...searchResults.filter(
+                        (r) =>
+                          r.source === currentSource &&
+                          String(r.id) === String(currentId)
+                      ),
+                      ...searchResults.filter(
+                        (r) =>
+                          !(
+                            r.source === currentSource &&
+                            String(r.id) === String(currentId)
+                          )
+                      ),
+                    ].map((result) => {
+                      const isCurrentSource =
+                        result.source === currentSource &&
+                        String(result.id) === String(currentId);
+                      return (
+                        <div
+                          key={`${result.source}-${result.id}`}
+                          className={`rounded-lg transition-colors border-2 ${
+                            isCurrentSource
+                              ? 'border-green-500 bg-green-500/20 cursor-not-allowed opacity-60'
+                              : 'border-transparent bg-transparent hover:bg-gray-600/30 cursor-pointer'
+                          }`}
+                          onClick={() =>
+                            !isCurrentSource &&
+                            handleSourceChange(
+                              result.source,
+                              result.id,
+                              result.title
+                            )
+                          }
+                        >
+                          {/* 视频封面 */}
+                          <div className='aspect-[2/3] rounded-t-lg overflow-hidden flex items-center justify-center p-1 relative'>
+                            <img
+                              src={result.poster}
+                              alt={result.title}
+                              className='w-full h-full object-cover rounded'
+                              referrerPolicy='no-referrer'
+                            />
+
+                            {/* 集数圆形指示器 */}
+                            {result.episodes && (
+                              <div className='absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center'>
+                                <span className='text-white text-xs font-bold'>
+                                  {result.episodes}
+                                </span>
+                              </div>
+                            )}
+
+                            {isCurrentSource && (
+                              <div className='absolute inset-0 flex items-center justify-center pointer-events-none'>
+                                <div className='bg-green-500 text-white text-xs px-3 py-1 rounded shadow-lg'>
+                                  当前播放
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* 视频信息 */}
+                          <div className='p-2 bg-transparent text-center'>
+                            <h4 className='text-white font-medium text-sm line-clamp-2 mb-2 leading-tight'>
+                              {result.title}
+                            </h4>
+                            <div className='text-gray-400 text-xs space-y-1'>
+                              <div className='inline-block border border-gray-500/60 rounded px-2 py-[1px]'>
+                                {result.source_name}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
-                {shortcutDirection === 'down' && (
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth='2'
-                    d='M19 9l-7 7-7-7'
-                  ></path>
-                )}
-                {shortcutDirection === 'play' && (
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth='2'
-                    d='M8 5v14l11-7L8 5z'
-                  ></path>
-                )}
-                {shortcutDirection === 'pause' && (
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth='2'
-                    d='M6 6h4v12H6zm8 0h4v12h-4z'
-                  ></path>
-                )}
-                {shortcutDirection === 'error' && (
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth='2'
-                    d='M6 18L18 6M6 6l12 12'
-                  ></path>
-                )}
-              </svg>
-              <span className='text-white font-medium'>{shortcutText}</span>
+              </div>
             </div>
           </div>
+        </div>
 
-          {/* 三倍速提示 */}
-          <div
-            className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 transition-opacity duration-300 ${
-              showSpeedTip ? 'opacity-100' : 'opacity-0 pointer-events-none'
-            }`}
-          >
-            <div className='bg-black/60 backdrop-blur-sm rounded-lg p-4 flex items-center space-x-3'>
-              <svg
-                className='w-6 h-6 text-white animate-pulse'
-                fill='none'
-                stroke='currentColor'
-                viewBox='0 0 24 24'
-              >
+        {/* 快捷键提示 */}
+        <div
+          className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 transition-opacity duration-300 ${
+            showShortcutHint ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
+        >
+          <div className='bg-black/80 backdrop-blur-sm rounded p-4 flex items-center space-x-3'>
+            <svg
+              className='w-6 h-6 text-white'
+              fill='none'
+              stroke='currentColor'
+              viewBox='0 0 24 24'
+            >
+              {shortcutDirection === 'left' && (
                 <path
                   strokeLinecap='round'
                   strokeLinejoin='round'
                   strokeWidth='2'
-                  d='M13 10V3L4 14h7v7l9-11h-7z'
-                />
-              </svg>
-              <span className='text-white font-bold text-lg'>3x 倍速</span>
-            </div>
+                  d='M15 19l-7-7 7-7'
+                ></path>
+              )}
+              {shortcutDirection === 'right' && (
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth='2'
+                  d='M9 5l7 7-7 7'
+                ></path>
+              )}
+              {shortcutDirection === 'up' && (
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth='2'
+                  d='M5 15l7-7 7 7'
+                ></path>
+              )}
+              {shortcutDirection === 'down' && (
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth='2'
+                  d='M19 9l-7 7-7-7'
+                ></path>
+              )}
+              {shortcutDirection === 'play' && (
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth='2'
+                  d='M8 5v14l11-7L8 5z'
+                ></path>
+              )}
+              {shortcutDirection === 'pause' && (
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth='2'
+                  d='M6 6h4v12H6zm8 0h4v12h-4z'
+                ></path>
+              )}
+              {shortcutDirection === 'error' && (
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth='2'
+                  d='M6 18L18 6M6 6l12 12'
+                ></path>
+              )}
+            </svg>
+            <span className='text-white font-medium'>{shortcutText}</span>
           </div>
-        </MediaPlayer>
-      </div>
-    </>
+        </div>
+
+        {/* 三倍速提示 */}
+        <div
+          className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 transition-opacity duration-300 ${
+            showSpeedTip ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
+        >
+          <div className='bg-black/60 backdrop-blur-sm rounded-lg p-4 flex items-center space-x-3'>
+            <svg
+              className='w-6 h-6 text-white animate-pulse'
+              fill='none'
+              stroke='currentColor'
+              viewBox='0 0 24 24'
+            >
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth='2'
+                d='M13 10V3L4 14h7v7l9-11h-7z'
+              />
+            </svg>
+            <span className='text-white font-bold text-lg'>3x 倍速</span>
+          </div>
+        </div>
+      </MediaPlayer>
+    </div>
   );
 }
 
@@ -1680,13 +1693,8 @@ const FavoriteIcon = ({ filled }: { filled: boolean }) => {
 
 export default function PlayPage() {
   return (
-    <>
-      <Head>
-        <meta name='theme-color' content='#000000' />
-      </Head>
-      <Suspense>
-        <PlayPageClient />
-      </Suspense>
-    </>
+    <Suspense>
+      <PlayPageClient />
+    </Suspense>
   );
 }
