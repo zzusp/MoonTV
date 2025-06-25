@@ -130,6 +130,12 @@ function PlayPageClient() {
   const currentIdRef = useRef(currentId);
   const videoTitleRef = useRef(videoTitle);
 
+  // 标记是否已触发过一次 sourcechange（首次不重建播放器）
+  const hasSourceChangedRef = useRef(false);
+
+  // 当播放器因重建而触发一次额外的 sourcechange 时，用于忽略那一次
+  const ignoreSourceChangeRef = useRef(false);
+
   // 同步最新值到 refs
   useEffect(() => {
     currentSourceRef.current = currentSource;
@@ -415,6 +421,7 @@ function PlayPageClient() {
       if (playerRef.current && !playerRef.current.paused) {
         saveCurrentPlayProgress();
       }
+      playerRef.current;
       setCurrentEpisodeIndex(episodeIndex);
       setShowEpisodePanel(false);
     }
@@ -1041,6 +1048,9 @@ function PlayPageClient() {
     };
   }, []);
 
+  // Safari(WebKit) 专用：用于强制重新挂载 <MediaPlayer>，实现"销毁并重建"效果
+  const [playerReloadKey, setPlayerReloadKey] = useState(0);
+
   if (loading) {
     return (
       <div className='min-h-[100dvh] bg-black flex items-center justify-center overflow-hidden overscroll-contain'>
@@ -1194,6 +1204,32 @@ function PlayPageClient() {
     }
   };
 
+  const onSourceChange = () => {
+    // 仅在 WebKit（Safari）环境下重建播放器，解决部分资源切换后黑屏或无法播放的问题
+    const isWebkit =
+      typeof window !== 'undefined' &&
+      typeof (window as any).webkitConvertPointFromNodeToPage === 'function';
+
+    if (ignoreSourceChangeRef.current) {
+      // 这一次是由我们手动重建引起的，直接忽略
+      ignoreSourceChangeRef.current = false;
+      return;
+    }
+
+    if (isWebkit) {
+      // 第一次真实的 sourcechange，仅设置标记，不重建
+      if (!hasSourceChangedRef.current) {
+        hasSourceChangedRef.current = true;
+        return;
+      }
+
+      // 第二次（用户真正切换源）开始重建播放器
+      // 设置标志，下一次由重建带来的 sourcechange 忽略
+      ignoreSourceChangeRef.current = true;
+      setPlayerReloadKey((k) => k + 1);
+    }
+  };
+
   return (
     <div
       ref={playerContainerRef}
@@ -1263,13 +1299,14 @@ function PlayPageClient() {
         autoPlay
         crossOrigin='anonymous'
         controlsDelay={3000}
-        keyDisabled
+        key={playerReloadKey}
         onCanPlay={onCanPlay}
         onEnded={onEnded}
         onTimeUpdate={onTimeUpdate}
         onPause={saveCurrentPlayProgress}
         onError={handlePlayerError}
         onProviderChange={onProviderChange}
+        onSourceChange={onSourceChange}
       >
         <MediaProvider />
         <PlayerUITopbar
