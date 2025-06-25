@@ -68,6 +68,7 @@ const AggregateCard: React.FC<AggregateCardProps> = ({ items }) => {
             alt={first.title}
             fill
             className='object-cover'
+            unoptimized
           />
 
           {/* Hover 层 & 播放按钮 */}

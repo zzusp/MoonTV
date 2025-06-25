@@ -74,6 +74,7 @@ const DemoCard = ({ title, poster, rate }: DemoCardProps) => {
           fill
           className='object-cover'
           referrerPolicy='no-referrer'
+          unoptimized
         />
         {/* 评分徽章 */}
         {rate && (

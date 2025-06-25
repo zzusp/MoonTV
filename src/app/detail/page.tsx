@@ -171,6 +171,7 @@ function DetailPageClient() {
                   className='w-full rounded-xl object-cover'
                   style={{ aspectRatio: '2/3' }}
                   priority
+                  unoptimized
                 />
               </div>
               {/* 右侧信息 */}
