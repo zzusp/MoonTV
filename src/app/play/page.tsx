@@ -1101,10 +1101,18 @@ function PlayPageClient() {
           </div>
           <div className='text-base mb-6'>{error}</div>
           <button
-            onClick={() => window.history.back()}
+            onClick={() => {
+              if (videoTitle) {
+                window.location.href = `/aggregate?q=${encodeURIComponent(
+                  videoTitle
+                )}${videoYear ? `&year=${encodeURIComponent(videoYear)}` : ''}`;
+              } else {
+                window.location.href = '/';
+              }
+            }}
             className='px-6 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors'
           >
-            返回
+            {videoTitle ? '返回选源' : '返回首页'}
           </button>
         </div>
       </div>
@@ -1117,10 +1125,19 @@ function PlayPageClient() {
         <div className='text-white text-center'>
           <div className='text-xl font-semibold mb-4'>未找到视频</div>
           <button
-            onClick={() => window.history.back()}
+            onClick={() => {
+              // 返回选源页
+              if (videoTitle) {
+                window.location.href = `/aggregate?q=${encodeURIComponent(
+                  videoTitle
+                )}${videoYear ? `&year=${encodeURIComponent(videoYear)}` : ''}`;
+              } else {
+                window.location.href = '/';
+              }
+            }}
             className='px-6 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors'
           >
-            返回
+            {videoTitle ? '返回选源' : '返回首页'}
           </button>
         </div>
       </div>
