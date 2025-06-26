@@ -176,7 +176,7 @@ function SearchPageClient() {
                         group[0].year || 'unknown'
                       }`;
                       return (
-                        <div key={key} className='w-full'>
+                        <div key={`agg-${key}`} className='w-full'>
                           <AggregateCard
                             items={group}
                             query={searchQuery}
@@ -186,7 +186,10 @@ function SearchPageClient() {
                       );
                     })
                   : searchResults.map((item) => (
-                      <div key={item.id} className='w-full'>
+                      <div
+                        key={`all-${item.source}-${item.id}`}
+                        className='w-full'
+                      >
                         <VideoCard
                           id={item.id}
                           title={item.title}
