@@ -21,8 +21,7 @@ import { Suspense } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import React from 'react';
 
-// 根据环境变量决定是否禁用去广告 Loader，默认 false
-const DISABLE_BLOCKAD = process.env.NEXT_PUBLIC_DISABLE_BLOCKAD === 'true';
+const ENABLE_BLOCKAD = process.env.NEXT_PUBLIC_ENABLE_BLOCKAD === 'true';
 
 import 'vidstack/styles/defaults.css';
 import '@vidstack/react/player/styles/default/theme.css';
@@ -1325,7 +1324,7 @@ function PlayPageClient() {
         backBufferLength: 30, // 仅保留 30s 已播放内容，避免内存占用
         maxBufferSize: 60 * 1000 * 1000, // 约 60MB，超出后触发清理
         /* 自定义loader */
-        loader: DISABLE_BLOCKAD ? Hls.DefaultConfig.loader : CustomHlsJsLoader,
+        loader: ENABLE_BLOCKAD ? CustomHlsJsLoader : Hls.DefaultConfig.loader,
       };
     }
   };

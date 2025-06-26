@@ -132,7 +132,7 @@ Pull Bot 会反复触发无效的 PR 和垃圾邮件，严重干扰项目维护�
 | ----------------------------------- | ---------------------------------- | ---------------------------------------------------------------- | ------------ |
 | PASSWORD                            | 实例访问密码，留空则不启用密码保护 | 任意字符串                                                       | （空）       |
 | NEXT_PUBLIC_STORAGE_TYPE            | 播放记录/收藏的存储方式            | localstorage（本地浏览器存储）、database（后端数据库，暂不支持） | localstorage |
-| NEXT_PUBLIC_DISABLE_BLOCKAD         | 禁用智能去广告功能                 | true / false                                                     | false        |
+| NEXT_PUBLIC_ENABLE_BLOCKAD          | 开启智能去广告功能（实验性）       | true / false                                                     | false        |
 | NEXT_PUBLIC_SEARCH_MAX_PAGE         | 搜索接口可拉取的最大页数           | 1-50                                                             | 5            |
 | NEXT_PUBLIC_AGGREGATE_SEARCH_RESULT | 搜索结果默认是否按标题和年份聚合   | true / false                                                     | true         |
 
