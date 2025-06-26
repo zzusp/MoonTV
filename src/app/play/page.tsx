@@ -21,6 +21,9 @@ import { Suspense } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import React from 'react';
 
+// 根据环境变量决定是否禁用去广告 Loader，默认 false
+const DISABLE_BLOCKAD = process.env.NEXT_PUBLIC_DISABLE_BLOCKAD === 'true';
+
 import 'vidstack/styles/defaults.css';
 import '@vidstack/react/player/styles/default/theme.css';
 import '@vidstack/react/player/styles/default/layouts/video.css';
@@ -1219,8 +1222,76 @@ function PlayPageClient() {
     );
   };
 
+  function filterAdsFromM3U8(m3u8Content: string): string {
+    if (!m3u8Content) return '';
+
+    // 按行分割M3U8内容
+    const lines = m3u8Content.split('\n');
+    const filteredLines = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      // 只过滤#EXT-X-DISCONTINUITY标识
+      if (!line.includes('#EXT-X-DISCONTINUITY')) {
+        filteredLines.push(line);
+      }
+    }
+
+    return filteredLines.join('\n');
+  }
+
+  class CustomHlsJsLoader extends Hls.DefaultConfig.loader {
+    constructor(config: any) {
+      super(config);
+      const load = this.load.bind(this);
+      this.load = function (context, config, callbacks) {
+        // 拦截manifest和level请求
+        if (
+          (context as any).type === 'manifest' ||
+          (context as any).type === 'level'
+        ) {
+          const onSuccess = callbacks.onSuccess;
+          callbacks.onSuccess = function (response, stats, context) {
+            // 如果是m3u8文件，处理内容以移除广告分段
+            if (response.data && typeof response.data === 'string') {
+              // 过滤掉广告段 - 实现更精确的广告过滤逻辑
+              response.data = filterAdsFromM3U8(response.data);
+            }
+            return onSuccess(response, stats, context, null);
+          };
+        }
+        // 执行原始load方法
+        load(context, config, callbacks);
+      };
+    }
+  }
   const onProviderChange = (provider: MediaProviderAdapter | null) => {
     class extendedHls extends Hls {
+      constructor(config: any) {
+        // 调用父类构造函数
+        // @ts-ignore
+        super(config);
+
+        // 监听 Hls 错误事件，捕获 bufferStalledError 并尝试跳过
+        this.on(Hls.Events.ERROR, (_evt: any, data: any) => {
+          if (
+            data?.details === Hls.ErrorDetails.BUFFER_STALLED_ERROR ||
+            data?.details === Hls.ErrorDetails.BUFFER_SEEK_OVER_HOLE
+          ) {
+            try {
+              const media = (this as any).media as HTMLMediaElement | undefined;
+              if (media && !media.seeking) {
+                // 前跳 1 秒，跳过当前卡顿的分片
+                media.currentTime = media.currentTime + 1;
+              }
+            } catch (err) {
+              console.warn('尝试跳过卡顿分片失败:', err);
+            }
+          }
+        });
+      }
+
       attachMedia(media: HTMLMediaElement): void {
         super.attachMedia(media);
 
@@ -1230,6 +1301,17 @@ function PlayPageClient() {
     }
     if (isHLSProvider(provider)) {
       provider.library = extendedHls;
+      provider.config = {
+        debug: false, // 关闭日志
+        enableWorker: true, // WebWorker 解码，降低主线程压力
+        lowLatencyMode: true, // 开启低延迟 LL-HLS
+        /* 缓冲/内存相关 */
+        maxBufferLength: 30, // 前向缓冲最大 30s，过大容易导致高延迟
+        backBufferLength: 30, // 仅保留 30s 已播放内容，避免内存占用
+        maxBufferSize: 60 * 1000 * 1000, // 约 60MB，超出后触发清理
+        /* 自定义loader */
+        loader: DISABLE_BLOCKAD ? Hls.DefaultConfig.loader : CustomHlsJsLoader,
+      };
     }
   };
 
