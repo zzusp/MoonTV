@@ -12,10 +12,6 @@ export const metadata: Metadata = {
   title: 'MoonTV',
   description: '影视聚合',
   manifest: '/manifest.json',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f9fbfe' },
-    { media: '(prefers-color-scheme: dark)', color: '#0C111C' },
-  ],
 };
 
 export default function RootLayout({
