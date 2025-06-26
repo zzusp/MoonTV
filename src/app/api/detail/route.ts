@@ -144,7 +144,9 @@ async function getDetailFromApi(
       cover: videoDetail.vod_pic,
       desc: cleanHtmlTags(videoDetail.vod_content),
       type: videoDetail.type_name,
-      year: videoDetail.vod_year,
+      year: videoDetail.vod_year
+        ? videoDetail.vod_year.match(/\d{4}/)?.[0] || ''
+        : '',
       area: videoDetail.vod_area,
       director: videoDetail.vod_director,
       actor: videoDetail.vod_actor,

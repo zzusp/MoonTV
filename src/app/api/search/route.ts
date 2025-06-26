@@ -95,7 +95,7 @@ async function searchFromApi(
         source: apiSite.key,
         source_name: apiName,
         class: item.vod_class,
-        year: item.vod_year,
+        year: item.vod_year ? item.vod_year.match(/\d{4}/)?.[0] || '' : '',
         desc: cleanHtmlTags(item.vod_content || ''),
         type_name: item.type_name,
       };
@@ -165,7 +165,9 @@ async function searchFromApi(
                 source: apiSite.key,
                 source_name: apiName,
                 class: item.vod_class,
-                year: item.vod_year,
+                year: item.vod_year
+                  ? item.vod_year.match(/\d{4}/)?.[0] || ''
+                  : '',
                 desc: cleanHtmlTags(item.vod_content || ''),
                 type_name: item.type_name,
               };
