@@ -136,6 +136,9 @@ function PlayPageClient() {
   // 当播放器因重建而触发一次额外的 sourcechange 时，用于忽略那一次
   const ignoreSourceChangeRef = useRef(false);
 
+  // 上次使用的音量，默认 0.7
+  const lastVolumeRef = useRef<number>(0.7);
+
   // 同步最新值到 refs
   useEffect(() => {
     currentSourceRef.current = currentSource;
@@ -328,6 +331,16 @@ function PlayPageClient() {
         console.warn('恢复播放进度失败:', err);
       }
       resumeTimeRef.current = null;
+    }
+
+    if (playerRef.current) {
+      setTimeout(() => {
+        try {
+          playerRef.current.volume = lastVolumeRef.current;
+        } catch (_) {
+          // 忽略异常
+        }
+      }, 0);
     }
   };
 
@@ -666,9 +679,13 @@ function PlayPageClient() {
 
     // 上箭头 = 音量+
     if (e.key === 'ArrowUp') {
-      if (player.volume < 1) {
+      const currentVolume = player.volume;
+      if (currentVolume < 1) {
         player.volume += 0.1;
-        displayShortcutHint(`音量 ${Math.round(player.volume * 100)}`, 'up');
+        displayShortcutHint(
+          `音量 ${Math.round((currentVolume + 0.1) * 100)}`,
+          'up'
+        );
       } else {
         displayShortcutHint('音量 100', 'up');
       }
@@ -677,9 +694,13 @@ function PlayPageClient() {
 
     // 下箭头 = 音量-
     if (e.key === 'ArrowDown') {
-      if (player.volume > 0) {
+      const currentVolume = player.volume;
+      if (currentVolume > 0) {
         player.volume -= 0.1;
-        displayShortcutHint(`音量 ${Math.round(player.volume * 100)}`, 'down');
+        displayShortcutHint(
+          `音量 ${Math.round((currentVolume - 0.1) * 100)}`,
+          'down'
+        );
       } else {
         displayShortcutHint('音量 0', 'down');
       }
@@ -1051,6 +1072,14 @@ function PlayPageClient() {
   // Safari(WebKit) 专用：用于强制重新挂载 <MediaPlayer>，实现"销毁并重建"效果
   const [playerReloadKey, setPlayerReloadKey] = useState(0);
 
+  // 实时记录音量变化
+  const handleVolumeChange = () => {
+    const v = playerRef.current?.volume;
+    if (typeof v === 'number' && !Number.isNaN(v)) {
+      lastVolumeRef.current = v;
+    }
+  };
+
   if (loading) {
     return (
       <div className='min-h-[100dvh] bg-black flex items-center justify-center overflow-hidden overscroll-contain'>
@@ -1225,6 +1254,7 @@ function PlayPageClient() {
 
       // 第二次（用户真正切换源）开始重建播放器
       // 设置标志，下一次由重建带来的 sourcechange 忽略
+      console.log('destory player and rebuild');
       ignoreSourceChangeRef.current = true;
       setPlayerReloadKey((k) => k + 1);
     }
@@ -1297,6 +1327,7 @@ function PlayPageClient() {
         poster={videoCover}
         playsInline
         autoPlay
+        volume={0.7}
         crossOrigin='anonymous'
         controlsDelay={3000}
         key={playerReloadKey}
@@ -1307,6 +1338,7 @@ function PlayPageClient() {
         onError={handlePlayerError}
         onProviderChange={onProviderChange}
         onSourceChange={onSourceChange}
+        onVolumeChange={handleVolumeChange}
       >
         <MediaProvider />
         <PlayerUITopbar
