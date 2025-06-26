@@ -41,8 +41,15 @@ function SearchPageClient() {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // 视图模式：聚合(agg) 或 全部(all)
-  const [viewMode, setViewMode] = useState<'agg' | 'all'>('agg');
+  // 视图模式：聚合(agg) 或 全部(all)，默认值由环境变量 NEXT_PUBLIC_AGGREGATE_SEARCH_RESULT 决定
+  const [viewMode, setViewMode] = useState<'agg' | 'all'>(() => {
+    const envVal = process.env.NEXT_PUBLIC_AGGREGATE_SEARCH_RESULT;
+    // 默认聚合（'agg'）。当显式设置为 'false' 或 '0' 时使用 'all'
+    if (envVal === 'false' || envVal === '0') {
+      return 'all';
+    }
+    return 'agg';
+  });
 
   // 聚合后的结果（按标题和年份分组）
   const aggregatedResults = useMemo(() => {

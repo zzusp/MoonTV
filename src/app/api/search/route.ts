@@ -3,6 +3,10 @@ import { NextResponse } from 'next/server';
 import { API_CONFIG, ApiSite, getApiSites, getCacheTime } from '@/lib/config';
 import { cleanHtmlTags } from '@/lib/utils';
 
+// 根据环境变量决定最大搜索页数，默认 5
+const MAX_SEARCH_PAGES: number =
+  Number(process.env.NEXT_PUBLIC_SEARCH_MAX_PAGE) || 5;
+
 export interface SearchResult {
   id: string;
   title: string;
@@ -104,10 +108,7 @@ async function searchFromApi(
     // 获取总页数
     const pageCount = data.pagecount || 1;
     // 确定需要获取的额外页数
-    const pagesToFetch = Math.min(
-      pageCount - 1,
-      API_CONFIG.search.maxPages - 1
-    );
+    const pagesToFetch = Math.min(pageCount - 1, MAX_SEARCH_PAGES - 1);
 
     // 如果有额外页数，获取更多页的结果
     if (pagesToFetch > 0) {
