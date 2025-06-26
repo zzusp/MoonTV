@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 'use client';
 
 import { Moon, Sun } from 'lucide-react';
@@ -19,12 +21,12 @@ export function ThemeToggle() {
 
   const toggleTheme = () => {
     // 检查浏览器是否支持 View Transitions API
-    if (!document.startViewTransition) {
+    if (!(document as any).startViewTransition) {
       setTheme(theme === 'dark' ? 'light' : 'dark');
       return;
     }
 
-    document.startViewTransition(() => {
+    (document as any).startViewTransition(() => {
       setTheme(theme === 'dark' ? 'light' : 'dark');
     });
   };
