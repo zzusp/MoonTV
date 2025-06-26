@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 
 import type { PlayRecord } from '@/lib/db.client';
-import { getAllPlayRecords } from '@/lib/db.client';
+import { clearAllPlayRecords, getAllPlayRecords } from '@/lib/db.client';
 
 import ScrollableRow from '@/components/ScrollableRow';
 import VideoCard from '@/components/VideoCard';
@@ -71,9 +71,20 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
 
   return (
     <section className={`mb-8 ${className || ''}`}>
-      <h2 className='mb-4 text-xl font-bold text-gray-800 text-left'>
-        继续观看
-      </h2>
+      <div className='mb-4 flex items-center justify-between'>
+        <h2 className='text-xl font-bold text-gray-800'>继续观看</h2>
+        {!loading && playRecords.length > 0 && (
+          <button
+            className='text-sm text-gray-500 hover:text-gray-700'
+            onClick={async () => {
+              await clearAllPlayRecords();
+              setPlayRecords([]);
+            }}
+          >
+            清空
+          </button>
+        )}
+      </div>
       <ScrollableRow>
         {loading
           ? // 加载状态显示灰色占位数据

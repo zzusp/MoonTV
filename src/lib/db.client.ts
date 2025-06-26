@@ -439,3 +439,45 @@ export async function toggleFavorite(
   await saveFavorite(source, id, favoriteData);
   return true;
 }
+
+/**
+ * 清空全部播放记录
+ */
+export async function clearAllPlayRecords(): Promise<void> {
+  // 数据库模式
+  if (STORAGE_TYPE === 'database') {
+    try {
+      await fetch('/api/playrecords', {
+        method: 'DELETE',
+      });
+    } catch (err) {
+      console.error('清空播放记录失败:', err);
+    }
+    return;
+  }
+
+  // localStorage 模式
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(PLAY_RECORDS_KEY);
+}
+
+/**
+ * 清空全部收藏
+ */
+export async function clearAllFavorites(): Promise<void> {
+  // 数据库模式
+  if (STORAGE_TYPE === 'database') {
+    try {
+      await fetch('/api/favorites', {
+        method: 'DELETE',
+      });
+    } catch (err) {
+      console.error('清空收藏失败:', err);
+    }
+    return;
+  }
+
+  // localStorage 模式
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(FAVORITES_KEY);
+}

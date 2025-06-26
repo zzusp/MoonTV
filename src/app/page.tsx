@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Suspense, useEffect, useState } from 'react';
 
 // 客户端收藏 API
-import { getAllFavorites } from '@/lib/db.client';
+import { clearAllFavorites, getAllFavorites } from '@/lib/db.client';
 
 import CapsuleSwitch from '@/components/CapsuleSwitch';
 import ContinueWatching from '@/components/ContinueWatching';
@@ -118,9 +118,20 @@ function HomeClient() {
           {activeTab === 'favorites' ? (
             // 收藏夹视图
             <section className='mb-8'>
-              <h2 className='mb-4 text-xl font-bold text-gray-800 text-left'>
-                我的收藏
-              </h2>
+              <div className='mb-4 flex items-center justify-between'>
+                <h2 className='text-xl font-bold text-gray-800'>我的收藏</h2>
+                {favoriteItems.length > 0 && (
+                  <button
+                    className='text-sm text-gray-500 hover:text-gray-700'
+                    onClick={async () => {
+                      await clearAllFavorites();
+                      setFavoriteItems([]);
+                    }}
+                  >
+                    清空
+                  </button>
+                )}
+              </div>
               <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8 sm:px-4'>
                 {favoriteItems.map((item) => (
                   <div key={item.id + item.source} className='w-full'>
