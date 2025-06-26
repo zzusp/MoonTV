@@ -27,6 +27,7 @@
 - 📱 **PWA**：离线缓存、安装到桌面/主屏，移动端原生体验。
 - 🌗 **响应式布局**：桌面侧边栏 + 移动底部导航，自适应各种屏幕尺寸。
 - 🚀 **极简部署**：一条 Docker 命令即可将完整服务跑起来，或免费部署到 Vercel。
+- 👿 **智能去广告**：自动跳过视频中的切片广告（实验性）
 
 <details>
   <summary>点击查看项目截图</summary>
@@ -37,6 +38,7 @@
 
 - [技术栈](#技术栈)
 - [部署](#部署)
+- [环境变量](#环境变量)
 - [配置说明](#配置说明)
 - [Roadmap](#roadmap)
 - [安全与隐私提醒](#安全与隐私提醒)
@@ -123,6 +125,14 @@ Pull Bot 会反复触发无效的 PR 和垃圾邮件，严重干扰项目维护�
 建议在 fork 的仓库中启用本仓库自带的 GitHub Actions 自动同步功能（见 `.github/workflows/sync.yml`）。
 
 如需手动同步主仓库更新，也可以使用 GitHub 官方的 [Sync fork](https://docs.github.com/cn/github/collaborating-with-issues-and-pull-requests/syncing-a-fork) 功能。
+
+## 环境变量
+
+| 变量                        | 说明                               | 可选值                                                           | 默认值       |
+| --------------------------- | ---------------------------------- | ---------------------------------------------------------------- | ------------ |
+| PASSWORD                    | 实例访问密码，留空则不启用密码保护 | 任意字符串                                                       | （空）       |
+| NEXT_PUBLIC_STORAGE_TYPE    | 播放记录/收藏的存储方式            | localstorage（本地浏览器存储）、database（后端数据库，暂不支持） | localstorage |
+| NEXT_PUBLIC_DISABLE_BLOCKAD | 禁用智能去广告功能                 | true / false                                                     | false        |
 
 ## 配置说明
 
