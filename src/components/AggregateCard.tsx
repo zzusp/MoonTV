@@ -114,7 +114,7 @@ const AggregateCard: React.FC<AggregateCardProps> = ({
         {/* 标题 */}
         <div className='absolute top-[calc(100%+0.2rem)] left-0 right-0'>
           <div className='flex flex-col items-center justify-center'>
-            <span className='text-gray-900 font-semibold truncate w-full text-center text-xs sm:text-sm'>
+            <span className='text-gray-900 font-semibold truncate w-full text-center text-xs sm:text-sm dark:text-gray-200'>
               {first.title}
             </span>
           </div>

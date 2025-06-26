@@ -2,6 +2,7 @@ import MobileBottomNav from './MobileBottomNav';
 import MobileHeader from './MobileHeader';
 import { useSidebar } from './Sidebar';
 import Sidebar from './Sidebar';
+import { ThemeToggle } from './ThemeToggle';
 
 interface PageLayoutProps {
   children: React.ReactNode;
@@ -17,10 +18,13 @@ const PageLayout = ({ children, activePath = '/' }: PageLayoutProps) => {
       <div className='hidden md:grid md:grid-cols-[auto_1fr] w-full'>
         <Sidebar activePath={activePath} />
         <div
-          className={`min-w-0 transition-all duration-300 ${
+          className={`relative min-w-0 transition-all duration-300 ${
             isCollapsed ? 'col-start-2' : 'col-start-2'
           }`}
         >
+          <div className='absolute top-2 right-4 z-20 hidden md:block'>
+            <ThemeToggle />
+          </div>
           {children}
         </div>
       </div>

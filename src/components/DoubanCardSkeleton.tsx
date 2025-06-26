@@ -3,8 +3,8 @@ const DoubanCardSkeleton = () => {
     <div className='w-full'>
       <div className='group relative w-full rounded-lg bg-transparent shadow-none flex flex-col'>
         {/* 海报骨架 - 2:3 比例 */}
-        <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse'>
-          <div className='absolute inset-0 bg-gray-300'></div>
+        <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse dark:bg-gray-800'>
+          <div className='absolute inset-0 bg-gray-300 dark:bg-gray-700'></div>
         </div>
 
         {/* 信息层骨架 */}

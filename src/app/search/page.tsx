@@ -135,14 +135,14 @@ function SearchPageClient() {
         <div className='mb-8'>
           <form onSubmit={handleSearch} className='max-w-2xl mx-auto'>
             <div className='relative'>
-              <Search className='absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400' />
+              <Search className='absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500' />
               <input
                 ref={searchInputRef}
                 type='text'
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder='搜索电影、电视剧...'
-                className='w-full h-12 rounded-lg bg-gray-50/80 py-3 pl-10 pr-4 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-400 focus:bg-white border border-gray-200/50 shadow-sm'
+                className='w-full h-12 rounded-lg bg-gray-50/80 py-3 pl-10 pr-4 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-400 focus:bg-white border border-gray-200/50 shadow-sm dark:bg-gray-800 dark:text-gray-300 dark:placeholder-gray-500 dark:focus:bg-gray-700 dark:border-gray-700'
               />
             </div>
           </form>
@@ -158,10 +158,14 @@ function SearchPageClient() {
             <section className='mb-12'>
               {/* 标题 + 聚合开关 */}
               <div className='mb-8 flex items-center justify-between'>
-                <h2 className='text-xl font-bold text-gray-800'>搜索结果</h2>
+                <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
+                  搜索结果
+                </h2>
                 {/* 聚合开关 */}
                 <label className='flex items-center gap-2 cursor-pointer select-none'>
-                  <span className='text-sm text-gray-700'>聚合</span>
+                  <span className='text-sm text-gray-700 dark:text-gray-300'>
+                    聚合
+                  </span>
                   <div className='relative'>
                     <input
                       type='checkbox'
@@ -171,7 +175,7 @@ function SearchPageClient() {
                         setViewMode(viewMode === 'agg' ? 'all' : 'agg')
                       }
                     />
-                    <div className='w-9 h-5 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors'></div>
+                    <div className='w-9 h-5 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors dark:bg-gray-600'></div>
                     <div className='absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4'></div>
                   </div>
                 </label>
@@ -209,7 +213,7 @@ function SearchPageClient() {
                       </div>
                     ))}
                 {searchResults.length === 0 && (
-                  <div className='col-span-full text-center text-gray-500 py-8'>
+                  <div className='col-span-full text-center text-gray-500 py-8 dark:text-gray-400'>
                     未找到相关结果
                   </div>
                 )}
@@ -218,7 +222,7 @@ function SearchPageClient() {
           ) : searchHistory.length > 0 ? (
             // 搜索历史
             <section className='mb-12'>
-              <h2 className='mb-4 text-xl font-bold text-gray-800 text-left'>
+              <h2 className='mb-4 text-xl font-bold text-gray-800 text-left dark:text-gray-200'>
                 搜索历史
                 {searchHistory.length > 0 && (
                   <button
@@ -226,7 +230,7 @@ function SearchPageClient() {
                       await clearSearchHistory();
                       setSearchHistory([]);
                     }}
-                    className='ml-3 text-sm text-gray-500 hover:text-red-500 transition-colors'
+                    className='ml-3 text-sm text-gray-500 hover:text-red-500 transition-colors dark:text-gray-400 dark:hover:text-red-500'
                   >
                     清空
                   </button>
@@ -240,7 +244,7 @@ function SearchPageClient() {
                       setSearchQuery(item);
                       router.push(`/search?q=${encodeURIComponent(item)}`);
                     }}
-                    className='px-4 py-2 bg-gray-500/10 hover:bg-gray-300 rounded-full text-sm text-gray-700 transition-colors duration-200'
+                    className='px-4 py-2 bg-gray-500/10 hover:bg-gray-300 rounded-full text-sm text-gray-700 transition-colors duration-200 dark:bg-gray-700/50 dark:hover:bg-gray-600 dark:text-gray-300'
                   >
                     {item}
                   </button>

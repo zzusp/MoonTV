@@ -143,7 +143,7 @@ function AggregatePageClient() {
                 className='absolute top-0 left-0 -translate-x-[40%] -translate-y-[30%] sm:-translate-x-[180%] sm:-translate-y-1/2 p-2 rounded transition-colors'
               >
                 <svg
-                  className='h-5 w-5 text-gray-500 hover:text-green-600 transition-colors'
+                  className='h-5 w-5 text-gray-500 hover:text-green-600 dark:text-gray-400 dark:hover:text-green-500 transition-colors'
                   viewBox='0 0 24 24'
                   fill='none'
                   xmlns='http://www.w3.org/2000/svg'
@@ -216,7 +216,7 @@ function AggregatePageClient() {
                         }&title=${encodeURIComponent(src.title)}${
                           src.year ? `&year=${src.year}` : ''
                         }&from=aggregate`}
-                        className='relative flex items-center justify-center w-full h-14 bg-gray-500/80 hover:bg-green-500 rounded-lg transition-colors'
+                        className='relative flex items-center justify-center w-full h-14 bg-gray-500/80 hover:bg-green-500 dark:bg-gray-700/80 dark:hover:bg-green-600 rounded-lg transition-colors'
                       >
                         {/* 名称 */}
                         <span className='px-1 text-white text-sm font-medium truncate whitespace-nowrap'>

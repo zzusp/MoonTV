@@ -183,10 +183,10 @@ function DoubanPageClient() {
       <div className='px-4 sm:px-10 py-4 sm:py-8 overflow-visible'>
         {/* 页面标题 */}
         <div className='mb-8'>
-          <h1 className='text-3xl font-bold text-gray-800 mb-2'>
+          <h1 className='text-3xl font-bold text-gray-800 mb-2 dark:text-gray-200'>
             {getPageTitle()}
           </h1>
-          <p className='text-gray-600'>来自豆瓣的精选内容</p>
+          <p className='text-gray-600 dark:text-gray-400'>来自豆瓣的精选内容</p>
         </div>
 
         {/* 内容展示区域 */}

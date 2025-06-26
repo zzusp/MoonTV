@@ -1,8 +1,12 @@
+'use client';
+
 import Link from 'next/link';
+
+import { ThemeToggle } from './ThemeToggle';
 
 const MobileHeader = () => {
   return (
-    <header className='md:hidden w-full bg-white/70 backdrop-blur-xl border-b border-gray-200/50 shadow-sm'>
+    <header className='md:hidden relative w-full bg-white/70 backdrop-blur-xl border-b border-gray-200/50 shadow-sm dark:bg-gray-900/70 dark:border-gray-700/50'>
       <div className='h-12 flex items-center justify-center'>
         <Link
           href='/'
@@ -10,6 +14,9 @@ const MobileHeader = () => {
         >
           MoonTV
         </Link>
+      </div>
+      <div className='absolute top-1/2 right-4 -translate-y-1/2'>
+        <ThemeToggle />
       </div>
     </header>
   );

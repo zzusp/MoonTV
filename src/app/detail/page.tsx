@@ -137,7 +137,7 @@ function DetailPageClient() {
                 className='absolute top-0 left-0 -translate-x-[40%] -translate-y-[30%] sm:-translate-x-[180%] sm:-translate-y-1/2 p-2 rounded transition-colors'
               >
                 <svg
-                  className='h-5 w-5 text-gray-500 hover:text-green-600 transition-colors'
+                  className='h-5 w-5 text-gray-500 hover:text-green-600 dark:text-gray-400 dark:hover:text-green-500 transition-colors'
                   viewBox='0 0 24 24'
                   fill='none'
                   xmlns='http://www.w3.org/2000/svg'
@@ -221,7 +221,7 @@ function DetailPageClient() {
                             ? `&year=${detail.year || fallbackYear}`
                             : ''
                         }`}
-                        className='hidden sm:flex items-center justify-center gap-2 px-6 py-2 bg-gray-500 hover:bg-gray-600 rounded-lg transition-colors text-white'
+                        className='hidden sm:flex items-center justify-center gap-2 px-6 py-2 bg-gray-500 hover:bg-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors text-white'
                       >
                         <div className='w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-white border-b-[6px] border-b-transparent'></div>
                         <span>从头开始</span>
@@ -252,10 +252,10 @@ function DetailPageClient() {
                   {/* 爱心按钮 */}
                   <button
                     onClick={handleToggleFavorite}
-                    className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors  ${
+                    className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors ${
                       favorited
-                        ? 'bg-gray-300 hover:bg-gray-400'
-                        : 'bg-gray-400 hover:bg-gray-500'
+                        ? 'bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500'
+                        : 'bg-gray-400 hover:bg-gray-500 dark:bg-gray-700 dark:hover:bg-gray-600'
                     }`}
                   >
                     <Heart
@@ -281,7 +281,7 @@ function DetailPageClient() {
                       ></div>
                     </div>
                     {/* 剩余时间 */}
-                    <span className='text-gray-600/60 text-xs whitespace-nowrap'>
+                    <span className='text-gray-600/60 dark:text-gray-400/60 text-xs whitespace-nowrap'>
                       {playRecord.total_episodes > 1
                         ? `第${playRecord.index}集 剩余 `
                         : '剩余 '}
@@ -318,12 +318,12 @@ function DetailPageClient() {
                         'source'
                       )}&id=${searchParams.get('id')}&index=${
                         idx + 1
-                      }&title=${encodeURIComponent(detail.title)}${
+                      }&position=0&title=${encodeURIComponent(detail.title)}${
                         detail.year || fallbackYear
                           ? `&year=${detail.year || fallbackYear}`
                           : ''
                       }`}
-                      className='bg-gray-500/80 hover:bg-green-500 text-white px-5 py-2 rounded-lg transition-colors text-base font-medium w-24 text-center'
+                      className='bg-gray-500/80 hover:bg-green-500 dark:bg-gray-700/80 dark:hover:bg-green-600 text-white px-5 py-2 rounded-lg transition-colors text-base font-medium w-24 text-center'
                     >
                       第{idx + 1}集
                     </a>
