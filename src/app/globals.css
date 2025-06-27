@@ -146,3 +146,9 @@ html.dark::view-transition-new(root) {
 html:not(.dark)::view-transition-new(root) {
   animation-name: slide-from-bottom;
 }
+
+/* 强制播放器内部的 video 元素高度为 100%，并保持内容完整显示 */
+div[data-media-provider] video {
+  height: 100%;
+  object-fit: contain;
+}
