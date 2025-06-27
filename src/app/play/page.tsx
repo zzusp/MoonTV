@@ -8,8 +8,9 @@ import {
   isHLSProvider,
   MediaPlayer,
   MediaProvider,
+  Menu,
 } from '@vidstack/react';
-import { AirPlayIcon } from '@vidstack/react/icons';
+import { AirPlayIcon, SettingsIcon } from '@vidstack/react/icons';
 import {
   defaultLayoutIcons,
   DefaultVideoLayout,
@@ -20,8 +21,6 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import React from 'react';
-
-const ENABLE_BLOCKAD = process.env.NEXT_PUBLIC_ENABLE_BLOCKAD === 'true';
 
 import 'vidstack/styles/defaults.css';
 import '@vidstack/react/player/styles/default/theme.css';
@@ -133,6 +132,15 @@ function PlayPageClient() {
 
   // 上次使用的音量，默认 0.7
   const lastVolumeRef = useRef<number>(0.7);
+
+  // 新增：去广告开关（从 localStorage 继承，默认取环境变量）
+  const [blockAdEnabled, _setBlockAdEnabled] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const v = localStorage.getItem('enable_blockad');
+      if (v !== null) return v === 'true';
+    }
+    return process.env.NEXT_PUBLIC_ENABLE_BLOCKAD === 'true';
+  });
 
   // 同步最新值到 refs
   useEffect(() => {
@@ -1214,7 +1222,7 @@ function PlayPageClient() {
         backBufferLength: 30, // 仅保留 30s 已播放内容，避免内存占用
         maxBufferSize: 60 * 1000 * 1000, // 约 60MB，超出后触发清理
         /* 自定义loader */
-        loader: ENABLE_BLOCKAD ? CustomHlsJsLoader : Hls.DefaultConfig.loader,
+        loader: blockAdEnabled ? CustomHlsJsLoader : Hls.DefaultConfig.loader,
       };
     }
   };
@@ -1385,6 +1393,39 @@ function PlayPageClient() {
                 <AirPlayButton className='vds-button'>
                   <AirPlayIcon className='vds-icon' />
                 </AirPlayButton>
+                {/* 设置按钮 */}
+                <Menu.Root className='vds-menu'>
+                  <Menu.Button
+                    className='vds-menu-button vds-button'
+                    aria-label='Settings'
+                  >
+                    <SettingsIcon className='vds-rotate-icon vds-icon' />
+                  </Menu.Button>
+                  <Menu.Content
+                    className='vds-menu-items'
+                    placement='top end'
+                    offset={0}
+                  >
+                    <button
+                      className='text-white'
+                      onClick={() => {
+                        const newVal = !blockAdEnabled;
+                        try {
+                          saveCurrentPlayProgress();
+                          localStorage.setItem(
+                            'enable_blockad',
+                            String(newVal)
+                          );
+                        } catch (_) {
+                          // ignore
+                        }
+                        window.location.reload();
+                      }}
+                    >
+                      {blockAdEnabled ? '关闭去广告' : '开启去广告'}
+                    </button>
+                  </Menu.Content>
+                </Menu.Root>
               </>
             ),
           }}
