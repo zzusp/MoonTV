@@ -58,7 +58,7 @@
 
 ## 部署
 
-本项目支持 Vercel 和 Docker 部署，注意**不支持 Cloudflare**，后续亦无支持计划。
+本项目**支持 Vercel、Docker 和 Cloudflare** 部署。
 
 ### Vercel 部署
 
@@ -72,6 +72,17 @@
 6. 每次 Push 到 `main` 分支将自动触发重新构建。
 
 部署完成后即可通过分配的域名访问，也可以绑定自定义域名。
+
+### Cloudflare 部署
+
+1. **Fork** 本仓库到你的 GitHub 账户。
+2. 登陆 [Cloudflare](https://cloudflare.com)，点击 **计算（Workers）-> Workers 和 Pages**，点击创建
+3. 选择 Pages，导入现有的 Git 存储库，选择 Fork 后的仓库
+4. 构建命令填写 **pnpm install --frozen-lockfile && pnpm run pages:build**，预设框架为无，构建输出目录保持空
+5. （强烈建议）设置 PASSWORD 环境变量。
+6. 保持默认设置完成首次部署。
+7. 如需自定义 `config.json`，请直接修改 Fork 后仓库中该文件。
+8. 每次 Push 到 `main` 分支将自动触发重新构建。
 
 ### Docker 部署
 
