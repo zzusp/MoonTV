@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { API_CONFIG, ApiSite, getApiSites, getCacheTime } from '@/lib/config';
 import { cleanHtmlTags } from '@/lib/utils';
 
+export const runtime = 'edge';
+
 // 根据环境变量决定最大搜索页数，默认 5
 const MAX_SEARCH_PAGES: number =
   Number(process.env.NEXT_PUBLIC_SEARCH_MAX_PAGE) || 5;

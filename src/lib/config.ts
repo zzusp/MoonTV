@@ -1,5 +1,4 @@
-import fs from 'fs';
-import path from 'path';
+import runtimeConfig from './runtime';
 
 export interface ApiSite {
   key: string;
@@ -47,11 +46,8 @@ export const API_CONFIG = {
   },
 };
 
-// 在模块加载时立即读取配置文件并缓存到内存，后续调用直接返回缓存内容，避免重复文件 I/O
-const configPath = path.join(process.cwd(), 'config.json');
-const cachedConfig: Config = JSON.parse(
-  fs.readFileSync(configPath, 'utf-8')
-) as Config;
+// 在模块加载时立即读取 runtime.ts 中的配置并缓存到内存，避免重复文件 I/O
+const cachedConfig: Config = runtimeConfig as unknown as Config;
 
 export function getConfig(): Config {
   return cachedConfig;

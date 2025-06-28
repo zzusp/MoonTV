@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -H 0.0.0.0",
-    "build": "next build",
+    "dev": "pnpm gen:runtime && next dev -H 0.0.0.0",
+    "build": "pnpm gen:runtime && next build",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "eslint src --fix && pnpm format",
@@ -14,10 +14,13 @@
     "test": "jest",
     "format": "prettier -w .",
     "format:check": "prettier -c .",
+    "gen:runtime": "node scripts/convert-config.js",
     "postbuild": "next-sitemap --config next-sitemap.config.js",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "pages:build": "pnpm gen:runtime && next build && next-sitemap --config next-sitemap.config.js && npx @cloudflare/next-on-pages --experimental-minify"
   },
   "dependencies": {
+    "@cloudflare/next-on-pages": "^1.13.12",
     "@headlessui/react": "^2.2.4",
     "@heroicons/react": "^2.2.0",
     "@vidstack/react": "^1.12.13",
