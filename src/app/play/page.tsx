@@ -82,6 +82,7 @@ function PlayPageClient() {
   const [showShortcutHint, setShowShortcutHint] = useState(false);
   const [shortcutText, setShortcutText] = useState('');
   const [shortcutDirection, setShortcutDirection] = useState('');
+  const [reverseEpisodeOrder, setReverseEpisodeOrder] = useState(false);
   const shortcutHintTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // 换源相关状态
@@ -1435,7 +1436,22 @@ function PlayPageClient() {
             >
               <div className='p-6 h-full flex flex-col'>
                 <div className='flex items-center justify-between mb-6'>
-                  <h3 className='text-white text-xl font-semibold'>选集列表</h3>
+                  <div className='flex items-center gap-4'>
+                    <h3 className='text-white text-xl font-semibold'>
+                      选集列表
+                    </h3>
+                    {/* 倒序小字 */}
+                    <span
+                      onClick={() => setReverseEpisodeOrder((prev) => !prev)}
+                      className={`text-sm cursor-pointer select-none transition-colors ${
+                        reverseEpisodeOrder
+                          ? 'text-green-500'
+                          : 'text-gray-400 hover:text-gray-500'
+                      }`}
+                    >
+                      倒序
+                    </span>
+                  </div>
                   <button
                     onClick={() => {
                       setShowEpisodePanel(false);
@@ -1465,7 +1481,13 @@ function PlayPageClient() {
 
                 <div className='flex-1 overflow-y-auto'>
                   <div className='grid grid-cols-4 gap-3'>
-                    {Array.from({ length: totalEpisodes }, (_, idx) => (
+                    {(reverseEpisodeOrder
+                      ? Array.from(
+                          { length: totalEpisodes },
+                          (_, i) => i
+                        ).reverse()
+                      : Array.from({ length: totalEpisodes }, (_, i) => i)
+                    ).map((idx) => (
                       <button
                         key={idx}
                         onClick={() => handleEpisodeChange(idx)}

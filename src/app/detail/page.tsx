@@ -25,6 +25,8 @@ function DetailPageClient() {
   const [error, setError] = useState<string | null>(null);
   const [playRecord, setPlayRecord] = useState<PlayRecord | null>(null);
   const [favorited, setFavorited] = useState(false);
+  // 是否倒序显示选集
+  const [reverseEpisodeOrder, setReverseEpisodeOrder] = useState(false);
 
   const fallbackTitle = searchParams.get('title') || '';
   const fallbackYear = searchParams.get('year') || '';
@@ -106,7 +108,7 @@ function DetailPageClient() {
 
   return (
     <PageLayout activePath='/detail'>
-      <div className='px-2 sm:px-10 py-4 sm:py-8 overflow-visible'>
+      <div className='flex flex-col min-h-full px-2 sm:px-10 pt-4 sm:pt-8 pb-[calc(3.5rem+env(safe-area-inset-bottom))] overflow-visible'>
         {/* 顶部返回按钮已移入右侧信息容器 */}
         {loading ? (
           <div className='flex items-center justify-center min-h-[60vh]'>
@@ -309,9 +311,29 @@ function DetailPageClient() {
                   <div className='text-gray-400 ml-2'>
                     共 {detail.episodes.length} 集
                   </div>
+                  {/* 倒序切换 */}
+                  <span
+                    onClick={() => setReverseEpisodeOrder((prev) => !prev)}
+                    className={`ml-4 text-sm cursor-pointer select-none transition-colors ${
+                      reverseEpisodeOrder
+                        ? 'text-green-500'
+                        : 'text-gray-400 hover:text-gray-500'
+                    }`}
+                  >
+                    倒序
+                  </span>
                 </div>
                 <div className='grid grid-cols-3 gap-2 sm:grid-cols-[repeat(auto-fill,_minmax(6rem,_6rem))] sm:gap-4 justify-start'>
-                  {detail.episodes.map((episode, idx) => (
+                  {(reverseEpisodeOrder
+                    ? Array.from(
+                        { length: detail.episodes.length },
+                        (_, i) => i
+                      ).reverse()
+                    : Array.from(
+                        { length: detail.episodes.length },
+                        (_, i) => i
+                      )
+                  ).map((idx) => (
                     <a
                       key={idx}
                       href={`/play?source=${searchParams.get(
@@ -325,7 +347,7 @@ function DetailPageClient() {
                       }`}
                       className='bg-gray-500/80 hover:bg-green-500 dark:bg-gray-700/80 dark:hover:bg-green-600 text-white px-5 py-2 rounded-lg transition-colors text-base font-medium w-24 text-center'
                     >
-                      第{idx + 1}集
+                      {idx + 1}
                     </a>
                   ))}
                 </div>
