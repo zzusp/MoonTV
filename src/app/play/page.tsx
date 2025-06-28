@@ -8,9 +8,8 @@ import {
   isHLSProvider,
   MediaPlayer,
   MediaProvider,
-  Menu,
 } from '@vidstack/react';
-import { AirPlayIcon, SettingsIcon } from '@vidstack/react/icons';
+import { AirPlayIcon } from '@vidstack/react/icons';
 import {
   defaultLayoutIcons,
   DefaultVideoLayout,
@@ -1393,39 +1392,22 @@ function PlayPageClient() {
                 <AirPlayButton className='vds-button'>
                   <AirPlayIcon className='vds-icon' />
                 </AirPlayButton>
-                {/* 设置按钮 */}
-                <Menu.Root className='vds-menu'>
-                  <Menu.Button
-                    className='vds-menu-button vds-button'
-                    aria-label='Settings'
-                  >
-                    <SettingsIcon className='vds-rotate-icon vds-icon' />
-                  </Menu.Button>
-                  <Menu.Content
-                    className='vds-menu-items'
-                    placement='top end'
-                    offset={0}
-                  >
-                    <button
-                      className='text-white'
-                      onClick={() => {
-                        const newVal = !blockAdEnabled;
-                        try {
-                          saveCurrentPlayProgress();
-                          localStorage.setItem(
-                            'enable_blockad',
-                            String(newVal)
-                          );
-                        } catch (_) {
-                          // ignore
-                        }
-                        window.location.reload();
-                      }}
-                    >
-                      {blockAdEnabled ? '关闭去广告' : '开启去广告'}
-                    </button>
-                  </Menu.Content>
-                </Menu.Root>
+                <button
+                  className='vds-button'
+                  aria-label={blockAdEnabled ? '关闭去广告' : '开启去广告'}
+                  onClick={() => {
+                    const newVal = !blockAdEnabled;
+                    try {
+                      saveCurrentPlayProgress();
+                      localStorage.setItem('enable_blockad', String(newVal));
+                    } catch (_) {
+                      // ignore
+                    }
+                    window.location.reload();
+                  }}
+                >
+                  <AdBlockIcon enabled={blockAdEnabled} />
+                </button>
               </>
             ),
           }}
@@ -1786,6 +1768,41 @@ const FavoriteIcon = ({ filled }: { filled: boolean }) => {
     );
   }
   return <Heart className='h-5 w-5 stroke-[2] text-gray-300' />;
+};
+
+// 新增：去广告图标组件
+const AdBlockIcon = ({ enabled }: { enabled: boolean }) => {
+  const color = enabled ? '#22c55e' : '#ffffff'; // Tailwind green-500 or white
+  return (
+    <svg
+      className='h-6 w-6 vds-icon' // 略微放大尺寸
+      viewBox='0 0 32 32'
+      xmlns='http://www.w3.org/2000/svg'
+    >
+      {/* "AD" 文字，居中显示 */}
+      <text
+        x='50%'
+        y='50%'
+        fontSize='20'
+        fontWeight='bold'
+        textAnchor='middle'
+        dominantBaseline='middle'
+        fill={color}
+      >
+        AD
+      </text>
+      {/* 斜线 */}
+      <line
+        x1='4'
+        y1='4'
+        x2='28'
+        y2='28'
+        stroke={color}
+        strokeWidth='4'
+        strokeLinecap='round'
+      />
+    </svg>
+  );
 };
 
 export default function PlayPage() {
