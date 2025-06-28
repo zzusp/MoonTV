@@ -6,6 +6,3 @@ pages_build_output_dir = ".vercel/output/static"
 
 # 开启 Node.js API 兼容层（next-on-pages 已自动注入所需 polyfill）
 compatibility_flags = ["nodejs_compat"] 
-
-[build]
-command = "pnpm install --frozen-lockfile && pnpm run pages:build"
