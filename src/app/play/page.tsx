@@ -1114,7 +1114,13 @@ function PlayPageClient() {
             </div>
 
             {totalEpisodes > 1 && (
-              <div className='text-gray-300 text-sm mt-0.5'>
+              <div
+                className='text-gray-300 text-sm mt-0.5 cursor-pointer'
+                onClick={() => {
+                  setShowEpisodePanel(true);
+                  playerContainerRef.current?.focus();
+                }}
+              >
                 第 {currentEpisodeIndex + 1} 集 / 共 {totalEpisodes} 集
               </div>
             )}
@@ -1377,22 +1383,7 @@ function PlayPageClient() {
               ) : null,
             beforeFullscreenButton: (
               <>
-                {totalEpisodes > 1 && (
-                  <button
-                    className='vds-button mr-2'
-                    onClick={() => {
-                      setShowEpisodePanel(true);
-                      playerContainerRef.current?.focus();
-                    }}
-                  >
-                    选集
-                  </button>
-                )}
                 <PlaybackRateButton playerRef={playerRef} />
-                {/* 自定义 AirPlay 按钮 */}
-                <AirPlayButton className='vds-button'>
-                  <AirPlayIcon className='vds-icon' />
-                </AirPlayButton>
                 <button
                   className='vds-button'
                   aria-label={blockAdEnabled ? '关闭去广告' : '开启去广告'}
@@ -1409,6 +1400,10 @@ function PlayPageClient() {
                 >
                   <AdBlockIcon enabled={blockAdEnabled} />
                 </button>
+                {/* 自定义 AirPlay 按钮 */}
+                <AirPlayButton className='vds-button'>
+                  <AirPlayIcon className='vds-icon' />
+                </AirPlayButton>
               </>
             ),
           }}
