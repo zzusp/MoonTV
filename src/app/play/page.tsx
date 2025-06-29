@@ -1049,7 +1049,6 @@ function PlayPageClient() {
     sourceName,
     onToggleFavorite,
     onOpenSourcePanel,
-    isFullscreen,
   }: {
     videoTitle: string;
     favorited: boolean;
@@ -1058,7 +1057,6 @@ function PlayPageClient() {
     sourceName: string;
     onToggleFavorite: () => void;
     onOpenSourcePanel: () => void;
-    isFullscreen: boolean;
   }) => {
     return (
       <div
@@ -1067,30 +1065,30 @@ function PlayPageClient() {
       >
         <div className='bg-black/60 backdrop-blur-sm px-0 sm:px-6 py-4 relative flex items-center sm:justify-center'>
           {/* 返回按钮 */}
-          {!isFullscreen && (
-            <button
-              onClick={() => {
-                if (playerRef.current?.fullscreen) {
-                  playerRef.current?.exitFullscreen();
-                }
-                window.history.back();
-              }}
-              className='absolute left-0 sm:left-6 text-white hover:text-gray-300 transition-colors p-2'
+          <button
+            onClick={() => {
+              // 如果当下是全屏状态，先退出全屏，而不是直接后退
+              if (isFullscreen) {
+                playerRef.current?.exitFullscreen();
+                return;
+              }
+              window.history.back();
+            }}
+            className='absolute left-0 sm:left-6 text-white hover:text-gray-300 transition-colors p-2'
+          >
+            <svg
+              width='24'
+              height='24'
+              viewBox='0 0 24 24'
+              fill='none'
+              xmlns='http://www.w3.org/2000/svg'
             >
-              <svg
-                width='24'
-                height='24'
-                viewBox='0 0 24 24'
-                fill='none'
-                xmlns='http://www.w3.org/2000/svg'
-              >
-                <path
-                  d='M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z'
-                  fill='currentColor'
-                />
-              </svg>
-            </button>
-          )}
+              <path
+                d='M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z'
+                fill='currentColor'
+              />
+            </svg>
+          </button>
 
           {/* 中央标题及集数信息 */}
           <div
@@ -1349,7 +1347,6 @@ function PlayPageClient() {
           sourceName={detail?.source_name || ''}
           onToggleFavorite={handleToggleFavorite}
           onOpenSourcePanel={handleSourcePanelOpen}
-          isFullscreen={isFullscreen}
         />
         <DefaultVideoLayout
           icons={defaultLayoutIcons}
