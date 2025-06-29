@@ -34,6 +34,7 @@ RUN addgroup -g 1001 -S nodejs && adduser -u 1001 -S nextjs -G nodejs
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV DOCKER_ENV=true
 
 # 复制必要文件
 COPY --from=builder /app/public ./public
