@@ -27,11 +27,6 @@ function LoginPageClient() {
       });
 
       if (res.ok) {
-        // 保存密码以供后续请求使用
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('password', password);
-        }
-
         const redirect = searchParams.get('redirect') || '/';
         router.replace(redirect);
       } else if (res.status === 401) {
