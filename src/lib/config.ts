@@ -52,12 +52,12 @@ export const API_CONFIG = {
 let cachedConfig: Config;
 
 if (process.env.DOCKER_ENV === 'true') {
-  // 使用 Node.js 原生 require，避免使用 eval 触发 V8 "Code generation from strings disallowed" 限制
-  // 这里在编译阶段即被 webpack 标记为 external，Edge Runtime 会被 tree-shaking 去掉
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const fs = require('fs') as typeof import('fs');
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const path = require('path') as typeof import('path');
+  // 这里用 eval("require") 避开静态分析，防止 Edge Runtime 打包时报 "Can't resolve 'fs'"
+  // 在实际 Node.js 运行时才会执行到，因此不会影响 Edge 环境。
+  // eslint-disable-next-line @typescript-eslint/no-implied-eval
+  const _require = eval('require') as NodeRequire;
+  const fs = _require('fs') as typeof import('fs');
+  const path = _require('path') as typeof import('path');
 
   const configPath = path.join(process.cwd(), 'config.json');
   const raw = fs.readFileSync(configPath, 'utf-8');
