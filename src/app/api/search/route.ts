@@ -4,7 +4,7 @@ import { API_CONFIG, ApiSite, getApiSites, getCacheTime } from '@/lib/config';
 import { SearchResult } from '@/lib/types';
 import { cleanHtmlTags } from '@/lib/utils';
 
-export const runtime = 'edge';
+export const runtime = process.env.DOCKER_ENV === 'true' ? 'node' : 'edge';
 
 // 根据环境变量决定最大搜索页数，默认 5
 const MAX_SEARCH_PAGES: number =

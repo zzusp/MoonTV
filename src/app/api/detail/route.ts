@@ -185,7 +185,7 @@ async function getVideoDetail(
   return getDetailFromApi(apiSite, id);
 }
 
-export const runtime = 'edge';
+export const runtime = process.env.DOCKER_ENV === 'true' ? 'node' : 'edge';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
