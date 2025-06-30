@@ -205,6 +205,10 @@ MoonTV 支持标准的苹果 CMS V10 API 格式。
 - 如因公开分享导致的任何法律问题，用户需自行承担责任
 - 项目开发者不对用户的使用行为承担任何法律责任
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=senshinya/MoonTV&type=Date)](https://www.star-history.com/#senshinya/MoonTV&Date)
+
 ## License
 
 [MIT](LICENSE) © 2025 MoonTV & Contributors
