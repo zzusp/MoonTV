@@ -3,12 +3,9 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 
-import { useSiteName } from '@/components/SiteNameContext';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
-export const dynamic = 'force-dynamic';
-
-function LoginPageClient({ siteName }: { siteName: string }) {
+function LoginPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [password, setPassword] = useState('');
@@ -30,11 +27,6 @@ function LoginPageClient({ siteName }: { siteName: string }) {
       });
 
       if (res.ok) {
-        // 保存密码以供后续请求使用
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('password', password);
-        }
-
         const redirect = searchParams.get('redirect') || '/';
         router.replace(redirect);
       } else if (res.status === 401) {
@@ -55,7 +47,7 @@ function LoginPageClient({ siteName }: { siteName: string }) {
       </div>
       <div className='relative z-10 w-full max-w-md rounded-3xl bg-gradient-to-b from-white/90 via-white/70 to-white/40 dark:from-zinc-900/90 dark:via-zinc-900/70 dark:to-zinc-900/40 backdrop-blur-xl shadow-2xl p-10 dark:border dark:border-zinc-800'>
         <h1 className='text-green-600 tracking-tight text-center text-3xl font-extrabold mb-8 bg-clip-text drop-shadow-sm'>
-          {siteName}
+          MoonTV
         </h1>
         <form onSubmit={handleSubmit} className='space-y-8'>
           <div>
@@ -91,10 +83,9 @@ function LoginPageClient({ siteName }: { siteName: string }) {
 }
 
 export default function LoginPage() {
-  const siteName = useSiteName();
   return (
     <Suspense>
-      <LoginPageClient siteName={siteName} />
+      <LoginPageClient />
     </Suspense>
   );
 }
