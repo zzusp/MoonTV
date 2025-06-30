@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const runtime = 'edge';
+
 // 全站（含 /api）鉴权中间件，运行于 Edge Runtime。
 export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
