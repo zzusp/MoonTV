@@ -39,7 +39,7 @@ const Logo = () => (
     className='flex items-center justify-center h-16 select-none hover:opacity-80 transition-opacity duration-200'
   >
     <span className='text-2xl font-bold text-green-600 tracking-tight'>
-      MoonTV
+      {process.env.NEXT_PUBLIC_SITE_NAME || 'MoonTV'}
     </span>
   </Link>
 );

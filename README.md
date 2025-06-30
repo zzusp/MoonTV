@@ -146,6 +146,7 @@ Pull Bot 会反复触发无效的 PR 和垃圾邮件，严重干扰项目维护�
 | NEXT_PUBLIC_ENABLE_BLOCKAD          | 开启智能去广告功能（实验性）       | true / false                                                     | false        |
 | NEXT_PUBLIC_SEARCH_MAX_PAGE         | 搜索接口可拉取的最大页数           | 1-50                                                             | 5            |
 | NEXT_PUBLIC_AGGREGATE_SEARCH_RESULT | 搜索结果默认是否按标题和年份聚合   | true / false                                                     | true         |
+| NEXT_PUBLIC_SITE_NAME               | 站点名称                           | 任意 string                                                      | MoonTV       |
 
 ## 配置说明
 

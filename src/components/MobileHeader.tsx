@@ -12,7 +12,7 @@ const MobileHeader = () => {
           href='/'
           className='text-2xl font-bold text-green-600 tracking-tight hover:opacity-80 transition-opacity'
         >
-          MoonTV
+          {process.env.NEXT_PUBLIC_SITE_NAME || 'MoonTV'}
         </Link>
       </div>
       <div className='absolute top-1/2 right-4 -translate-y-1/2'>
