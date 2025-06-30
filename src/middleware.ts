@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export const runtime = 'edge';
-
 // 全站（含 /api）鉴权中间件，运行于 Edge Runtime。
 export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
@@ -20,12 +18,18 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // 内部请求标记，避免递归拦截
+  if (req.headers.get('x-internal-auth') === 'true') {
+    return NextResponse.next();
+  }
+
   // 通过后端接口验证登录状态（GET /api/login）
   const origin = req.nextUrl.origin;
   const verifyRes = await fetch(`${origin}/api/login`, {
     method: 'GET',
     headers: {
       Cookie: req.headers.get('cookie') || '',
+      'x-internal-auth': 'true',
     },
   });
 
@@ -47,6 +51,6 @@ export async function middleware(req: NextRequest) {
 // 2. 指定哪些路径使用 middleware
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|manifest.json|icons|logo.png|screenshot.png).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest.json|icons|logo.png|screenshot.png|api/login).*)',
   ],
 };
