@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export const runtime = process.env.DOCKER_ENV === 'true' ? 'node' : 'edge';
+export const runtime = process.env.DOCKER_ENV === 'true' ? 'nodejs' : 'edge';
 
 export async function POST(req: NextRequest) {
   try {

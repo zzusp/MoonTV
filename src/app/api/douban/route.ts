@@ -43,7 +43,7 @@ async function fetchDoubanData(url: string): Promise<DoubanApiResponse> {
   }
 }
 
-export const runtime = process.env.DOCKER_ENV === 'true' ? 'node' : 'edge';
+export const runtime = process.env.DOCKER_ENV === 'true' ? 'nodejs' : 'edge';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
