@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { PlayRecord } from '@/lib/db';
 
-export const runtime = process.env.DOCKER_ENV === 'true' ? 'nodejs' : 'edge';
+export const runtime = 'edge';
 
 export async function GET() {
   try {
