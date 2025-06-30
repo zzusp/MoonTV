@@ -5,7 +5,9 @@ import { Suspense, useState } from 'react';
 
 import { ThemeToggle } from '@/components/ThemeToggle';
 
-function LoginPageClient() {
+export const dynamic = 'force-dynamic';
+
+function LoginPageClient({ siteName }: { siteName: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [password, setPassword] = useState('');
@@ -52,7 +54,7 @@ function LoginPageClient() {
       </div>
       <div className='relative z-10 w-full max-w-md rounded-3xl bg-gradient-to-b from-white/90 via-white/70 to-white/40 dark:from-zinc-900/90 dark:via-zinc-900/70 dark:to-zinc-900/40 backdrop-blur-xl shadow-2xl p-10 dark:border dark:border-zinc-800'>
         <h1 className='text-green-600 tracking-tight text-center text-3xl font-extrabold mb-8 bg-clip-text drop-shadow-sm'>
-          {process.env.NEXT_PUBLIC_SITE_NAME || 'MoonTV'}
+          {siteName}
         </h1>
         <form onSubmit={handleSubmit} className='space-y-8'>
           <div>
@@ -88,9 +90,10 @@ function LoginPageClient() {
 }
 
 export default function LoginPage() {
+  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'MoonTV';
   return (
     <Suspense>
-      <LoginPageClient />
+      <LoginPageClient siteName={siteName} />
     </Suspense>
   );
 }

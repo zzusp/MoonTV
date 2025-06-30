@@ -33,13 +33,17 @@ const SidebarContext = createContext<SidebarContextType>({
 export const useSidebar = () => useContext(SidebarContext);
 
 // 可替换为你自己的 logo 图片
-const Logo = () => (
+interface LogoProps {
+  siteName: string;
+}
+
+const Logo = ({ siteName }: LogoProps) => (
   <Link
     href='/'
     className='flex items-center justify-center h-16 select-none hover:opacity-80 transition-opacity duration-200'
   >
     <span className='text-2xl font-bold text-green-600 tracking-tight'>
-      {process.env.NEXT_PUBLIC_SITE_NAME || 'MoonTV'}
+      {siteName}
     </span>
   </Link>
 );
@@ -55,6 +59,8 @@ declare global {
     __sidebarCollapsed?: boolean;
   }
 }
+
+export const dynamic = 'force-dynamic';
 
 const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
   const router = useRouter();
@@ -158,6 +164,8 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
     { icon: VenetianMask, label: '日漫', href: '/douban?type=tv&tag=日本动画' },
   ];
 
+  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'MoonTV';
+
   return (
     <SidebarContext.Provider value={contextValue}>
       {/* 在移动端隐藏侧边栏 */}
@@ -181,7 +189,7 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
                 }`}
               >
                 <div className='w-[calc(100%-4rem)] flex justify-center'>
-                  {!isCollapsed && <Logo />}
+                  {!isCollapsed && <Logo siteName={siteName} />}
                 </div>
               </div>
               <button

@@ -8,11 +8,15 @@ import { ThemeProvider } from '../components/ThemeProvider';
 
 const inter = Inter({ subsets: ['latin'] });
 
-export const metadata: Metadata = {
-  title: process.env.NEXT_PUBLIC_SITE_NAME || 'MoonTV',
-  description: '影视聚合',
-  manifest: '/manifest.json',
-};
+export const dynamic = 'force-dynamic';
+
+export function generateMetadata(): Metadata {
+  return {
+    title: process.env.NEXT_PUBLIC_SITE_NAME || 'MoonTV',
+    description: '影视聚合',
+    manifest: '/manifest.json',
+  };
+}
 
 export const viewport: Viewport = {
   width: 'device-width',
