@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 
+import { useSiteName } from './SiteNameContext';
 import { ThemeToggle } from './ThemeToggle';
 
 export const dynamic = 'force-dynamic';
 
 const MobileHeader = () => {
-  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'MoonTV';
+  const siteName = useSiteName();
   return (
     <header className='md:hidden relative w-full bg-white/70 backdrop-blur-xl border-b border-gray-200/50 shadow-sm dark:bg-gray-900/70 dark:border-gray-700/50'>
       <div className='h-12 flex items-center justify-center'>

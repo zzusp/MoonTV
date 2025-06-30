@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 
+import { useSiteName } from '@/components/SiteNameContext';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 export const dynamic = 'force-dynamic';
@@ -90,7 +91,7 @@ function LoginPageClient({ siteName }: { siteName: string }) {
 }
 
 export default function LoginPage() {
-  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'MoonTV';
+  const siteName = useSiteName();
   return (
     <Suspense>
       <LoginPageClient siteName={siteName} />

@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Clover,
   Film,
@@ -21,6 +23,8 @@ import {
   useLayoutEffect,
   useState,
 } from 'react';
+
+import { useSiteName } from './SiteNameContext';
 
 interface SidebarContextType {
   isCollapsed: boolean;
@@ -164,7 +168,7 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
     { icon: VenetianMask, label: '日漫', href: '/douban?type=tv&tag=日本动画' },
   ];
 
-  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'MoonTV';
+  const siteName = useSiteName();
 
   return (
     <SidebarContext.Provider value={contextValue}>

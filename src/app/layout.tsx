@@ -4,11 +4,13 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 
 import AuthProvider from '../components/AuthProvider';
+import { SiteNameProvider } from '../components/SiteNameContext';
 import { ThemeProvider } from '../components/ThemeProvider';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 export function generateMetadata(): Metadata {
   return {
@@ -31,19 +33,24 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'MoonTV';
+
   return (
     <html lang='zh-CN' suppressHydrationWarning>
       <body
         className={`${inter.className} min-h-screen bg-white text-gray-900 dark:bg-black dark:text-gray-200`}
+        data-site-name={siteName}
       >
-        <ThemeProvider
-          attribute='class'
-          defaultTheme='system'
-          enableSystem
-          disableTransitionOnChange
-        >
-          <AuthProvider>{children}</AuthProvider>
-        </ThemeProvider>
+        <SiteNameProvider value={siteName}>
+          <ThemeProvider
+            attribute='class'
+            defaultTheme='system'
+            enableSystem
+            disableTransitionOnChange
+          >
+            <AuthProvider>{children}</AuthProvider>
+          </ThemeProvider>
+        </SiteNameProvider>
       </body>
     </html>
   );
