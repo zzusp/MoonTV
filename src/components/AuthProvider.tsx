@@ -18,7 +18,7 @@ export default function AuthProvider({ children }: Props) {
   const { siteName } = useSite();
   const authenticate = useCallback(async () => {
     // 登录页
-    if (pathname.startsWith('/login') || pathname.startsWith('/api/login')) {
+    if (pathname.startsWith('/login') || pathname.startsWith('/api')) {
       setIsAuthenticated(true);
       return;
     }
@@ -29,13 +29,6 @@ export default function AuthProvider({ children }: Props) {
       typeof window !== 'undefined'
         ? window.location.pathname + window.location.search
         : pathname;
-
-    // 没有密码直接跳转
-    if (!password) {
-      router.replace(`/login?redirect=${encodeURIComponent(fullPath)}`);
-      setIsAuthenticated(false);
-      return;
-    }
 
     // 尝试认证
     try {
