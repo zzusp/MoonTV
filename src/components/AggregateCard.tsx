@@ -121,32 +121,25 @@ const AggregateCard: React.FC<AggregateCardProps> = ({
         year ? `&year=${encodeURIComponent(year)}` : ''
       }&type=${mostFrequentEpisodes > 1 ? 'tv' : 'movie'}`}
     >
-      <div className='group relative w-full rounded-lg bg-transparent shadow-none flex flex-col'>
+      <div className='group relative w-full rounded-lg bg-transparent flex flex-col cursor-pointer transition-all duration-500 ease-in-out'>
         {/* 封面图片 2:3 */}
-        <div className='relative aspect-[2/3] w-full overflow-hidden rounded-md'>
+        <div className='relative aspect-[2/3] w-full overflow-hidden rounded-md group-hover:scale-[1.02] transition-all duration-700 cubic-bezier(0.4,0,0.2,1)'>
           <Image
             src={first.poster}
             alt={first.title}
             fill
-            className='object-cover'
-            unoptimized
+            className='object-cover transition-transform duration-1000 cubic-bezier(0.4,0,0.2,1) group-hover:scale-110'
+            referrerPolicy='no-referrer'
+            priority={false}
           />
 
-          {/* 集数指示器 - 绿色小圆球 */}
-          {mostFrequentEpisodes && mostFrequentEpisodes > 1 && (
-            <div className='absolute top-2 right-2 w-4 h-4 sm:w-7 sm:h-7 bg-green-500 rounded-full flex items-center justify-center'>
-              <span className='text-white text-[0.5rem] sm:text-xs font-bold'>
-                {mostFrequentEpisodes}
-              </span>
-            </div>
-          )}
-
-          {/* Hover 层 & 播放按钮 */}
-          <div className='absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center pointer-events-none'>
+          {/* Hover 效果层 */}
+          <div className='absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 cubic-bezier(0.4,0,0.2,1) flex items-center justify-center overflow-hidden'>
+            {/* 播放按钮 */}
             <div className='absolute inset-0 flex items-center justify-center pointer-events-auto'>
               <div
-                className={`transition-all duration-200 pointer-events-auto ${
-                  playHover ? 'scale-110' : ''
+                className={`transition-all duration-500 cubic-bezier(0.4,0,0.2,1) ${
+                  playHover ? 'scale-100 opacity-100' : 'scale-90 opacity-70'
                 }`}
                 style={{ cursor: 'pointer' }}
                 onClick={(e) => {
@@ -168,15 +161,25 @@ const AggregateCard: React.FC<AggregateCardProps> = ({
             </div>
           </div>
 
+          {/* 集数矩形展示框 - 不透明，无hover效果 */}
+          {mostFrequentEpisodes && mostFrequentEpisodes > 1 && (
+            <div className='absolute top-2 right-2 min-w-[1.875rem] h-5 sm:h-7 sm:min-w-[2.5rem] bg-green-500 dark:bg-green-600 rounded-md flex items-center justify-center px-2 shadow-md text-[0.55rem] sm:text-xs'>
+              <span className='text-white font-bold leading-none'>
+                {mostFrequentEpisodes}
+              </span>
+            </div>
+          )}
+
+          {/* 豆瓣链接按钮 */}
           {mostFrequentDoubanId && (
             <a
               href={`https://movie.douban.com/subject/${mostFrequentDoubanId}`}
               target='_blank'
               rel='noopener noreferrer'
               onClick={(e) => e.stopPropagation()}
-              className='absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200'
+              className='absolute top-2 left-2 scale-90 group-hover:scale-100 opacity-0 group-hover:opacity-100 transition-all duration-500 cubic-bezier(0.4,0,0.2,1)'
             >
-              <div className='w-4 h-4 sm:w-7 sm:h-7 rounded-full bg-green-500 flex items-center justify-center transition-all duration-200 hover:scale-110'>
+              <div className='w-4 h-4 sm:w-7 sm:h-7 rounded-full bg-[#22c55e] flex items-center justify-center shadow-md opacity-70 hover:opacity-100 transition-all duration-300 ease-in-out hover:scale-110 hover:bg-[#16a34a]'>
                 <LinkIcon className='w-4 h-4 text-white' strokeWidth={2} />
               </div>
             </a>
@@ -184,13 +187,9 @@ const AggregateCard: React.FC<AggregateCardProps> = ({
         </div>
 
         {/* 标题 */}
-        <div className='absolute top-[calc(100%+0.2rem)] left-0 right-0'>
-          <div className='flex flex-col items-center justify-center'>
-            <span className='text-gray-900 font-semibold truncate w-full text-center text-xs sm:text-sm dark:text-gray-200'>
-              {first.title}
-            </span>
-          </div>
-        </div>
+        <span className='mt-2 px-1 block text-gray-900 font-semibold truncate w-full text-center text-xs sm:text-sm dark:text-gray-200 transition-all duration-700 cubic-bezier(0.4,0,0.2,1) group-hover:translate-y-[-2px] translate-y-1 opacity-80 group-hover:opacity-100 group-hover:text-green-600 dark:group-hover:text-green-400'>
+          {first.title}
+        </span>
       </div>
     </Link>
   );
