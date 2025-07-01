@@ -161,17 +161,17 @@ export default function VideoCard({
       )}${year ? `&year=${year}` : ''}${from ? `&from=${from}` : ''}`}
     >
       <div
-        className={`group relative w-full rounded-lg bg-transparent flex flex-col cursor-pointer transition-all duration-500 ease-in-out ${
+        className={`group relative w-full rounded-lg bg-transparent flex flex-col cursor-pointer transition-all duration-300 ease-in-out ${
           isDeleting ? 'opacity-0 scale-90' : ''
         }`}
       >
         {/* 海报图片容器 */}
-        <div className='relative aspect-[2/3] w-full overflow-hidden rounded-md group-hover:scale-[1.02] transition-all duration-700 cubic-bezier(0.4,0,0.2,1)'>
+        <div className='relative aspect-[2/3] w-full overflow-hidden rounded-md group-hover:scale-[1.02] transition-all duration-400 cubic-bezier(0.4,0,0.2,1)'>
           <Image
             src={poster}
             alt={title}
             fill
-            className='object-cover transition-transform duration-1000 cubic-bezier(0.4,0,0.2,1) group-hover:scale-110'
+            className='object-cover transition-transform duration-500 cubic-bezier(0.4,0,0.2,1) group-hover:scale-110'
             referrerPolicy='no-referrer'
             priority={false}
           />
@@ -182,12 +182,12 @@ export default function VideoCard({
               alwaysShowHeart
                 ? 'opacity-50 group-hover:opacity-100'
                 : 'opacity-0 group-hover:opacity-100'
-            } transition-all duration-500 cubic-bezier(0.4,0,0.2,1) flex items-center justify-center overflow-hidden`}
+            } transition-all duration-300 cubic-bezier(0.4,0,0.2,1) flex items-center justify-center overflow-hidden`}
           >
             {/* 播放按钮 */}
             <div className='absolute inset-0 flex items-center justify-center pointer-events-auto'>
               <div
-                className={`transition-all duration-500 cubic-bezier(0.4,0,0.2,1) ${
+                className={`transition-all duration-300 cubic-bezier(0.4,0,0.2,1) ${
                   playHover ? 'scale-100 opacity-100' : 'scale-90 opacity-70'
                 }`}
                 style={{ cursor: 'pointer' }}
@@ -208,12 +208,12 @@ export default function VideoCard({
             </div>
 
             {/* 右侧操作按钮组 */}
-            <div className='absolute bottom-2 right-2 sm:bottom-4 sm:right-4 flex items-center gap-3 transform transition-all duration-500 cubic-bezier(0.4,0,0.2,1) group-hover:scale-110'>
+            <div className='absolute bottom-2 right-2 sm:bottom-4 sm:right-4 flex items-center gap-3 transform transition-all duration-300 cubic-bezier(0.4,0,0.2,1) group-hover:scale-110'>
               {!hideCheckCircle && (
                 <span
                   onClick={handleDeleteRecord}
                   title='标记已看'
-                  className='inline-flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity duration-300'
+                  className='inline-flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity duration-200'
                 >
                   <CheckCircleCustom />
                 </span>
@@ -224,7 +224,7 @@ export default function VideoCard({
                 title={favorited ? '移除收藏' : '加入收藏'}
                 className={`inline-flex items-center justify-center ${
                   alwaysShowHeart ? 'opacity-100' : 'opacity-70'
-                } hover:opacity-100 transition-opacity duration-300`}
+                } hover:opacity-100 transition-opacity duration-200`}
               >
                 <Heart
                   className={`h-4 w-4 sm:h-5 sm:w-5 ${
@@ -257,9 +257,9 @@ export default function VideoCard({
               target='_blank'
               rel='noopener noreferrer'
               onClick={(e) => e.stopPropagation()}
-              className='absolute top-2 left-2 scale-90 group-hover:scale-100 opacity-0 group-hover:opacity-100 transition-all duration-500 cubic-bezier(0.4,0,0.2,1)'
+              className='absolute top-2 left-2 scale-90 group-hover:scale-100 opacity-0 group-hover:opacity-100 transition-all duration-300 cubic-bezier(0.4,0,0.2,1)'
             >
-              <div className='w-4 h-4 sm:w-7 sm:h-7 rounded-full bg-[#22c55e] flex items-center justify-center shadow-md opacity-70 hover:opacity-100 transition-all duration-300 ease-in-out hover:scale-110 hover:bg-[#16a34a]'>
+              <div className='w-4 h-4 sm:w-7 sm:h-7 rounded-full bg-[#22c55e] flex items-center justify-center shadow-md opacity-70 hover:opacity-100 transition-all duration-200 ease-in-out hover:scale-110 hover:bg-[#16a34a]'>
                 <LinkIcon className='w-4 h-4 text-white' strokeWidth={2} />
               </div>
             </a>
@@ -270,20 +270,20 @@ export default function VideoCard({
         {progress !== undefined && (
           <div className='mt-1 h-1 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden'>
             <div
-              className='h-full bg-[#22c55e] rounded-full transition-all duration-300'
+              className='h-full bg-[#22c55e] rounded-full transition-all duration-200'
               style={{ width: `${progress}%` }}
             />
           </div>
         )}
 
         {/* 信息层 */}
-        <span className='mt-2 px-1 block text-gray-900 font-semibold truncate w-full text-center text-xs sm:text-sm dark:text-gray-200 transition-all duration-700 cubic-bezier(0.4,0,0.2,1) group-hover:translate-y-[-2px] translate-y-1 opacity-80 group-hover:opacity-100 group-hover:text-green-600 dark:group-hover:text-green-400'>
+        <span className='mt-2 px-1 block text-gray-900 font-semibold truncate w-full text-center text-xs sm:text-sm dark:text-gray-200 transition-all duration-400 cubic-bezier(0.4,0,0.2,1) group-hover:translate-y-[-2px] translate-y-1 opacity-80 group-hover:opacity-100 group-hover:text-green-600 dark:group-hover:text-green-400'>
           {title}
         </span>
 
         {/* 来源信息 */}
         {source && (
-          <span className='mt-1 px-1 block text-gray-500 text-[0.5rem] sm:text-xs w-full text-center dark:text-gray-400 transition-all duration-700 cubic-bezier(0.4,0,0.2,1) group-hover:translate-y-[-2px] translate-y-1 opacity-80 group-hover:opacity-100'>
+          <span className='mt-1 px-1 block text-gray-500 text-[0.5rem] sm:text-xs w-full text-center dark:text-gray-400 transition-all duration-400 cubic-bezier(0.4,0,0.2,1) group-hover:translate-y-[-2px] translate-y-1 opacity-80 group-hover:opacity-100'>
             <span className='inline-block border border-gray-500/60 rounded px-2 py-[1px] dark:border-gray-400/60'>
               {source_name}
             </span>
