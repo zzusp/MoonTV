@@ -1,9 +1,10 @@
-import { Search } from 'lucide-react';
+import { Link as LinkIcon, Search } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
 interface DemoCardProps {
+  id: string;
   title: string;
   poster: string;
   rate?: string;
@@ -53,7 +54,7 @@ function SearchCircle({
   );
 }
 
-const DemoCard = ({ title, poster, rate }: DemoCardProps) => {
+const DemoCard = ({ id, title, poster, rate }: DemoCardProps) => {
   const [hover, setHover] = useState(false);
   const router = useRouter();
 
@@ -98,6 +99,18 @@ const DemoCard = ({ title, poster, rate }: DemoCardProps) => {
             </div>
           </div>
         </div>
+        {/* 顶部左侧 🔗 链接按钮 */}
+        <a
+          href={`https://movie.douban.com/subject/${id}`}
+          target='_blank'
+          rel='noopener noreferrer'
+          onClick={(e) => e.stopPropagation()}
+          className='absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200'
+        >
+          <div className='w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gray-600/60 flex items-center justify-center transition-all duration-200 hover:bg-green-500 hover:scale-110'>
+            <LinkIcon className='w-4 h-4 text-white' strokeWidth={2} />
+          </div>
+        </a>
       </div>
       {/* 信息层 */}
       <div className='absolute top-[calc(100%+0.2rem)] left-0 right-0'>
