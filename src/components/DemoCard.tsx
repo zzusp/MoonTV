@@ -8,6 +8,7 @@ interface DemoCardProps {
   title: string;
   poster: string;
   rate?: string;
+  type?: string;
 }
 
 function SearchCircle({
@@ -54,12 +55,12 @@ function SearchCircle({
   );
 }
 
-const DemoCard = ({ id, title, poster, rate }: DemoCardProps) => {
+const DemoCard = ({ id, title, poster, rate, type }: DemoCardProps) => {
   const [hover, setHover] = useState(false);
   const router = useRouter();
 
   const handleClick = () => {
-    router.push(`/aggregate?q=${encodeURIComponent(title)}`);
+    router.push(`/aggregate?q=${encodeURIComponent(title)}&type=${type}`);
   };
 
   return (

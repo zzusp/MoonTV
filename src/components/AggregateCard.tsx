@@ -1,7 +1,8 @@
+import { LinkIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 // 聚合卡需要的基本字段，与搜索接口保持一致
 interface SearchResult {
@@ -10,6 +11,7 @@ interface SearchResult {
   poster: string;
   source: string;
   source_name: string;
+  douban_id?: number;
   episodes: string[];
 }
 
@@ -64,13 +66,60 @@ const AggregateCard: React.FC<AggregateCardProps> = ({
   const [playHover, setPlayHover] = useState(false);
   const router = useRouter();
 
+  // 统计 items 中出现次数最多的（非 0） douban_id，用于跳转豆瓣页面
+  const mostFrequentDoubanId = useMemo(() => {
+    const countMap = new Map<number, number>();
+
+    items.forEach((item) => {
+      if (item.douban_id && item.douban_id !== 0) {
+        countMap.set(item.douban_id, (countMap.get(item.douban_id) || 0) + 1);
+      }
+    });
+
+    let selectedId: number | undefined;
+    let maxCount = 0;
+
+    countMap.forEach((cnt, id) => {
+      if (cnt > maxCount) {
+        maxCount = cnt;
+        selectedId = id;
+      }
+    });
+
+    return selectedId;
+  }, [items]);
+
+  // 统计出现次数最多的集数（episodes.length），主要用于显示剧集数徽标
+  const mostFrequentEpisodes = useMemo(() => {
+    const countMap = new Map<number, number>();
+
+    items.forEach((item) => {
+      const len = item.episodes?.length || 0;
+      if (len > 0) {
+        countMap.set(len, (countMap.get(len) || 0) + 1);
+      }
+    });
+
+    let selectedLen = 0;
+    let maxCount = 0;
+
+    countMap.forEach((cnt, len) => {
+      if (cnt > maxCount) {
+        maxCount = cnt;
+        selectedLen = len;
+      }
+    });
+
+    return selectedLen;
+  }, [items]);
+
   return (
     <Link
       href={`/aggregate?q=${encodeURIComponent(
         query
       )}&title=${encodeURIComponent(first.title)}${
         year ? `&year=${encodeURIComponent(year)}` : ''
-      }`}
+      }&type=${mostFrequentEpisodes > 1 ? 'tv' : 'movie'}`}
     >
       <div className='group relative w-full rounded-lg bg-transparent shadow-none flex flex-col'>
         {/* 封面图片 2:3 */}
@@ -82,6 +131,15 @@ const AggregateCard: React.FC<AggregateCardProps> = ({
             className='object-cover'
             unoptimized
           />
+
+          {/* 集数指示器 - 绿色小圆球 */}
+          {mostFrequentEpisodes && mostFrequentEpisodes > 1 && (
+            <div className='absolute top-2 right-2 w-4 h-4 sm:w-7 sm:h-7 bg-green-500 rounded-full flex items-center justify-center'>
+              <span className='text-white text-[0.5rem] sm:text-xs font-bold'>
+                {mostFrequentEpisodes}
+              </span>
+            </div>
+          )}
 
           {/* Hover 层 & 播放按钮 */}
           <div className='absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center pointer-events-none'>
@@ -109,6 +167,20 @@ const AggregateCard: React.FC<AggregateCardProps> = ({
               </div>
             </div>
           </div>
+
+          {mostFrequentDoubanId && (
+            <a
+              href={`https://movie.douban.com/subject/${mostFrequentDoubanId}`}
+              target='_blank'
+              rel='noopener noreferrer'
+              onClick={(e) => e.stopPropagation()}
+              className='absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200'
+            >
+              <div className='w-4 h-4 sm:w-7 sm:h-7 rounded-full bg-green-500 flex items-center justify-center transition-all duration-200 hover:scale-110'>
+                <LinkIcon className='w-4 h-4 text-white' strokeWidth={2} />
+              </div>
+            </a>
+          )}
         </div>
 
         {/* 标题 */}

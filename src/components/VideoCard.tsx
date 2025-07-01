@@ -1,4 +1,4 @@
-import { Heart } from 'lucide-react';
+import { Heart, LinkIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -17,6 +17,7 @@ interface VideoCardProps {
   year?: string;
   from?: string;
   currentEpisode?: number;
+  douban_id?: number;
   onDelete?: () => void;
 }
 
@@ -83,6 +84,7 @@ export default function VideoCard({
   year,
   from,
   currentEpisode,
+  douban_id,
   onDelete,
 }: VideoCardProps) {
   const [playHover, setPlayHover] = useState(false);
@@ -242,6 +244,20 @@ export default function VideoCard({
                 {currentEpisode}
               </span>
             </div>
+          )}
+
+          {douban_id && from === 'search' && (
+            <a
+              href={`https://movie.douban.com/subject/${douban_id}`}
+              target='_blank'
+              rel='noopener noreferrer'
+              onClick={(e) => e.stopPropagation()}
+              className='absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200'
+            >
+              <div className='w-4 h-4 sm:w-7 sm:h-7 rounded-full bg-green-500 flex items-center justify-center transition-all duration-200 hover:scale-110'>
+                <LinkIcon className='w-4 h-4 text-white' strokeWidth={2} />
+              </div>
+            </a>
           )}
         </div>
 

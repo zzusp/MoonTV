@@ -494,7 +494,12 @@ function PlayPageClient() {
             result.title.toLowerCase() === videoTitle.toLowerCase() &&
             (videoYear
               ? result.year.toLowerCase() === videoYear.toLowerCase()
-              : true)
+              : true) &&
+            detailRef.current?.episodes.length &&
+            ((detailRef.current?.episodes.length === 1 &&
+              result.episodes.length === 1) ||
+              (detailRef.current?.episodes.length > 1 &&
+                result.episodes.length > 1))
         );
 
         if (exactMatch) {
