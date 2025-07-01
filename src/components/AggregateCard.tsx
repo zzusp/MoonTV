@@ -121,24 +121,24 @@ const AggregateCard: React.FC<AggregateCardProps> = ({
         year ? `&year=${encodeURIComponent(year)}` : ''
       }&type=${mostFrequentEpisodes > 1 ? 'tv' : 'movie'}`}
     >
-      <div className='group relative w-full rounded-lg bg-transparent flex flex-col cursor-pointer transition-all duration-500 ease-in-out'>
+      <div className='group relative w-full rounded-lg bg-transparent flex flex-col cursor-pointer transition-all duration-300 ease-in-out'>
         {/* 封面图片 2:3 */}
-        <div className='relative aspect-[2/3] w-full overflow-hidden rounded-md group-hover:scale-[1.02] transition-all duration-700 cubic-bezier(0.4,0,0.2,1)'>
+        <div className='relative aspect-[2/3] w-full overflow-hidden rounded-md group-hover:scale-[1.02] transition-all duration-400 cubic-bezier(0.4,0,0.2,1)'>
           <Image
             src={first.poster}
             alt={first.title}
             fill
-            className='object-cover transition-transform duration-1000 cubic-bezier(0.4,0,0.2,1) group-hover:scale-110'
+            className='object-cover transition-transform duration-500 cubic-bezier(0.4,0,0.2,1) group-hover:scale-110'
             referrerPolicy='no-referrer'
             priority={false}
           />
 
           {/* Hover 效果层 */}
-          <div className='absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 cubic-bezier(0.4,0,0.2,1) flex items-center justify-center overflow-hidden'>
+          <div className='absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 cubic-bezier(0.4,0,0.2,1) flex items-center justify-center overflow-hidden'>
             {/* 播放按钮 */}
             <div className='absolute inset-0 flex items-center justify-center pointer-events-auto'>
               <div
-                className={`transition-all duration-500 cubic-bezier(0.4,0,0.2,1) ${
+                className={`transition-all duration-300 cubic-bezier(0.4,0,0.2,1) ${
                   playHover ? 'scale-100 opacity-100' : 'scale-90 opacity-70'
                 }`}
                 style={{ cursor: 'pointer' }}
@@ -177,9 +177,9 @@ const AggregateCard: React.FC<AggregateCardProps> = ({
               target='_blank'
               rel='noopener noreferrer'
               onClick={(e) => e.stopPropagation()}
-              className='absolute top-2 left-2 scale-90 group-hover:scale-100 opacity-0 group-hover:opacity-100 transition-all duration-500 cubic-bezier(0.4,0,0.2,1)'
+              className='absolute top-2 left-2 scale-90 group-hover:scale-100 opacity-0 group-hover:opacity-100 transition-all duration-300 cubic-bezier(0.4,0,0.2,1)'
             >
-              <div className='w-4 h-4 sm:w-7 sm:h-7 rounded-full bg-[#22c55e] flex items-center justify-center shadow-md opacity-70 hover:opacity-100 transition-all duration-300 ease-in-out hover:scale-110 hover:bg-[#16a34a]'>
+              <div className='w-4 h-4 sm:w-7 sm:h-7 rounded-full bg-[#22c55e] flex items-center justify-center shadow-md opacity-70 hover:opacity-100 transition-all duration-200 ease-in-out hover:scale-110 hover:bg-[#16a34a]'>
                 <LinkIcon className='w-4 h-4 text-white' strokeWidth={2} />
               </div>
             </a>
@@ -187,7 +187,7 @@ const AggregateCard: React.FC<AggregateCardProps> = ({
         </div>
 
         {/* 标题 */}
-        <span className='mt-2 px-1 block text-gray-900 font-semibold truncate w-full text-center text-xs sm:text-sm dark:text-gray-200 transition-all duration-700 cubic-bezier(0.4,0,0.2,1) group-hover:translate-y-[-2px] translate-y-1 opacity-80 group-hover:opacity-100 group-hover:text-green-600 dark:group-hover:text-green-400'>
+        <span className='mt-2 px-1 block text-gray-900 font-semibold truncate w-full text-center text-xs sm:text-sm dark:text-gray-200 transition-all duration-400 cubic-bezier(0.4,0,0.2,1) group-hover:translate-y-[-2px] translate-y-1 opacity-80 group-hover:opacity-100 group-hover:text-green-600 dark:group-hover:text-green-400'>
           {first.title}
         </span>
       </div>
