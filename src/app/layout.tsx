@@ -39,6 +39,7 @@ export default function RootLayout({
       process.env.STORAGE_TYPE ||
       process.env.NEXT_PUBLIC_STORAGE_TYPE ||
       'localstorage',
+    ENABLE_REGISTER: process.env.NEXT_PUBLIC_ENABLE_REGISTER === 'true',
   };
 
   return (

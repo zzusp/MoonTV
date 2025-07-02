@@ -54,6 +54,8 @@ export interface IStorage {
   // 用户相关
   registerUser(userName: string, password: string): Promise<void>;
   verifyUser(userName: string, password: string): Promise<boolean>;
+  // 检查用户是否存在（无需密码）
+  checkUserExist(userName: string): Promise<boolean>;
 
   // 搜索历史相关
   getSearchHistory(): Promise<string[]>;
@@ -169,6 +171,13 @@ class RedisStorage implements IStorage {
     const stored = await this.client.get(this.userPwdKey(userName));
     if (stored === null) return false;
     return stored === password;
+  }
+
+  // 检查用户是否存在
+  async checkUserExist(userName: string): Promise<boolean> {
+    // 使用 EXISTS 判断 key 是否存在
+    const exists = await this.client.exists(this.userPwdKey(userName));
+    return exists === 1;
   }
 
   // ---------- 搜索历史 ----------
@@ -340,6 +349,11 @@ export class DbManager {
 
   async verifyUser(userName: string, password: string): Promise<boolean> {
     return this.storage.verifyUser(userName, password);
+  }
+
+  // 检查用户是否已存在
+  async checkUserExist(userName: string): Promise<boolean> {
+    return this.storage.checkUserExist(userName);
   }
 
   // ---------- 搜索历史 ----------
