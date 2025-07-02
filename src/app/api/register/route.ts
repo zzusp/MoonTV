@@ -20,6 +20,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // 校验是否开放注册
+    if (process.env.NEXT_PUBLIC_ENABLE_REGISTER !== 'true') {
+      return NextResponse.json({ error: '当前未开放注册' }, { status: 400 });
+    }
+
     const { username, password } = await req.json();
 
     if (!username || typeof username !== 'string') {

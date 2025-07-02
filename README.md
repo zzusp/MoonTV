@@ -181,7 +181,10 @@ services:
   redis:
     image: redis
     container_name: moontv-redis
-    estart: unless-stopped
+    restart: unless-stopped
+    # 如需持久化
+    # volumes:
+    #   - ./data:/data
 ```
 
 ## 环境变量
@@ -228,8 +231,9 @@ MoonTV 支持标准的苹果 CMS V10 API 格式。
 
 ## Roadmap
 
-- [ ] DB 存储
-- [ ] 深色模式
+- [x] 深色模式
+- [x] 持久化存储
+- [x] 多账户
 
 ## 安全与隐私提醒
 
