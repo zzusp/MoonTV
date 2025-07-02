@@ -1195,24 +1195,6 @@ function PlayPageClient() {
         // 调用父类构造函数
         // @ts-ignore
         super(config);
-
-        // 监听 Hls 错误事件，捕获 bufferStalledError 并尝试跳过
-        this.on(Hls.Events.ERROR, (_evt: any, data: any) => {
-          if (
-            data?.details === Hls.ErrorDetails.BUFFER_STALLED_ERROR ||
-            data?.details === Hls.ErrorDetails.BUFFER_SEEK_OVER_HOLE
-          ) {
-            try {
-              const media = (this as any).media as HTMLMediaElement | undefined;
-              if (media && !media.seeking) {
-                // 前跳 1 秒，跳过当前卡顿的分片
-                media.currentTime = media.currentTime + 1;
-              }
-            } catch (err) {
-              console.warn('尝试跳过卡顿分片失败:', err);
-            }
-          }
-        });
       }
 
       attachMedia(media: HTMLMediaElement): void {
