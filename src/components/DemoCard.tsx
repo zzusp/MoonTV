@@ -53,7 +53,9 @@ const DemoCard = ({ id, title, poster, rate, type }: DemoCardProps) => {
   const imgRef = useRef<HTMLImageElement>(null);
 
   const handleClick = () => {
-    router.push(`/aggregate?q=${encodeURIComponent(title)}&type=${type}`);
+    router.push(
+      `/aggregate?q=${encodeURIComponent(title.trim())}&type=${type}`
+    );
   };
 
   return (

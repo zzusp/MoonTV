@@ -154,7 +154,7 @@ export default function VideoCard({
   return (
     <Link
       href={`/detail?source=${source}&id=${id}&title=${encodeURIComponent(
-        title
+        title.trim()
       )}${year ? `&year=${year}` : ''}${from ? `&from=${from}` : ''}`}
     >
       <div

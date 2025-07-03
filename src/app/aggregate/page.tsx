@@ -14,10 +14,10 @@ import PageLayout from '@/components/PageLayout';
 
 function AggregatePageClient() {
   const searchParams = useSearchParams();
-  const query = searchParams.get('q')?.trim() || '';
-  const title = searchParams.get('title')?.trim() || '';
-  const year = searchParams.get('year')?.trim() || '';
-  const type = searchParams.get('type')?.trim() || '';
+  const query = searchParams.get('q') || '';
+  const title = searchParams.get('title') || '';
+  const year = searchParams.get('year') || '';
+  const type = searchParams.get('type') || '';
 
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,7 +33,9 @@ function AggregatePageClient() {
 
     const fetchData = async () => {
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+        const res = await fetch(
+          `/api/search?q=${encodeURIComponent(query.trim())}`
+        );
         if (!res.ok) {
           throw new Error('搜索失败');
         }
@@ -79,7 +81,7 @@ function AggregatePageClient() {
           setResults(Array.from(map.values()).flat());
         } else if (map.size > 1) {
           // 存在多个匹配，跳转到搜索页
-          router.push(`/search?q=${encodeURIComponent(query)}`);
+          router.push(`/search?q=${encodeURIComponent(query.trim())}`);
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : '搜索失败');
@@ -189,7 +191,7 @@ function AggregatePageClient() {
         key={src.source}
         href={`/play?source=${src.source}&id=${
           src.id
-        }&title=${encodeURIComponent(src.title)}${
+        }&title=${encodeURIComponent(src.title.trim())}${
           src.year ? `&year=${src.year}` : ''
         }&from=aggregate`}
         className='group relative flex items-center justify-center w-full h-14 bg-gray-500/80 hover:bg-green-500 dark:bg-gray-700/80 dark:hover:bg-green-600 rounded-lg transition-colors'

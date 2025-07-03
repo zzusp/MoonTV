@@ -274,7 +274,7 @@ function PlayPageClient() {
         const detailData = await fetchVideoDetail({
           source: currentSource,
           id: currentId,
-          fallbackTitle: videoTitle,
+          fallbackTitle: videoTitle.trim(),
           fallbackYear: videoYear,
         });
 
@@ -531,7 +531,7 @@ function PlayPageClient() {
 
     try {
       const response = await fetch(
-        `/api/search?q=${encodeURIComponent(query)}`
+        `/api/search?q=${encodeURIComponent(query.trim())}`
       );
       if (!response.ok) {
         throw new Error('搜索失败');
@@ -614,7 +614,7 @@ function PlayPageClient() {
       const newDetail = await fetchVideoDetail({
         source: newSource,
         id: newId,
-        fallbackTitle: newTitle,
+        fallbackTitle: newTitle.trim(),
         fallbackYear: videoYear,
       });
 
@@ -1100,7 +1100,7 @@ function PlayPageClient() {
             onClick={() => {
               if (videoTitle) {
                 window.location.href = `/aggregate?q=${encodeURIComponent(
-                  videoTitle
+                  videoTitle.trim()
                 )}${videoYear ? `&year=${encodeURIComponent(videoYear)}` : ''}`;
               } else {
                 window.location.href = '/';
@@ -1125,7 +1125,7 @@ function PlayPageClient() {
               // 返回选源页
               if (videoTitle) {
                 window.location.href = `/aggregate?q=${encodeURIComponent(
-                  videoTitle
+                  videoTitle.trim()
                 )}${videoYear ? `&year=${encodeURIComponent(videoYear)}` : ''}`;
               } else {
                 window.location.href = '/';

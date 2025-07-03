@@ -78,7 +78,7 @@ function SearchPageClient() {
     try {
       setIsLoading(true);
       const response = await fetch(
-        `/api/search?q=${encodeURIComponent(query)}`
+        `/api/search?q=${encodeURIComponent(query.trim())}`
       );
       const data = await response.json();
       setSearchResults(data.results);
@@ -92,17 +92,20 @@ function SearchPageClient() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchQuery.trim()) return;
+    const trimmed = searchQuery.trim().replace(/\s+/g, ' ');
+    if (!trimmed) return;
 
+    // 回显搜索框
+    setSearchQuery(trimmed);
     setIsLoading(true);
     setShowResults(true);
 
-    router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+    router.push(`/search?q=${encodeURIComponent(trimmed)}`);
     // 直接发请求
-    fetchSearchResults(searchQuery);
+    fetchSearchResults(trimmed);
 
     // 保存到搜索历史
-    addSearchHistory(searchQuery).then(async () => {
+    addSearchHistory(trimmed).then(async () => {
       const history = await getSearchHistory();
       setSearchHistory(history);
     });
@@ -225,7 +228,9 @@ function SearchPageClient() {
                     <button
                       onClick={() => {
                         setSearchQuery(item);
-                        router.push(`/search?q=${encodeURIComponent(item)}`);
+                        router.push(
+                          `/search?q=${encodeURIComponent(item.trim())}`
+                        );
                       }}
                       className='px-4 py-2 bg-gray-500/10 hover:bg-gray-300 rounded-full text-sm text-gray-700 transition-colors duration-200 dark:bg-gray-700/50 dark:hover:bg-gray-600 dark:text-gray-300'
                     >

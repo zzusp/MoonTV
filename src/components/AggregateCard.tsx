@@ -119,7 +119,7 @@ const AggregateCard: React.FC<AggregateCardProps> = ({
   return (
     <Link
       href={`/aggregate?q=${encodeURIComponent(
-        query
+        query.trim()
       )}&title=${encodeURIComponent(first.title)}${
         year ? `&year=${encodeURIComponent(year)}` : ''
       }&type=${mostFrequentEpisodes > 1 ? 'tv' : 'movie'}`}
