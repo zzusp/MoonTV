@@ -40,13 +40,15 @@ function SearchPageClient() {
   const aggregatedResults = useMemo(() => {
     const map = new Map<string, SearchResult[]>();
     searchResults.forEach((item) => {
-      // 使用 title + year + id 作为键，若 year 不存在则使用 'unknown'
-      const key = `${item.title}-${item.year || 'unknown'}-${item.id}`;
+      // 使用 title + year + type 作为键，若 year 不存在则使用 'unknown'
+      const key = `${item.title}-${item.year || 'unknown'}-${
+        item.episodes.length === 1 ? 'movie' : 'tv'
+      }`;
       const arr = map.get(key) || [];
       arr.push(item);
       map.set(key, arr);
     });
-    return Array.from(map.values());
+    return map;
   }, [searchResults]);
 
   useEffect(() => {
@@ -163,20 +165,19 @@ function SearchPageClient() {
                 className='justify-start grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8'
               >
                 {viewMode === 'agg'
-                  ? aggregatedResults.map((group) => {
-                      const key = `${group[0].title}-${
-                        group[0].year || 'unknown'
-                      }-${group[0].id}`;
-                      return (
-                        <div key={`agg-${key}`} className='w-full'>
-                          <AggregateCard
-                            items={group}
-                            query={searchQuery}
-                            year={group[0].year}
-                          />
-                        </div>
-                      );
-                    })
+                  ? Array.from(aggregatedResults.entries()).map(
+                      ([mapKey, group]) => {
+                        return (
+                          <div key={`agg-${mapKey}`} className='w-full'>
+                            <AggregateCard
+                              items={group}
+                              query={searchQuery}
+                              year={group[0].year}
+                            />
+                          </div>
+                        );
+                      }
+                    )
                   : searchResults.map((item) => (
                       <div
                         key={`all-${item.source}-${item.id}`}
