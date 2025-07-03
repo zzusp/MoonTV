@@ -149,7 +149,7 @@ export default function VideoCard({
   };
 
   const hideCheckCircle = from === 'favorites' || from === 'search';
-  const alwaysShowHeart = from === 'favorites';
+  const alwaysShowHeart = from !== 'favorites';
 
   return (
     <Link
@@ -254,7 +254,7 @@ export default function VideoCard({
             </div>
           )}
           {/* 搜索非聚合 - 集数圆形展示框 */}
-          {from === 'search' && (
+          {episodes && episodes > 1 && !currentEpisode && (
             <div className='absolute top-2 right-2 w-4 h-4 sm:w-7 sm:h-7 rounded-full bg-green-500/90 dark:bg-green-600/90 flex items-center justify-center shadow-md text-[0.55rem] sm:text-xs'>
               <span className='text-white font-bold leading-none'>
                 {episodes}
