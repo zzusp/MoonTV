@@ -1,4 +1,4 @@
-/* eslint-disable no-console, @typescript-eslint/no-explicit-any */
+/* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 
 // storage type 常量: 'localstorage' | 'database'，默认 'localstorage'
 const STORAGE_TYPE =
@@ -405,12 +405,33 @@ function getRedisClient(): RedisClientType {
     if (!url) {
       throw new Error('REDIS_URL env variable not set');
     }
-    client = createClient({ url });
 
-    // 提前连接，连接失败抛出错误便于定位
-    client.connect().catch((err: unknown) => {
-      console.error('Redis connection error:', err);
+    // 创建客户端，配置重连策略
+    client = createClient({
+      url,
+      socket: {
+        // 5秒重连间隔
+        reconnectStrategy: (retries: number) => {
+          console.log(`Redis reconnection attempt ${retries + 1}`);
+          return 5000; // 5秒后重试
+        },
+        connectTimeout: 10000, // 10秒连接超时
+      },
     });
+
+    // 初始连接，带重试机制
+    const connectWithRetry = async () => {
+      try {
+        await client!.connect();
+        console.log('Redis connected successfully');
+      } catch (err) {
+        console.error('Redis initial connection failed:', err);
+        console.log('Will retry in 5 seconds...');
+        setTimeout(connectWithRetry, 5000);
+      }
+    };
+
+    connectWithRetry();
 
     (global as any)[globalKey] = client;
   }
