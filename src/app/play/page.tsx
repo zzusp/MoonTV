@@ -8,10 +8,13 @@ import {
   isHLSProvider,
   MediaPlayer,
   MediaProvider,
+  Menu,
+  RadioGroup,
   SeekButton,
 } from '@vidstack/react';
 import {
   AirPlayIcon,
+  CheckIcon,
   SeekBackward10Icon,
   SeekForward10Icon,
 } from '@vidstack/react/icons';
@@ -1433,7 +1436,10 @@ function PlayPageClient() {
                 >
                   <AdBlockIcon enabled={blockAdEnabled} />
                 </button>
-                <PlaybackRateButton playerRef={playerRef} />
+                <PlaybackRateButton
+                  playerRef={playerRef}
+                  playerContainerRef={playerContainerRef}
+                />
                 {/* 自定义 AirPlay 按钮 */}
                 <AirPlayButton className='vds-button'>
                   <AirPlayIcon className='vds-icon' />
@@ -1787,8 +1793,10 @@ function PlayPageClient() {
 
 const PlaybackRateButton = ({
   playerRef,
+  playerContainerRef,
 }: {
   playerRef: React.RefObject<any>;
+  playerContainerRef: React.RefObject<HTMLDivElement>;
 }) => {
   const [rate, setRate] = useState(1);
   const rates = [0.75, 1.0, 1.25, 1.5, 2.0, 3.0];
@@ -1803,18 +1811,38 @@ const PlaybackRateButton = ({
     return unsubscribe;
   }, [playerRef]);
 
-  const cycleRate = () => {
-    const player = playerRef.current;
-    if (!player) return;
-    const currentIndex = rates.indexOf(rate);
-    const nextIndex = (currentIndex + 1) % rates.length;
-    player.playbackRate = rates[nextIndex];
-  };
-
   return (
-    <button className='vds-button' onClick={cycleRate}>
-      {rate === 1 ? '倍速' : `${rate.toFixed(2)}x`}
-    </button>
+    <Menu.Root className='vds-menu'>
+      <Menu.Button className='vds-menu-button vds-button' aria-label='Settings'>
+        <span>倍速</span>
+      </Menu.Button>
+      <Menu.Items className='vds-menu-items' placement='top' offset={0}>
+        <RadioGroup.Root
+          className='vds-radio-group'
+          aria-label='Custom Options'
+          value={rate.toString()}
+          onChange={(value) => {
+            const player = playerRef.current;
+            if (!player) {
+              return;
+            }
+            player.playbackRate = Number(value);
+            playerContainerRef.current?.focus();
+          }}
+        >
+          {rates.reverse().map((rate) => (
+            <RadioGroup.Item
+              className='vds-radio'
+              value={rate.toString()}
+              key={rate}
+            >
+              <CheckIcon className='vds-icon' />
+              <span className='vds-radio-label'>{rate}</span>
+            </RadioGroup.Item>
+          ))}
+        </RadioGroup.Root>
+      </Menu.Items>
+    </Menu.Root>
   );
 };
 
