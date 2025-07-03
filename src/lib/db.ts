@@ -61,6 +61,9 @@ export interface IStorage {
   getSearchHistory(): Promise<string[]>;
   addSearchHistory(keyword: string): Promise<void>;
   deleteSearchHistory(keyword?: string): Promise<void>;
+
+  // 用户列表
+  getAllUsers(): Promise<string[]>;
 }
 
 // ---------------- Redis 实现 ----------------
@@ -202,6 +205,17 @@ class RedisStorage implements IStorage {
     } else {
       await this.client.del(this.shKey);
     }
+  }
+
+  // ---------- 获取全部用户 ----------
+  async getAllUsers(): Promise<string[]> {
+    const keys = await this.client.keys('u:*:pwd');
+    return keys
+      .map((k) => {
+        const match = k.match(/^u:(.+?):pwd$/);
+        return match ? match[1] : undefined;
+      })
+      .filter((u): u is string => typeof u === 'string');
   }
 }
 
@@ -367,6 +381,14 @@ export class DbManager {
 
   async deleteSearchHistory(keyword?: string): Promise<void> {
     await this.storage.deleteSearchHistory(keyword);
+  }
+
+  // 获取全部用户名
+  async getAllUsers(): Promise<string[]> {
+    if (typeof (this.storage as any).getAllUsers === 'function') {
+      return (this.storage as any).getAllUsers();
+    }
+    return [];
   }
 }
 
