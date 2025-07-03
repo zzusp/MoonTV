@@ -158,7 +158,7 @@ export default function VideoCard({
       )}${year ? `&year=${year}` : ''}${from ? `&from=${from}` : ''}`}
     >
       <div
-        className={`group relative w-full rounded-lg bg-transparent flex flex-col cursor-pointer transition-all duration-300 ease-in-out ${
+        className={`group relative w-full rounded-lg bg-transparent/0 flex flex-col cursor-pointer transition-all duration-300 ease-in-out ${
           isDeleting ? 'opacity-0 scale-90' : ''
         }`}
       >
@@ -171,7 +171,6 @@ export default function VideoCard({
             src={poster}
             alt={title}
             fill
-            loading='lazy'
             className={`object-cover transition-transform duration-500 cubic-bezier(0.4,0,0.2,1) group-hover:scale-110
                       ${
                         isLoaded
