@@ -52,7 +52,7 @@ function PlayCircleSolid({
 }
 
 /**
- * 与 `VideoCard` 基本一致，删除了集数徽标、来源标签、收藏等功能
+ * 与 `VideoCard` 基本一致，删除了来源标签、收藏等功能
  * 点击播放按钮 -> 跳到第一个源播放
  * 点击卡片其他区域 -> 跳到聚合详情页 (/aggregate)
  */
@@ -161,9 +161,9 @@ const AggregateCard: React.FC<AggregateCardProps> = ({
             </div>
           </div>
 
-          {/* 集数矩形展示框 - 不透明，无hover效果 */}
+          {/* 集数矩形展示框 */}
           {mostFrequentEpisodes && mostFrequentEpisodes > 1 && (
-            <div className='absolute top-2 right-2 min-w-[1.875rem] h-5 sm:h-7 sm:min-w-[2.5rem] bg-green-500 dark:bg-green-600 rounded-md flex items-center justify-center px-2 shadow-md text-[0.55rem] sm:text-xs'>
+            <div className='absolute top-2 right-2 w-7 h-7 sm:w-7 sm:h-7 rounded-full bg-green-500/90 dark:bg-green-600/90 flex items-center justify-center shadow-md text-[0.55rem] sm:text-xs'>
               <span className='text-white font-bold leading-none'>
                 {mostFrequentEpisodes}
               </span>

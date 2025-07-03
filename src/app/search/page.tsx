@@ -30,23 +30,19 @@ function SearchPageClient() {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // 视图模式：聚合(agg) 或 全部(all)，默认值由环境变量 NEXT_PUBLIC_AGGREGATE_SEARCH_RESULT 决定
-  const [viewMode, setViewMode] = useState<'agg' | 'all'>(() => {
-    const envVal = process.env.NEXT_PUBLIC_AGGREGATE_SEARCH_RESULT;
-    // 默认聚合（'agg'）。当显式设置为 'false' 或 '0' 时使用 'all'
-    if (envVal === 'false' || envVal === '0') {
-      return 'all';
-    }
-    return 'agg';
-  });
+  const [viewMode, setViewMode] = useState<'agg' | 'all'>(
+    process.env.NEXT_PUBLIC_AGGREGATE_SEARCH_RESULT === 'false' ||
+      process.env.NEXT_PUBLIC_AGGREGATE_SEARCH_RESULT === '0'
+      ? 'all'
+      : 'agg'
+  );
 
   // 聚合后的结果（按标题和年份分组）
   const aggregatedResults = useMemo(() => {
     const map = new Map<string, SearchResult[]>();
     searchResults.forEach((item) => {
-      // 使用 title + year 作为键，若 year 不存在则使用 'unknown'
-      const key = `${item.title}-${item.year || 'unknown'}-${
-        item.episodes.length === 1 ? 'movie' : 'tv'
-      }`;
+      // 使用 title + year + id 作为键，若 year 不存在则使用 'unknown'
+      const key = `${item.title}-${item.year || 'unknown'}-${item.id}`;
       const arr = map.get(key) || [];
       arr.push(item);
       map.set(key, arr);
@@ -55,16 +51,9 @@ function SearchPageClient() {
   }, [searchResults]);
 
   useEffect(() => {
-    // 自动聚焦搜索框：仅当 URL 中没有搜索参数时
-    if (!searchParams.get('q')) {
-      searchInputRef.current?.focus();
-    }
-
-    // 加载搜索历史
-    (async () => {
-      const history = await getSearchHistory();
-      setSearchHistory(history);
-    })();
+    // 无搜索参数时聚焦搜索框
+    !searchParams.get('q') && searchInputRef.current?.focus();
+    getSearchHistory().then(setSearchHistory);
   }, []);
 
   useEffect(() => {
@@ -172,13 +161,13 @@ function SearchPageClient() {
               </div>
               <div
                 key={`search-results-${viewMode}`}
-                className='justify-start grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8 sm:px-4'
+                className='justify-start grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8'
               >
                 {viewMode === 'agg'
                   ? aggregatedResults.map((group) => {
                       const key = `${group[0].title}-${
                         group[0].year || 'unknown'
-                      }`;
+                      }-${group[0].id}`;
                       return (
                         <div key={`agg-${key}`} className='w-full'>
                           <AggregateCard
