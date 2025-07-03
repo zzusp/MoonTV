@@ -8,8 +8,13 @@ import {
   isHLSProvider,
   MediaPlayer,
   MediaProvider,
+  SeekButton,
 } from '@vidstack/react';
-import { AirPlayIcon } from '@vidstack/react/icons';
+import {
+  AirPlayIcon,
+  SeekBackward10Icon,
+  SeekForward10Icon,
+} from '@vidstack/react/icons';
 import {
   defaultLayoutIcons,
   DefaultVideoLayout,
@@ -1389,34 +1394,6 @@ function PlayPageClient() {
             airPlayButton: null, // 隐藏默认 AirPlay 按钮
             beforeCurrentTime: (
               <>
-                {/* 快进 10 秒按钮 - 根据播放器尺寸决定显隐 */}
-                {showSkipButtons && (
-                  <button
-                    className='vds-button mr-2'
-                    onClick={() => {
-                      if (playerRef.current) {
-                        const p = playerRef.current;
-                        const newTime = Math.min(
-                          (p.currentTime || 0) + 10,
-                          p.duration || 0
-                        );
-                        p.currentTime = newTime;
-                      }
-                    }}
-                    aria-label='Fast Forward 10 Seconds'
-                  >
-                    <svg
-                      className='vds-icon'
-                      viewBox='0 0 32 32'
-                      xmlns='http://www.w3.org/2000/svg'
-                    >
-                      {/* 双三角快进图标 */}
-                      <path d='M6 24l10-8L6 8v16z' fill='currentColor' />
-                      <path d='M18 24l10-8-10-8v16z' fill='currentColor' />
-                    </svg>
-                  </button>
-                )}
-
                 {totalEpisodes > 1 && (
                   // 下一集按钮放在时间显示前
                   <button
@@ -1467,27 +1444,18 @@ function PlayPageClient() {
             beforePlayButton: (
               <>
                 {showSkipButtons && (
-                  <button
-                    className='vds-button mr-2'
-                    onClick={() => {
-                      if (playerRef.current) {
-                        const p = playerRef.current;
-                        const newTime = Math.max(0, (p.currentTime || 0) - 10);
-                        p.currentTime = newTime;
-                      }
-                    }}
-                    aria-label='Rewind 10 Seconds'
-                  >
-                    <svg
-                      className='vds-icon'
-                      viewBox='0 0 32 32'
-                      xmlns='http://www.w3.org/2000/svg'
-                    >
-                      {/* 双三角快退图标 */}
-                      <path d='M26 24l-10-8 10-8v16z' fill='currentColor' />
-                      <path d='M14 24l-10-8 10-8v16z' fill='currentColor' />
-                    </svg>
-                  </button>
+                  <SeekButton className='vds-button' seconds={10}>
+                    <SeekBackward10Icon className='vds-icon' />
+                  </SeekButton>
+                )}
+              </>
+            ),
+            afterPlayButton: (
+              <>
+                {showSkipButtons && (
+                  <SeekButton className='vds-button' seconds={10}>
+                    <SeekForward10Icon className='vds-icon' />
+                  </SeekButton>
                 )}
               </>
             ),
