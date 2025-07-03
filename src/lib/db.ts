@@ -58,9 +58,9 @@ export interface IStorage {
   checkUserExist(userName: string): Promise<boolean>;
 
   // 搜索历史相关
-  getSearchHistory(): Promise<string[]>;
-  addSearchHistory(keyword: string): Promise<void>;
-  deleteSearchHistory(keyword?: string): Promise<void>;
+  getSearchHistory(userName: string): Promise<string[]>;
+  addSearchHistory(userName: string, keyword: string): Promise<void>;
+  deleteSearchHistory(userName: string, keyword?: string): Promise<void>;
 
   // 用户列表
   getAllUsers(): Promise<string[]>;
@@ -184,26 +184,30 @@ class RedisStorage implements IStorage {
   }
 
   // ---------- 搜索历史 ----------
-  private shKey = 'moontv:search_history';
-
-  async getSearchHistory(): Promise<string[]> {
-    return (await this.client.lRange(this.shKey, 0, -1)) as string[];
+  private shKey(user: string) {
+    return `u:${user}:sh`; // u:username:sh
   }
 
-  async addSearchHistory(keyword: string): Promise<void> {
+  async getSearchHistory(userName: string): Promise<string[]> {
+    return (await this.client.lRange(this.shKey(userName), 0, -1)) as string[];
+  }
+
+  async addSearchHistory(userName: string, keyword: string): Promise<void> {
+    const key = this.shKey(userName);
     // 先去重
-    await this.client.lRem(this.shKey, 0, keyword);
+    await this.client.lRem(key, 0, keyword);
     // 插入到最前
-    await this.client.lPush(this.shKey, keyword);
+    await this.client.lPush(key, keyword);
     // 限制最大长度
-    await this.client.lTrim(this.shKey, 0, SEARCH_HISTORY_LIMIT - 1);
+    await this.client.lTrim(key, 0, SEARCH_HISTORY_LIMIT - 1);
   }
 
-  async deleteSearchHistory(keyword?: string): Promise<void> {
+  async deleteSearchHistory(userName: string, keyword?: string): Promise<void> {
+    const key = this.shKey(userName);
     if (keyword) {
-      await this.client.lRem(this.shKey, 0, keyword);
+      await this.client.lRem(key, 0, keyword);
     } else {
-      await this.client.del(this.shKey);
+      await this.client.del(key);
     }
   }
 
@@ -371,16 +375,16 @@ export class DbManager {
   }
 
   // ---------- 搜索历史 ----------
-  async getSearchHistory(): Promise<string[]> {
-    return this.storage.getSearchHistory();
+  async getSearchHistory(userName: string): Promise<string[]> {
+    return this.storage.getSearchHistory(userName);
   }
 
-  async addSearchHistory(keyword: string): Promise<void> {
-    await this.storage.addSearchHistory(keyword);
+  async addSearchHistory(userName: string, keyword: string): Promise<void> {
+    await this.storage.addSearchHistory(userName, keyword);
   }
 
-  async deleteSearchHistory(keyword?: string): Promise<void> {
-    await this.storage.deleteSearchHistory(keyword);
+  async deleteSearchHistory(userName: string, keyword?: string): Promise<void> {
+    await this.storage.deleteSearchHistory(userName, keyword);
   }
 
   // 获取全部用户名
