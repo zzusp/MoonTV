@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useMemo, useState } from 'react';
 
+import { ImagePlaceholder } from '@/components/ImagePlaceholder';
+
 // 聚合卡需要的基本字段，与搜索接口保持一致
 interface SearchResult {
   id: string;
@@ -64,6 +66,7 @@ const AggregateCard: React.FC<AggregateCardProps> = ({
   // 使用列表中的第一个结果做展示 & 播放
   const first = items[0];
   const [playHover, setPlayHover] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
   const router = useRouter();
 
   // 统计 items 中出现次数最多的（非 0） douban_id，用于跳转豆瓣页面
@@ -124,11 +127,21 @@ const AggregateCard: React.FC<AggregateCardProps> = ({
       <div className='group relative w-full rounded-lg bg-transparent flex flex-col cursor-pointer transition-all duration-300 ease-in-out'>
         {/* 封面图片 2:3 */}
         <div className='relative aspect-[2/3] w-full overflow-hidden rounded-md group-hover:scale-[1.02] transition-all duration-400 cubic-bezier(0.4,0,0.2,1)'>
+          {/* 图片占位符 - 骨架屏效果 */}
+          <ImagePlaceholder aspectRatio='aspect-[2/3]' />
+
           <Image
             src={first.poster}
             alt={first.title}
             fill
-            className='object-cover transition-transform duration-500 cubic-bezier(0.4,0,0.2,1) group-hover:scale-110'
+            loading='lazy'
+            className={`object-cover transition-transform duration-500 cubic-bezier(0.4,0,0.2,1) group-hover:scale-110
+                      ${
+                        isLoaded
+                          ? 'opacity-100 scale-100'
+                          : 'opacity-0 scale-95'
+                      }`}
+            onLoadingComplete={() => setIsLoaded(true)}
             referrerPolicy='no-referrer'
             priority={false}
           />
