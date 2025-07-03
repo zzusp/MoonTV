@@ -250,6 +250,15 @@ export default function VideoCard({
             </div>
           )}
 
+          {/* 集数圆形展示框 - 无当前集数且总集数大于 1 时展示 */}
+          {episodes && episodes > 1 && !currentEpisode && (
+            <div className='absolute top-2 right-2 w-4 h-4 sm:w-7 sm:h-7 bg-green-500 rounded-full flex items-center justify-center'>
+              <span className='text-white text-[0.5rem] sm:text-xs font-bold'>
+                {episodes}
+              </span>
+            </div>
+          )}
+
           {/* 豆瓣链接按钮 */}
           {douban_id && from === 'search' && (
             <a
