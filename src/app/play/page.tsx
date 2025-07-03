@@ -190,6 +190,10 @@ function PlayPageClient() {
     return true;
   });
 
+  // 长按三倍速相关
+  const longPressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const normalPlaybackRateRef = useRef<number>(1);
+
   // 同步最新值到 refs
   useEffect(() => {
     currentSourceRef.current = currentSource;
@@ -393,6 +397,10 @@ function PlayPageClient() {
         }
       }, 0);
     }
+
+    // 绑定长按三倍速事件
+    playerRef.current?.addEventListener('touchstart', handleLongPressStart);
+    playerRef.current?.addEventListener('touchend', handleLongPressEnd);
   };
 
   const onEnded = () => {
@@ -451,6 +459,9 @@ function PlayPageClient() {
       }
       if (saveIntervalRef.current) {
         clearInterval(saveIntervalRef.current);
+      }
+      if (longPressTimeoutRef.current) {
+        clearTimeout(longPressTimeoutRef.current);
       }
     };
   }, []);
@@ -1031,6 +1042,41 @@ function PlayPageClient() {
     }
   };
 
+  // 长按三倍速处理
+  const handleLongPressStart = (e: TouchEvent) => {
+    if (playerRef.current?.paused || playerRef.current?.playbackRate === 3.0) {
+      return;
+    }
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('.custom_topbar') ||
+      target.closest('.custom_episodes_panel') ||
+      target.closest('.custom_source_panel')
+    ) {
+      return;
+    }
+    if (longPressTimeoutRef.current) {
+      clearTimeout(longPressTimeoutRef.current);
+    }
+    longPressTimeoutRef.current = setTimeout(() => {
+      if (playerRef.current) {
+        normalPlaybackRateRef.current = playerRef.current.playbackRate || 1;
+        playerRef.current.playbackRate = 3.0;
+        displayShortcutHint('3倍速', 'play');
+      }
+    }, 300); // 按压 300ms 触发
+  };
+
+  const handleLongPressEnd = () => {
+    if (longPressTimeoutRef.current) {
+      clearTimeout(longPressTimeoutRef.current);
+      longPressTimeoutRef.current = null;
+    }
+    if (playerRef.current) {
+      playerRef.current.playbackRate = normalPlaybackRateRef.current || 1;
+    }
+  };
+
   if (loading) {
     return (
       <div className='min-h-[100dvh] bg-black flex items-center justify-center overflow-hidden overscroll-contain'>
@@ -1114,7 +1160,7 @@ function PlayPageClient() {
     return (
       <div
         data-top-bar
-        className='absolute top-0 left-0 right-0 transition-opacity duration-300 z-10 opacity-0 pointer-events-none group-data-[controls]:opacity-100 group-data-[controls]:pointer-events-auto'
+        className='absolute custom_topbar top-0 left-0 right-0 transition-opacity duration-300 z-10 opacity-0 pointer-events-none group-data-[controls]:opacity-100 group-data-[controls]:pointer-events-auto'
       >
         <div className='bg-black/60 backdrop-blur-sm px-0 sm:px-6 py-4 relative flex items-center sm:justify-center'>
           {/* 返回按钮 */}
@@ -1387,6 +1433,7 @@ function PlayPageClient() {
         />
         <DefaultVideoLayout
           icons={defaultLayoutIcons}
+          noGestures={true}
           slots={{
             googleCastButton: null,
             pipButton: null,
@@ -1484,7 +1531,7 @@ function PlayPageClient() {
 
             {/* 侧拉面板 */}
             <div
-              className={`fixed top-0 right-0 h-full w-full mobile-landscape:w-1/2 md:w-80 bg-black/40 backdrop-blur-xl z-[110] transform transition-transform duration-300 ${
+              className={`fixed custom_episodes_panel top-0 right-0 h-full w-full mobile-landscape:w-1/2 md:w-80 bg-black/40 backdrop-blur-xl z-[110] transform transition-transform duration-300 ${
                 showEpisodePanel ? 'translate-x-0' : 'translate-x-full'
               }`}
             >
@@ -1576,7 +1623,7 @@ function PlayPageClient() {
 
           {/* 侧拉面板 */}
           <div
-            className={`fixed top-0 right-0 h-full w-full mobile-landscape:w-1/2 md:w-96 bg-black/40 backdrop-blur-xl z-[110] transform transition-transform duration-300 ${
+            className={`fixed custom_source_panel top-0 right-0 h-full w-full mobile-landscape:w-1/2 md:w-96 bg-black/40 backdrop-blur-xl z-[110] transform transition-transform duration-300 ${
               showSourcePanel ? 'translate-x-0' : 'translate-x-full'
             }`}
           >
