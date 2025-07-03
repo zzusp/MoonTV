@@ -37,7 +37,7 @@ function SearchCircle({
       />
       <foreignObject x='0' y='0' width='44' height='44'>
         <div className='w-full h-full flex items-center justify-center'>
-          <Search className='h-7 w-7 text-white' strokeWidth={2} />
+          <Search className='h-5 w-5 text-white' strokeWidth={2} />
         </div>
       </foreignObject>
     </svg>
