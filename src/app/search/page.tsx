@@ -3,7 +3,7 @@
 
 import { Search, X } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 
 import {
   addSearchHistory,
@@ -27,7 +27,6 @@ function SearchPageClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // 视图模式：聚合(agg) 或 全部(all)，默认值由环境变量 NEXT_PUBLIC_AGGREGATE_SEARCH_RESULT 决定
   const [viewMode, setViewMode] = useState<'agg' | 'all'>(
@@ -52,7 +51,7 @@ function SearchPageClient() {
 
   useEffect(() => {
     // 无搜索参数时聚焦搜索框
-    !searchParams.get('q') && searchInputRef.current?.focus();
+    !searchParams.get('q') && document.getElementById('searchInput')?.focus();
     getSearchHistory().then(setSearchHistory);
   }, []);
 
@@ -116,7 +115,7 @@ function SearchPageClient() {
             <div className='relative'>
               <Search className='absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500' />
               <input
-                ref={searchInputRef}
+                id='searchInput'
                 type='text'
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
