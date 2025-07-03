@@ -58,7 +58,7 @@ const DemoCard = ({ id, title, poster, rate, type }: DemoCardProps) => {
 
   return (
     <div
-      className='group relative w-full rounded-lg bg-transparen flex flex-col cursor-pointer transition-all duration-300 ease-in-out'
+      className='group relative w-full rounded-lg bg-transparent flex flex-col cursor-pointer transition-all duration-300 ease-in-out'
       onClick={handleClick}
     >
       {/* 海报图片区域 */}
