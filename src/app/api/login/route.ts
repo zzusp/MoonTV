@@ -44,6 +44,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '密码不能为空' }, { status: 400 });
     }
 
+    // 可能是管理员，直接读环境变量
+    if (
+      username === process.env.USERNAME &&
+      password === process.env.PASSWORD
+    ) {
+      return NextResponse.json({ ok: true });
+    }
+
     // 校验用户密码
     try {
       const pass = await db.verifyUser(username, password);
