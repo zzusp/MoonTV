@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import { NextRequest, NextResponse } from 'next/server';
 
+import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 
 export const runtime = 'edge';
@@ -20,8 +21,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const config = getConfig();
     // 校验是否开放注册
-    if (process.env.NEXT_PUBLIC_ENABLE_REGISTER !== 'true') {
+    if (!config.UserConfig.AllowRegister) {
       return NextResponse.json({ error: '当前未开放注册' }, { status: 400 });
     }
 
