@@ -134,7 +134,7 @@ const DemoCard = ({ id, title, poster, rate, type }: DemoCardProps) => {
     >
       {/* 海报图片区域 */}
       <div
-        className='relative w-full overflow-hidden rounded-md group-hover:scale-[1.02] transition-all duration-500 cubic-bezier(0.34, 1.56, 0.64, 1) safari-fix'
+        className='relative w-full overflow-hidden rounded-md transition-all duration-500 cubic-bezier(0.34, 1.56, 0.64, 1) safari-fix'
         style={{
           // 为 Safari 提供固定宽高比的后备方案
           paddingBottom: '150%', // 2:3 比例
@@ -150,7 +150,7 @@ const DemoCard = ({ id, title, poster, rate, type }: DemoCardProps) => {
           alt={title}
           fill
           ref={imgRef}
-          className={`object-cover transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1)
+          className={`object-cover transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1) group-hover:scale-[1.05]
                       ${
                         isLoaded
                           ? 'opacity-100 scale-100 blur-0'
@@ -209,7 +209,7 @@ const DemoCard = ({ id, title, poster, rate, type }: DemoCardProps) => {
       </div>
 
       {/* 信息层 - 暗色模式优化 */}
-      <span className='mt-2 px-1 block font-semibold truncate w-full text-center text-xs sm:text-sm transition-all duration-500 cubic-bezier(0.34, 1.56, 0.64, 1) group-hover:translate-y-[-2px] opacity-80 group-hover:opacity-100'>
+      <span className='mt-2 px-1 block font-semibold truncate w-full text-center text-xs sm:text-sm transition-all duration-500 cubic-bezier(0.34, 1.56, 0.64, 1) group-hover:translate-y-[-4px] opacity-80 group-hover:opacity-100'>
         <span className='text-gray-900 dark:text-gray-200 group-hover:text-green-600 dark:group-hover:text-green-400'>
           {title}
         </span>
