@@ -1497,7 +1497,7 @@ function PlayPageClient() {
             beforePlayButton: (
               <>
                 {showSkipButtons && (
-                  <SeekButton className='vds-button' seconds={10}>
+                  <SeekButton className='vds-button' seconds={-10}>
                     <SeekBackward10Icon className='vds-icon' />
                   </SeekButton>
                 )}
