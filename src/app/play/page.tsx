@@ -1441,8 +1441,8 @@ function PlayPageClient() {
             googleCastButton: null,
             settingsMenu: null,
             captionButton: null,
-            muteButton: null, // 隐藏静音按钮
-            volumeSlider: null, // 隐藏音量条
+            // muteButton: null, // 隐藏静音按钮
+            // volumeSlider: null, // 隐藏音量条
             airPlayButton: null, // 隐藏默认 AirPlay 按钮
             beforeCurrentTime: (
               <>
