@@ -51,6 +51,8 @@ export async function POST(req: NextRequest) {
       password === process.env.PASSWORD
     ) {
       return NextResponse.json({ ok: true });
+    } else if (username === process.env.USERNAME) {
+      return NextResponse.json({ error: '用户名或密码错误' }, { status: 401 });
     }
 
     const config = getConfig();
