@@ -23,11 +23,25 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { ChevronDown, ChevronUp, Settings, Users, Video } from 'lucide-react';
 import { GripVertical } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import Swal from 'sweetalert2';
 
 import { AdminConfig, AdminConfigResult } from '@/lib/admin.types';
 
 import PageLayout from '@/components/PageLayout';
+
+// 统一弹窗方法（必须在首次使用前定义）
+const showError = (message: string) =>
+  Swal.fire({ icon: 'error', title: '错误', text: message });
+
+const showSuccess = (message: string) =>
+  Swal.fire({
+    icon: 'success',
+    title: '成功',
+    text: message,
+    timer: 2000,
+    showConfirmButton: false,
+  });
 
 // 新增站点配置类型
 interface SiteConfig {
@@ -87,7 +101,13 @@ const CollapsibleTab = ({
 };
 
 // 用户配置组件
-const UserConfig = ({ config }: { config: AdminConfig | null }) => {
+interface UserConfigProps {
+  config: AdminConfig | null;
+  role: 'owner' | 'admin' | null;
+  refreshConfig: () => Promise<void>;
+}
+
+const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
   const [userSettings, setUserSettings] = useState({
     enableRegistration: false,
   });
@@ -97,6 +117,10 @@ const UserConfig = ({ config }: { config: AdminConfig | null }) => {
     password: '',
   });
 
+  // 当前登录用户名
+  const currentUsername =
+    typeof window !== 'undefined' ? localStorage.getItem('username') : null;
+
   useEffect(() => {
     if (config?.UserConfig) {
       setUserSettings({
@@ -105,31 +129,107 @@ const UserConfig = ({ config }: { config: AdminConfig | null }) => {
     }
   }, [config]);
 
-  const handleBanUser = (username: string) => {
-    // 这里应该调用API来封禁用户
-    console.log('封禁用户:', username);
+  // 切换允许注册设置
+  const toggleAllowRegister = async (value: boolean) => {
+    const username =
+      typeof window !== 'undefined' ? localStorage.getItem('username') : null;
+    const password =
+      typeof window !== 'undefined' ? localStorage.getItem('password') : null;
+    if (!username || !password) {
+      showError('无法获取当前用户信息，请重新登录');
+      return;
+    }
+
+    try {
+      // 先更新本地 UI
+      setUserSettings((prev) => ({ ...prev, enableRegistration: value }));
+
+      const res = await fetch('/api/admin/user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username,
+          password,
+          action: 'setAllowRegister',
+          allowRegister: value,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `操作失败: ${res.status}`);
+      }
+
+      await refreshConfig();
+    } catch (err) {
+      showError(err instanceof Error ? err.message : '操作失败');
+      // revert toggle UI
+      setUserSettings((prev) => ({ ...prev, enableRegistration: !value }));
+    }
   };
 
-  const handleUnbanUser = (username: string) => {
-    // 这里应该调用API来解封用户
-    console.log('解封用户:', username);
+  const handleBanUser = async (uname: string) => {
+    await handleUserAction('ban', uname);
   };
 
-  const handleSetAdmin = (username: string) => {
-    // 这里应该调用API来设为管理员
-    console.log('设为管理员:', username);
+  const handleUnbanUser = async (uname: string) => {
+    await handleUserAction('unban', uname);
   };
 
-  const handleRemoveAdmin = (username: string) => {
-    // 这里应该调用API来取消管理员
-    console.log('取消管理员:', username);
+  const handleSetAdmin = async (uname: string) => {
+    await handleUserAction('setAdmin', uname);
   };
 
-  const handleAddUser = () => {
-    // 这里应该调用API来添加用户，默认角色为 user
-    console.log('添加用户:', { ...newUser, role: 'user' });
+  const handleRemoveAdmin = async (uname: string) => {
+    await handleUserAction('cancelAdmin', uname);
+  };
+
+  const handleAddUser = async () => {
+    if (!newUser.username || !newUser.password) return;
+    await handleUserAction('add', newUser.username, newUser.password);
     setNewUser({ username: '', password: '' });
     setShowAddUserForm(false);
+  };
+
+  // 通用请求函数
+  const handleUserAction = async (
+    action: 'add' | 'ban' | 'unban' | 'setAdmin' | 'cancelAdmin',
+    targetUsername: string,
+    targetPassword?: string
+  ) => {
+    const username =
+      typeof window !== 'undefined' ? localStorage.getItem('username') : null;
+    const password =
+      typeof window !== 'undefined' ? localStorage.getItem('password') : null;
+
+    if (!username || !password) {
+      showError('无法获取当前用户信息，请重新登录');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/admin/user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username,
+          password,
+          targetUsername,
+          ...(targetPassword ? { targetPassword } : {}),
+          action,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `操作失败: ${res.status}`);
+      }
+
+      // 成功后刷新配置（无需整页刷新）
+      await refreshConfig();
+    } catch (err) {
+      showError(err instanceof Error ? err.message : '操作失败');
+    }
   };
 
   if (!config) {
@@ -168,10 +268,7 @@ const UserConfig = ({ config }: { config: AdminConfig | null }) => {
           </label>
           <button
             onClick={() =>
-              setUserSettings((prev) => ({
-                ...prev,
-                enableRegistration: !prev.enableRegistration,
-              }))
+              toggleAllowRegister(!userSettings.enableRegistration)
             }
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
               userSettings.enableRegistration
@@ -268,79 +365,109 @@ const UserConfig = ({ config }: { config: AdminConfig | null }) => {
                 </th>
               </tr>
             </thead>
-            <tbody className='divide-y divide-gray-200 dark:divide-gray-700'>
-              {config.UserConfig.Users.map((user) => (
-                <tr
-                  key={user.username}
-                  className='hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors'
-                >
-                  <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100'>
-                    {user.username}
-                  </td>
-                  <td className='px-6 py-4 whitespace-nowrap'>
-                    <span
-                      className={`px-2 py-1 text-xs rounded-full ${
-                        user.role === 'owner'
-                          ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300'
-                          : user.role === 'admin'
-                          ? 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                      }`}
-                    >
-                      {user.role === 'owner'
-                        ? '站长'
-                        : user.role === 'admin'
-                        ? '管理员'
-                        : '普通用户'}
-                    </span>
-                  </td>
-                  <td className='px-6 py-4 whitespace-nowrap'>
-                    <span
-                      className={`px-2 py-1 text-xs rounded-full ${
-                        !user.banned
-                          ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'
-                          : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300'
-                      }`}
-                    >
-                      {!user.banned ? '正常' : '已封禁'}
-                    </span>
-                  </td>
-                  <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2'>
-                    {user.role === 'user' ? (
-                      <button
-                        onClick={() => handleSetAdmin(user.username)}
-                        className='inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 hover:bg-purple-200 dark:bg-purple-900/40 dark:hover:bg-purple-900/60 dark:text-purple-200 transition-colors'
+            {/* 按规则排序用户：自己 -> 站长(若非自己) -> 管理员 -> 其他 */}
+            {(() => {
+              const sortedUsers = [...config.UserConfig.Users].sort((a, b) => {
+                type UserInfo = (typeof config.UserConfig.Users)[number];
+                const priority = (u: UserInfo) => {
+                  if (u.username === currentUsername) return 0;
+                  if (u.role === 'owner') return 1;
+                  if (u.role === 'admin') return 2;
+                  return 3;
+                };
+                return priority(a) - priority(b);
+              });
+              return (
+                <tbody className='divide-y divide-gray-200 dark:divide-gray-700'>
+                  {sortedUsers.map((user) => {
+                    const canOperate =
+                      user.username !== currentUsername &&
+                      (role === 'owner' ||
+                        (role === 'admin' && user.role === 'user'));
+                    return (
+                      <tr
+                        key={user.username}
+                        className='hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors'
                       >
-                        设为管理
-                      </button>
-                    ) : user.role === 'admin' ? (
-                      <button
-                        onClick={() => handleRemoveAdmin(user.username)}
-                        className='inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-700/40 dark:hover:bg-gray-700/60 dark:text-gray-200 transition-colors'
-                      >
-                        取消管理
-                      </button>
-                    ) : null}
-                    {user.role !== 'owner' &&
-                      (!user.banned ? (
-                        <button
-                          onClick={() => handleBanUser(user.username)}
-                          className='inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900/60 dark:text-red-300 transition-colors'
-                        >
-                          封禁
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleUnbanUser(user.username)}
-                          className='inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/40 dark:hover:bg-green-900/60 dark:text-green-300 transition-colors'
-                        >
-                          解封
-                        </button>
-                      ))}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+                        <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100'>
+                          {user.username}
+                        </td>
+                        <td className='px-6 py-4 whitespace-nowrap'>
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full ${
+                              user.role === 'owner'
+                                ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300'
+                                : user.role === 'admin'
+                                ? 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                            }`}
+                          >
+                            {user.role === 'owner'
+                              ? '站长'
+                              : user.role === 'admin'
+                              ? '管理员'
+                              : '普通用户'}
+                          </span>
+                        </td>
+                        <td className='px-6 py-4 whitespace-nowrap'>
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full ${
+                              !user.banned
+                                ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'
+                                : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300'
+                            }`}
+                          >
+                            {!user.banned ? '正常' : '已封禁'}
+                          </span>
+                        </td>
+                        <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2'>
+                          {canOperate && (
+                            <>
+                              {user.role === 'user' && (
+                                <button
+                                  onClick={() => handleSetAdmin(user.username)}
+                                  className='inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 hover:bg-purple-200 dark:bg-purple-900/40 dark:hover:bg-purple-900/60 dark:text-purple-200 transition-colors'
+                                >
+                                  设为管理
+                                </button>
+                              )}
+                              {user.role === 'admin' && (
+                                <button
+                                  onClick={() =>
+                                    handleRemoveAdmin(user.username)
+                                  }
+                                  className='inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-700/40 dark:hover:bg-gray-700/60 dark:text-gray-200 transition-colors'
+                                >
+                                  取消管理
+                                </button>
+                              )}
+                              {user.role !== 'owner' &&
+                                (!user.banned ? (
+                                  <button
+                                    onClick={() => handleBanUser(user.username)}
+                                    className='inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900/60 dark:text-red-300 transition-colors'
+                                  >
+                                    封禁
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() =>
+                                      handleUnbanUser(user.username)
+                                    }
+                                    className='inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/40 dark:hover:bg-green-900/60 dark:text-green-300 transition-colors'
+                                  >
+                                    解封
+                                  </button>
+                                ))}
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              );
+            })()}
           </table>
         </div>
       </div>
@@ -349,7 +476,13 @@ const UserConfig = ({ config }: { config: AdminConfig | null }) => {
 };
 
 // 视频源配置组件
-const VideoSourceConfig = ({ config }: { config: AdminConfig | null }) => {
+const VideoSourceConfig = ({
+  config,
+  refreshConfig,
+}: {
+  config: AdminConfig | null;
+  refreshConfig: () => Promise<void>;
+}) => {
   const [sources, setSources] = useState<DataSource[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [orderChanged, setOrderChanged] = useState(false);
@@ -381,34 +514,81 @@ const VideoSourceConfig = ({ config }: { config: AdminConfig | null }) => {
   useEffect(() => {
     if (config?.SourceConfig) {
       setSources(config.SourceConfig);
+      // 进入时重置 orderChanged
+      setOrderChanged(false);
     }
   }, [config]);
 
+  // 通用 API 请求
+  const callSourceApi = async (body: Record<string, any>) => {
+    const username =
+      typeof window !== 'undefined' ? localStorage.getItem('username') : null;
+    const password =
+      typeof window !== 'undefined' ? localStorage.getItem('password') : null;
+
+    if (!username || !password) {
+      showError('无法获取当前用户信息，请重新登录');
+      throw new Error('no-credential');
+    }
+
+    try {
+      const resp = await fetch('/api/admin/source', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, ...body }),
+      });
+
+      if (!resp.ok) {
+        const data = await resp.json().catch(() => ({}));
+        throw new Error(data.error || `操作失败: ${resp.status}`);
+      }
+
+      // 成功后刷新配置
+      await refreshConfig();
+    } catch (err) {
+      showError(err instanceof Error ? err.message : '操作失败');
+      throw err; // 向上抛出方便调用处判断
+    }
+  };
+
   const handleToggleEnable = (key: string) => {
-    setSources((prev) =>
-      prev.map((source) =>
-        source.key === key ? { ...source, disabled: !source.disabled } : source
-      )
-    );
+    const target = sources.find((s) => s.key === key);
+    if (!target) return;
+    const action = target.disabled ? 'enable' : 'disable';
+    callSourceApi({ action, key }).catch(() => {
+      console.error('操作失败', action, key);
+    });
   };
 
   const handleDelete = (key: string) => {
-    setSources((prev) => prev.filter((source) => source.key !== key));
+    callSourceApi({ action: 'delete', key }).catch(() => {
+      console.error('操作失败', 'delete', key);
+    });
   };
 
   const handleAddSource = () => {
     if (!newSource.name || !newSource.key || !newSource.api) return;
-    setSources((prev) => [...prev, newSource]);
-    setNewSource({
-      name: '',
-      key: '',
-      api: '',
-      detail: '',
-      disabled: false,
-      from: 'custom',
-    });
-    setShowAddForm(false);
-    setOrderChanged(true);
+    callSourceApi({
+      action: 'add',
+      key: newSource.key,
+      name: newSource.name,
+      api: newSource.api,
+      detail: newSource.detail,
+    })
+      .then(() => {
+        setNewSource({
+          name: '',
+          key: '',
+          api: '',
+          detail: '',
+          disabled: false,
+          from: 'custom',
+        });
+        setShowAddForm(false);
+      })
+      .catch(() => {
+        console.error('操作失败', 'add', newSource);
+      });
   };
 
   const handleDragEnd = (event: any) => {
@@ -421,9 +601,14 @@ const VideoSourceConfig = ({ config }: { config: AdminConfig | null }) => {
   };
 
   const handleSaveOrder = () => {
-    console.log('保存排序:', sources);
-    // TODO: 调用 API 保存排序
-    setOrderChanged(false);
+    const order = sources.map((s) => s.key);
+    callSourceApi({ action: 'sort', order })
+      .then(() => {
+        setOrderChanged(false);
+      })
+      .catch(() => {
+        console.error('操作失败', 'sort', order);
+      });
   };
 
   // 可拖拽行封装 (dnd-kit)
@@ -513,16 +698,16 @@ const VideoSourceConfig = ({ config }: { config: AdminConfig | null }) => {
 
   return (
     <div className='space-y-6'>
-      {/* 添加数据源表单 */}
+      {/* 添加视频源表单 */}
       <div className='flex items-center justify-between'>
         <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-          数据源列表
+          视频源列表
         </h4>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
           className='px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition-colors'
         >
-          {showAddForm ? '取消' : '添加数据源'}
+          {showAddForm ? '取消' : '添加视频源'}
         </button>
       </div>
 
@@ -578,7 +763,7 @@ const VideoSourceConfig = ({ config }: { config: AdminConfig | null }) => {
         </div>
       )}
 
-      {/* 数据源表格 */}
+      {/* 视频源表格 */}
       <div className='border border-gray-200 dark:border-gray-700 rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto'>
         <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
           <thead className='bg-gray-50 dark:bg-gray-900'>
@@ -649,12 +834,51 @@ const SiteConfigComponent = ({ config }: { config: AdminConfig | null }) => {
     SiteInterfaceCacheTime: 7200,
     SearchResultDefaultAggregate: false,
   });
+  // 保存状态
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (config?.SiteConfig) {
       setSiteSettings(config.SiteConfig);
     }
   }, [config]);
+
+  // 保存站点配置
+  const handleSave = async () => {
+    const username =
+      typeof window !== 'undefined' ? localStorage.getItem('username') : null;
+    if (!username) {
+      showError('无法获取用户名，请重新登录');
+      return;
+    }
+
+    const password =
+      typeof window !== 'undefined' ? localStorage.getItem('password') : null;
+    if (!password) {
+      showError('无法获取密码，请重新登录');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const resp = await fetch('/api/admin/site', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, ...siteSettings }),
+      });
+
+      if (!resp.ok) {
+        const data = await resp.json().catch(() => ({}));
+        throw new Error(data.error || `保存失败: ${resp.status}`);
+      }
+
+      showSuccess('保存成功, 请刷新页面');
+    } catch (err) {
+      showError(err instanceof Error ? err.message : '保存失败');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (!config) {
     return (
@@ -767,8 +991,14 @@ const SiteConfigComponent = ({ config }: { config: AdminConfig | null }) => {
 
       {/* 操作按钮 */}
       <div className='flex justify-end'>
-        <button className='px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors'>
-          保存
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className={`px-4 py-2 ${
+            saving ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'
+          } text-white rounded-lg transition-colors`}
+        >
+          {saving ? '保存中…' : '保存'}
         </button>
       </div>
     </div>
@@ -779,6 +1009,7 @@ export default function AdminPage() {
   const [config, setConfig] = useState<AdminConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [role, setRole] = useState<'owner' | 'admin' | null>(null);
   const [expandedTabs, setExpandedTabs] = useState<{ [key: string]: boolean }>({
     userConfig: false,
     videoSource: false,
@@ -786,27 +1017,43 @@ export default function AdminPage() {
   });
 
   // 获取管理员配置
-  useEffect(() => {
-    const fetchConfig = async () => {
-      try {
+  // showLoading 用于控制是否在请求期间显示整体加载骨架。
+  const fetchConfig = useCallback(async (showLoading = false) => {
+    try {
+      if (showLoading) {
         setLoading(true);
-        const response = await fetch('/api/admin/config');
+      }
 
-        if (!response.ok) {
-          throw new Error(`获取配置失败: ${response.status}`);
-        }
+      const username = localStorage.getItem('username');
+      const response = await fetch(
+        `/api/admin/config${
+          username ? `?username=${encodeURIComponent(username)}` : ''
+        }`
+      );
 
-        const data = (await response.json()) as AdminConfigResult;
-        setConfig(data.Config);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : '获取配置失败');
-      } finally {
+      if (!response.ok) {
+        const data = (await response.json()) as any;
+        throw new Error(`获取配置失败: ${data.error}`);
+      }
+
+      const data = (await response.json()) as AdminConfigResult;
+      setConfig(data.Config);
+      setRole(data.Role);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '获取配置失败';
+      showError(msg);
+      setError(msg);
+    } finally {
+      if (showLoading) {
         setLoading(false);
       }
-    };
-
-    fetchConfig();
+    }
   }, []);
+
+  useEffect(() => {
+    // 首次加载时显示骨架
+    fetchConfig(true);
+  }, [fetchConfig]);
 
   // 切换标签展开状态
   const toggleTab = (tabKey: string) => {
@@ -814,6 +1061,48 @@ export default function AdminPage() {
       ...prev,
       [tabKey]: !prev[tabKey],
     }));
+  };
+
+  // 新增: 重置配置处理函数
+  const handleResetConfig = async () => {
+    const username = localStorage.getItem('username');
+    if (!username) {
+      showError('无法获取用户名，请重新登录');
+      return;
+    }
+    const { isConfirmed } = await Swal.fire({
+      title: '确认重置配置',
+      text: '此操作将重置用户封禁和管理员设置、自定义视频源，站点配置将重置为默认值，是否继续？',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+    });
+    if (!isConfirmed) return;
+
+    const password = localStorage.getItem('password');
+    if (!password) {
+      showError('无法获取密码，请重新登录');
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/api/admin/reset${
+          username
+            ? `?username=${encodeURIComponent(
+                username
+              )}&password=${encodeURIComponent(password)}`
+            : ''
+        }`
+      );
+      if (!response.ok) {
+        throw new Error(`重置失败: ${response.status}`);
+      }
+      showSuccess('重置成功，请刷新页面！');
+    } catch (err) {
+      showError(err instanceof Error ? err.message : '重置失败');
+    }
   };
 
   if (loading) {
@@ -839,29 +1128,28 @@ export default function AdminPage() {
   }
 
   if (error) {
-    return (
-      <PageLayout activePath='/admin'>
-        <div className='px-2 sm:px-10 py-4 sm:py-8'>
-          <div className='max-w-[95%] mx-auto'>
-            <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100 mb-8'>
-              管理员设置
-            </h1>
-            <div className='p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg'>
-              <p className='text-red-700 dark:text-red-300'>{error}</p>
-            </div>
-          </div>
-        </div>
-      </PageLayout>
-    );
+    // 错误已通过 SweetAlert2 展示，此处直接返回空
+    return null;
   }
 
   return (
     <PageLayout activePath='/admin'>
       <div className='px-2 sm:px-10 py-4 sm:py-8'>
         <div className='max-w-[95%] mx-auto'>
-          <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100 mb-8'>
-            管理员设置
-          </h1>
+          {/* 标题 + 重置配置按钮 */}
+          <div className='flex items-center gap-2 mb-8'>
+            <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
+              管理员设置
+            </h1>
+            {config && role === 'owner' && (
+              <button
+                onClick={handleResetConfig}
+                className='px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded-md transition-colors'
+              >
+                重置配置
+              </button>
+            )}
+          </div>
 
           {/* 站点配置标签 */}
           <CollapsibleTab
@@ -888,7 +1176,11 @@ export default function AdminPage() {
               isExpanded={expandedTabs.userConfig}
               onToggle={() => toggleTab('userConfig')}
             >
-              <UserConfig config={config} />
+              <UserConfig
+                config={config}
+                role={role}
+                refreshConfig={fetchConfig}
+              />
             </CollapsibleTab>
 
             {/* 视频源配置标签 */}
@@ -900,7 +1192,7 @@ export default function AdminPage() {
               isExpanded={expandedTabs.videoSource}
               onToggle={() => toggleTab('videoSource')}
             >
-              <VideoSourceConfig config={config} />
+              <VideoSourceConfig config={config} refreshConfig={fetchConfig} />
             </CollapsibleTab>
           </div>
         </div>

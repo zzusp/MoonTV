@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import '../lib/cron';
 
 import './globals.css';
+import 'sweetalert2/dist/sweetalert2.min.css';
 
 import { getConfig } from '@/lib/config';
 
