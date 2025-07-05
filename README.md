@@ -23,7 +23,7 @@
 - 🔍 **多源聚合搜索**：内置数十个免费资源站点，一次搜索立刻返回全源结果。
 - 📄 **丰富详情页**：支持剧集列表、演员、年份、简介等完整信息展示。
 - ▶️ **流畅在线播放**：集成 HLS.js & VidStack。
-- ❤️ **收藏 + 继续观看**：LocalStorage 存储，后续扩展 DB 存储。
+- ❤️ **收藏 + 继续观看**：Docker 部署支持 Redis 存储，多端同步进度。
 - 📱 **PWA**：离线缓存、安装到桌面/主屏，移动端原生体验。
 - 🌗 **响应式布局**：桌面侧边栏 + 移动底部导航，自适应各种屏幕尺寸。
 - 🚀 **极简部署**：一条 Docker 命令即可将完整服务跑起来，或免费部署到 Vercel。
@@ -38,9 +38,10 @@
 
 - [技术栈](#技术栈)
 - [部署](#部署)
-- [Compose 最佳实践](#Compose最佳实践)
+- [Docker Compose 最佳实践](#Docker Compose 最佳实践)
 - [环境变量](#环境变量)
 - [配置说明](#配置说明)
+- [管理员配置](#管理员配置)
 - [Roadmap](#roadmap)
 - [安全与隐私提醒](#安全与隐私提醒)
 - [License](#license)
@@ -134,9 +135,11 @@ services:
     ports:
       - '3000:3000'
     environment:
+      - USERNAME=admin
+      - PASSWORD=admin_password
       - NEXT_PUBLIC_STORAGE_TYPE=redis
       - REDIS_URL=redis://moontv-redis:6379
-      - NEXT_PUBLIC_ENABLE_REGISTER=true # 首次部署请设置该变量，注册初始账户后可关闭
+      - NEXT_PUBLIC_ENABLE_REGISTER=true
     networks:
       - moontv-network
     depends_on:
@@ -206,6 +209,16 @@ networks:
 MoonTV 支持标准的苹果 CMS V10 API 格式。
 
 修改后 **无需重新构建**，服务会在启动时读取一次。
+
+## 管理员配置
+
+**该特性目前仅支持通过 Docker Redis 的部署方式使用**
+
+支持在运行时动态变更服务配置
+
+设置环境变量 USERNAME 和 PASSWORD 即为站长用户，站长可设置用户为管理员
+
+站长或管理员访问 `/admin` 即可进行管理员配置
 
 ## Roadmap
 
