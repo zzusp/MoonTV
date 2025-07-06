@@ -84,7 +84,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
 
   return (
     <div
-      className={`md:ml-6 px-6 py-3 h-full rounded-lg bg-black/10 dark:bg-white/5 flex flex-col ${className}`.trim()}
+      className={`md:ml-6 px-6 py-3 h-full rounded-2xl bg-black/10 dark:bg-white/5 flex flex-col ${className}`.trim()}
     >
       {/* 分类标签 */}
       <div className='flex items-center gap-4 mb-4 border-b border-gray-300 dark:border-gray-700 -mx-6 px-6 flex-shrink-0'>
@@ -141,7 +141,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
       </div>
 
       {/* 集数网格 */}
-      <div className='grid grid-cols-[repeat(auto-fill,minmax(48px,1fr))] gap-3 overflow-y-auto h-full'>
+      <div className='grid grid-cols-[repeat(auto-fill,minmax(40px,1fr))] auto-rows-[40px] gap-x-3 gap-y-3 overflow-y-auto h-full'>
         {(() => {
           const len = currentEnd - currentStart + 1;
           const episodes = Array.from({ length: len }, (_, i) =>
