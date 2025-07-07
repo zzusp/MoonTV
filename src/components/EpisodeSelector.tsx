@@ -153,7 +153,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
           return (
             <button
               key={episodeNumber}
-              onClick={() => handleEpisodeClick(episodeNumber)}
+              onClick={() => handleEpisodeClick(episodeNumber - 1)}
               className={`h-10 flex items-center justify-center text-sm font-medium rounded-md transition-all duration-200 
                 ${
                   isActive
