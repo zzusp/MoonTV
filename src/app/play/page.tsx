@@ -55,8 +55,12 @@ function PlayPageClient() {
   });
 
   // 视频基本信息
+  const [videoType, setVideoType] = useState(searchParams.get('type') || '');
+  const [videoDoubanId, setVideoDoubanId] = useState(
+    searchParams.get('douban_id') || ''
+  );
   const [videoTitle, setVideoTitle] = useState(searchParams.get('title') || '');
-  const videoYear = searchParams.get('year') || '';
+  const [videoYear, setVideoYear] = useState(searchParams.get('year') || '');
   const [videoCover, setVideoCover] = useState('');
   // 当前源和ID
   const [currentSource, setCurrentSource] = useState(
@@ -228,48 +232,77 @@ function PlayPageClient() {
 
   // 获取视频详情
   useEffect(() => {
-    if (!currentSource || !currentId) {
-      setError('缺少必要参数');
-      setLoading(false);
-      return;
-    }
-
-    const fetchDetail = async () => {
-      try {
-        const detailData = await fetchVideoDetail({
-          source: currentSource,
-          id: currentId,
-          fallbackTitle: videoTitle.trim(),
-          fallbackYear: videoYear,
-        });
-
-        // 更新状态保存详情
-        setVideoTitle(detailData.title || videoTitle);
-        setVideoCover(detailData.poster);
-        setDetail(detailData);
-
-        // 确保集数索引在有效范围内
-        if (currentEpisodeIndex >= detailData.episodes.length) {
-          console.log('currentEpisodeIndex', currentEpisodeIndex);
-          setCurrentEpisodeIndex(0);
-        }
-
-        // 清理URL参数（移除index参数）
-        if (searchParams.has('index')) {
-          const newUrl = new URL(window.location.href);
-          newUrl.searchParams.delete('index');
-          newUrl.searchParams.delete('position');
-          window.history.replaceState({}, '', newUrl.toString());
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : '获取视频详情失败');
-      } finally {
+    const fetchDetailAsync = async () => {
+      if (!currentSource && !currentId && !videoTitle) {
+        setError('缺少必要参数');
         setLoading(false);
+        return;
       }
+
+      if (!currentSource && !currentId) {
+        // 只包含视频标题，搜索视频
+        setLoading(true);
+        const searchResults = await handleSearchSources(videoTitle);
+        console.log('searchResults', searchResults);
+        if (searchResults.length == 0) {
+          setError('未找到匹配结果');
+          setLoading(false);
+          return;
+        }
+        setCurrentSource(searchResults[0].source);
+        setCurrentId(searchResults[0].id);
+        setVideoYear(searchResults[0].year);
+        setVideoType('');
+        setVideoDoubanId(''); // 清空豆瓣ID
+        // 替换URL参数
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.set('source', searchResults[0].source);
+        newUrl.searchParams.set('id', searchResults[0].id);
+        newUrl.searchParams.set('year', searchResults[0].year);
+        newUrl.searchParams.delete('douban_id');
+        window.history.replaceState({}, '', newUrl.toString());
+        return;
+      }
+
+      const fetchDetail = async () => {
+        try {
+          const detailData = await fetchVideoDetail({
+            source: currentSource,
+            id: currentId,
+            fallbackTitle: videoTitle.trim(),
+            fallbackYear: videoYear,
+          });
+
+          // 更新状态保存详情
+          setVideoTitle(detailData.title || videoTitle);
+          setVideoCover(detailData.poster);
+          setDetail(detailData);
+
+          // 确保集数索引在有效范围内
+          if (currentEpisodeIndex >= detailData.episodes.length) {
+            console.log('currentEpisodeIndex', currentEpisodeIndex);
+            setCurrentEpisodeIndex(0);
+          }
+
+          // 清理URL参数（移除index参数）
+          if (searchParams.has('index')) {
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.delete('index');
+            newUrl.searchParams.delete('position');
+            window.history.replaceState({}, '', newUrl.toString());
+          }
+        } catch (err) {
+          console.error('获取视频详情失败:', err);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchDetail();
     };
 
-    fetchDetail();
-  }, [currentSource]);
+    fetchDetailAsync();
+  }, [currentSource, currentId]);
 
   // 播放记录处理
   useEffect(() => {
@@ -332,10 +365,12 @@ function PlayPageClient() {
   // 换源搜索与切换
   // ---------------------------------------------------------------------------
   // 处理换源搜索
-  const handleSearchSources = async (query: string) => {
+  const handleSearchSources = async (
+    query: string
+  ): Promise<SearchResult[]> => {
     if (!query.trim()) {
       setAvailableSources([]);
-      return;
+      return [];
     }
 
     setSourceSearchLoading(true);
@@ -370,27 +405,37 @@ function PlayPageClient() {
         if (results.length === 0) return;
 
         // 只选择和当前视频标题完全匹配的结果，如果有年份，还需要年份完全匹配
-        const exactMatch = results.find(
+        const exactMatchs = results.filter(
           (result) =>
             result.title.toLowerCase() === videoTitle.toLowerCase() &&
             (videoYear
               ? result.year.toLowerCase() === videoYear.toLowerCase()
               : true) &&
-            detail?.episodes.length &&
-            ((detail?.episodes.length === 1 && result.episodes.length === 1) ||
-              (detail?.episodes.length > 1 && result.episodes.length > 1))
+            (detail
+              ? (detail.episodes.length === 1 &&
+                  result.episodes.length === 1) ||
+                (detail.episodes.length > 1 && result.episodes.length > 1)
+              : true) &&
+            (videoDoubanId && result.douban_id
+              ? result.douban_id.toString() === videoDoubanId
+              : true) &&
+            (videoType
+              ? (videoType === 'movie' && result.episodes.length === 1) ||
+                (videoType === 'tv' && result.episodes.length > 1)
+              : true)
         );
-
-        if (exactMatch) {
-          processedResults.push(exactMatch);
-          return;
+        if (exactMatchs.length > 0) {
+          processedResults.push(...exactMatchs);
         }
       });
+      console.log('processedResults', processedResults);
 
       setAvailableSources(processedResults);
+      return processedResults;
     } catch (err) {
       setSourceSearchError(err instanceof Error ? err.message : '搜索失败');
       setAvailableSources([]);
+      return [];
     } finally {
       setSourceSearchLoading(false);
     }
@@ -1142,10 +1187,16 @@ function PlayPageClient() {
               {error}
             </p>
             <button
-              onClick={() => window.location.reload()}
+              onClick={() =>
+                videoTitle
+                  ? (window.location.href = `/search?q=${encodeURIComponent(
+                      videoTitle
+                    )}`)
+                  : window.history.back()
+              }
               className='px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors'
             >
-              重试
+              {videoTitle ? '返回搜索' : '返回'}
             </button>
           </div>
         </div>
