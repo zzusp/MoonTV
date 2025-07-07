@@ -53,8 +53,9 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
   const pageCount = Math.ceil(totalEpisodes / episodesPerPage);
 
   // 主要的 tab 状态：'episodes' 或 'sources'
+  // 当只有一集时默认展示 "换源"，并隐藏 "选集" 标签
   const [activeTab, setActiveTab] = useState<'episodes' | 'sources'>(
-    'episodes'
+    totalEpisodes > 1 ? 'episodes' : 'sources'
   );
 
   // 当前分页索引（0 开始）
@@ -118,6 +119,20 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
     [onSourceChange]
   );
 
+  // 如果组件初始即显示 "换源"，自动触发搜索一次
+  useEffect(() => {
+    if (
+      activeTab === 'sources' &&
+      availableSources.length === 0 &&
+      videoTitle &&
+      onSearchSources
+    ) {
+      onSearchSources(videoTitle);
+    }
+    // 只在依赖变化时尝试，availableSources 长度变化可阻止重复搜索
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, availableSources.length, videoTitle]);
+
   const currentStart = currentPage * episodesPerPage + 1;
   const currentEnd = Math.min(
     currentStart + episodesPerPage - 1,
@@ -128,18 +143,20 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
     <div className='md:ml-2 px-4 py-0 h-full rounded-xl bg-black/10 dark:bg-white/5 flex flex-col border border-white/0 dark:border-white/30 overflow-hidden'>
       {/* 主要的 Tab 切换 - 无缝融入设计 */}
       <div className='flex mb-1 -mx-6 flex-shrink-0'>
-        <div
-          onClick={() => setActiveTab('episodes')}
-          className={`flex-1 py-3 px-6 text-center cursor-pointer transition-all duration-200 font-medium
-            ${
-              activeTab === 'episodes'
-                ? 'text-green-500 dark:text-green-400'
-                : 'text-gray-700 hover:text-green-600 bg-black/5 dark:bg-white/5 dark:text-gray-300 dark:hover:text-green-400 hover:bg-black/3 dark:hover:bg-white/3'
-            }
-          `.trim()}
-        >
-          选集
-        </div>
+        {totalEpisodes > 1 && (
+          <div
+            onClick={() => setActiveTab('episodes')}
+            className={`flex-1 py-3 px-6 text-center cursor-pointer transition-all duration-200 font-medium
+              ${
+                activeTab === 'episodes'
+                  ? 'text-green-500 dark:text-green-400'
+                  : 'text-gray-700 hover:text-green-600 bg-black/5 dark:bg-white/5 dark:text-gray-300 dark:hover:text-green-400 hover:bg-black/3 dark:hover:bg-white/3'
+              }
+            `.trim()}
+          >
+            选集
+          </div>
+        )}
         <div
           onClick={handleSourceTabClick}
           className={`flex-1 py-3 px-6 text-center cursor-pointer transition-all duration-200 font-medium
