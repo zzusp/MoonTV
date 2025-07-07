@@ -153,10 +153,6 @@ div[data-media-provider] video {
   object-fit: contain;
 }
 
-.art-notice {
-  display: none !important;
-}
-
 .art-poster {
   background-size: contain !important; /* 使图片完整展示 */
   background-position: center center !important; /* 居中显示 */

@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 
+import { useRouter } from 'next/navigation';
 import React, {
   useCallback,
   useEffect,
@@ -48,6 +49,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
   sourceSearchLoading = false,
   sourceSearchError = null,
 }) => {
+  const router = useRouter();
   const pageCount = Math.ceil(totalEpisodes / episodesPerPage);
 
   // 主要的 tab 状态：'episodes' 或 'sources'
@@ -123,7 +125,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
   );
 
   return (
-    <div className='md:ml-6 px-6 py-0 h-full rounded-2xl bg-black/10 dark:bg-white/5 flex flex-col border border-white/0 dark:border-white/30 overflow-hidden'>
+    <div className='md:ml-2 px-4 py-0 h-full rounded-xl bg-black/10 dark:bg-white/5 flex flex-col border border-white/0 dark:border-white/30 overflow-hidden'>
       {/* 主要的 Tab 切换 - 无缝融入设计 */}
       <div className='flex mb-1 -mx-6 flex-shrink-0'>
         <div
@@ -345,6 +347,20 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                       </div>
                     );
                   })}
+                <div className='flex-shrink-0 mt-auto pt-2 border-t border-gray-400 dark:border-gray-700'>
+                  <button
+                    onClick={() => {
+                      if (videoTitle) {
+                        router.push(
+                          `/search?q=${encodeURIComponent(videoTitle)}`
+                        );
+                      }
+                    }}
+                    className='w-full text-center text-xs text-gray-500 dark:text-gray-400 hover:text-green-500 dark:hover:text-green-400 transition-colors py-2'
+                  >
+                    影片匹配有误？点击去搜索
+                  </button>
+                </div>
               </div>
             )}
         </div>
