@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import {
+  deletePlayRecord,
   generateStorageKey,
   getAllPlayRecords,
   savePlayRecord,
@@ -14,9 +15,12 @@ import {
   type VideoDetail,
   fetchVideoDetail,
 } from '@/lib/fetchVideoDetail.client';
+import { SearchResult } from '@/lib/types';
 
 import EpisodeSelector from '@/components/EpisodeSelector';
 import PageLayout from '@/components/PageLayout';
+
+// 直接从 types.ts 导入 SearchResult 接口
 
 function PlayPageClient() {
   const searchParams = useSearchParams();
@@ -49,6 +53,13 @@ function PlayPageClient() {
 
   // 用于记录是否需要在播放器 ready 后跳转到指定进度
   const resumeTimeRef = useRef<number | null>(null);
+
+  // 换源相关状态
+  const [availableSources, setAvailableSources] = useState<SearchResult[]>([]);
+  const [sourceSearchLoading, setSourceSearchLoading] = useState(false);
+  const [sourceSearchError, setSourceSearchError] = useState<string | null>(
+    null
+  );
 
   const currentSourceRef = useRef(currentSource);
   const currentIdRef = useRef(currentId);
@@ -265,6 +276,140 @@ function PlayPageClient() {
 
     initFromHistory();
   }, []);
+
+  // 处理换源搜索
+  const handleSearchSources = async (query: string) => {
+    if (!query.trim()) {
+      setAvailableSources([]);
+      return;
+    }
+
+    setSourceSearchLoading(true);
+    setSourceSearchError(null);
+
+    try {
+      const response = await fetch(
+        `/api/search?q=${encodeURIComponent(query.trim())}`
+      );
+      if (!response.ok) {
+        throw new Error('搜索失败');
+      }
+      const data = await response.json();
+
+      // 处理搜索结果：每个数据源只展示一个，优先展示与title同名的结果
+      const processedResults: SearchResult[] = [];
+      const sourceMap = new Map<string, SearchResult[]>();
+
+      // 按数据源分组
+      data.results?.forEach((result: SearchResult) => {
+        if (!sourceMap.has(result.source)) {
+          sourceMap.set(result.source, []);
+        }
+        const list = sourceMap.get(result.source);
+        if (list) {
+          list.push(result);
+        }
+      });
+
+      // 为每个数据源选择最佳结果
+      sourceMap.forEach((results) => {
+        if (results.length === 0) return;
+
+        // 只选择和当前视频标题完全匹配的结果，如果有年份，还需要年份完全匹配
+        const exactMatch = results.find(
+          (result) =>
+            result.title.toLowerCase() === videoTitle.toLowerCase() &&
+            (videoYear
+              ? result.year.toLowerCase() === videoYear.toLowerCase()
+              : true) &&
+            detail?.episodes.length &&
+            ((detail?.episodes.length === 1 && result.episodes.length === 1) ||
+              (detail?.episodes.length > 1 && result.episodes.length > 1))
+        );
+
+        if (exactMatch) {
+          processedResults.push(exactMatch);
+          return;
+        }
+      });
+
+      // 直接使用 SearchResult 格式
+      setAvailableSources(processedResults);
+    } catch (err) {
+      setSourceSearchError(err instanceof Error ? err.message : '搜索失败');
+      setAvailableSources([]);
+    } finally {
+      setSourceSearchLoading(false);
+    }
+  };
+
+  // 处理换源
+  const handleSourceChange = async (
+    newSource: string,
+    newId: string,
+    newTitle: string
+  ) => {
+    try {
+      // 记录当前播放进度（仅在同一集数切换时恢复）
+      const currentPlayTime =
+        artPlayerRef.current?.video?.currentTime ||
+        artPlayerRef.current?.currentTime ||
+        0;
+      console.log('换源前当前播放时间:', currentPlayTime);
+
+      // 显示加载状态
+      setError(null);
+
+      // 清除前一个历史记录
+      if (currentSource && currentId) {
+        try {
+          await deletePlayRecord(currentSource, currentId);
+          console.log('已清除前一个播放记录');
+        } catch (err) {
+          console.error('清除播放记录失败:', err);
+        }
+      }
+
+      // 获取新源的详情
+      const newDetail = await fetchVideoDetail({
+        source: newSource,
+        id: newId,
+        fallbackTitle: newTitle.trim(),
+        fallbackYear: videoYear,
+      });
+
+      // 尝试跳转到当前正在播放的集数
+      let targetIndex = currentEpisodeIndex;
+
+      // 如果当前集数超出新源的范围，则跳转到第一集
+      if (!newDetail.episodes || targetIndex >= newDetail.episodes.length) {
+        targetIndex = 0;
+      }
+
+      // 如果仍然是同一集数且播放进度有效，则在播放器就绪后恢复到原始进度
+      if (targetIndex === currentEpisodeIndex && currentPlayTime > 1) {
+        resumeTimeRef.current = currentPlayTime;
+      } else {
+        // 否则从头开始播放，防止影响后续选集逻辑
+        resumeTimeRef.current = 0;
+      }
+
+      // 更新URL参数（不刷新页面）
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set('source', newSource);
+      newUrl.searchParams.set('id', newId);
+      window.history.replaceState({}, '', newUrl.toString());
+
+      setVideoTitle(newDetail.title || newTitle);
+      setVideoCover(newDetail.poster);
+      setCurrentSource(newSource);
+      setCurrentId(newId);
+      setDetail(newDetail);
+      setCurrentEpisodeIndex(targetIndex);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '换源失败');
+    }
+  };
 
   // 处理集数切换
   const handleEpisodeChange = (episodeNumber: number) => {
@@ -515,11 +660,15 @@ function PlayPageClient() {
       // 监听播放器事件
       artPlayerRef.current.on('ready', () => {
         setError(null);
+      });
 
+      // 监听视频可播放事件，这时恢复播放进度更可靠
+      artPlayerRef.current.on('video:canplay', () => {
         // 若存在需要恢复的播放进度，则跳转
         if (resumeTimeRef.current && resumeTimeRef.current > 0) {
           try {
             artPlayerRef.current.video.currentTime = resumeTimeRef.current;
+            console.log('成功恢复播放进度到:', resumeTimeRef.current);
           } catch (err) {
             console.warn('恢复播放进度失败:', err);
           }
@@ -652,29 +801,42 @@ function PlayPageClient() {
 
   return (
     <PageLayout activePath='/play'>
-      <div className='flex flex-col gap-6 py-4 px-10 md:px-24'>
+      <div className='flex flex-col gap-6 py-4 px-5 md:px-20'>
         {/* 第一行：影片标题 */}
         <div className='py-1'>
           <h1 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
             {videoTitle || '影片标题'}
+            {totalEpisodes > 1 && (
+              <span className='text-gray-500 dark:text-gray-400'>
+                {` > 第 ${currentEpisodeIndex + 1} 集`}
+              </span>
+            )}
           </h1>
         </div>
         {/* 第二行：播放器和选集 */}
         <div className='grid grid-cols-1 md:grid-cols-4 gap-4 md:h-[650px]'>
           {/* 播放器 */}
-          <div className='md:col-span-3 h-[400px] md:h-full'>
+          <div className='md:col-span-3 h-[300px] md:h-full'>
             <div
               id='artplayer-container'
-              className='bg-black w-full h-full rounded-2xl overflow-hidden border border-white/10'
+              className='bg-black w-full h-full rounded-2xl overflow-hidden border border-white/0 dark:border-white/30'
             ></div>
           </div>
 
-          {/* 选集 */}
-          <div className='md:col-span-1 h-full md:overflow-hidden'>
+          {/* 选集和换源 */}
+          <div className='md:col-span-1 h-[300px] md:h-full md:overflow-hidden'>
             <EpisodeSelector
               totalEpisodes={totalEpisodes}
               value={currentEpisodeIndex + 1}
               onChange={handleEpisodeChange}
+              onSourceChange={handleSourceChange}
+              currentSource={currentSource}
+              currentId={currentId}
+              videoTitle={videoTitle}
+              availableSources={availableSources}
+              onSearchSources={handleSearchSources}
+              sourceSearchLoading={sourceSearchLoading}
+              sourceSearchError={sourceSearchError}
             />
           </div>
         </div>
