@@ -74,6 +74,7 @@ function PlayPageClient() {
   const currentSourceRef = useRef(currentSource);
   const currentIdRef = useRef(currentId);
   const videoTitleRef = useRef(videoTitle);
+  const videoYearRef = useRef(videoYear);
   const detailRef = useRef<VideoDetail | null>(detail);
   const currentEpisodeIndexRef = useRef(currentEpisodeIndex);
 
@@ -84,7 +85,15 @@ function PlayPageClient() {
     detailRef.current = detail;
     currentEpisodeIndexRef.current = currentEpisodeIndex;
     videoTitleRef.current = videoTitle;
-  }, [currentSource, currentId, detail, currentEpisodeIndex, videoTitle]);
+    videoYearRef.current = videoYear;
+  }, [
+    currentSource,
+    currentId,
+    detail,
+    currentEpisodeIndex,
+    videoTitle,
+    videoYear,
+  ]);
 
   // 视频播放地址
   const [videoUrl, setVideoUrl] = useState('');
@@ -276,12 +285,12 @@ function PlayPageClient() {
           const detailData = await fetchVideoDetail({
             source: currentSource,
             id: currentId,
-            fallbackTitle: videoTitle.trim(),
-            fallbackYear: videoYear,
+            fallbackTitle: videoTitleRef.current.trim(),
+            fallbackYear: videoYearRef.current,
           });
 
           // 更新状态保存详情
-          setVideoTitle(detailData.title || videoTitle);
+          setVideoTitle(detailData.title || videoTitleRef.current);
           setVideoCover(detailData.poster);
           setDetail(detailData);
 
@@ -421,14 +430,16 @@ function PlayPageClient() {
         // 只选择和当前视频标题完全匹配的结果，如果有年份，还需要年份完全匹配
         const exactMatchs = results.filter(
           (result) =>
-            result.title.toLowerCase() === videoTitle.toLowerCase() &&
-            (videoYear
-              ? result.year.toLowerCase() === videoYear.toLowerCase()
+            result.title.toLowerCase() ===
+              videoTitleRef.current.toLowerCase() &&
+            (videoYearRef.current
+              ? result.year.toLowerCase() === videoYearRef.current.toLowerCase()
               : true) &&
-            (detail
-              ? (detail.episodes.length === 1 &&
+            (detailRef.current
+              ? (detailRef.current.episodes.length === 1 &&
                   result.episodes.length === 1) ||
-                (detail.episodes.length > 1 && result.episodes.length > 1)
+                (detailRef.current.episodes.length > 1 &&
+                  result.episodes.length > 1)
               : true)
         );
         if (exactMatchs.length > 0) {
@@ -462,9 +473,12 @@ function PlayPageClient() {
       setError(null);
 
       // 清除前一个历史记录
-      if (currentSource && currentId) {
+      if (currentSourceRef.current && currentIdRef.current) {
         try {
-          await deletePlayRecord(currentSource, currentId);
+          await deletePlayRecord(
+            currentSourceRef.current,
+            currentIdRef.current
+          );
           console.log('已清除前一个播放记录');
         } catch (err) {
           console.error('清除播放记录失败:', err);
@@ -476,7 +490,7 @@ function PlayPageClient() {
         source: newSource,
         id: newId,
         fallbackTitle: newTitle.trim(),
-        fallbackYear: videoYear,
+        fallbackYear: videoYearRef.current,
       });
 
       // 尝试跳转到当前正在播放的集数
