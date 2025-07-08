@@ -1273,11 +1273,6 @@ function PlayPageClient() {
               <p className='text-xl font-semibold text-gray-800 dark:text-gray-200 animate-pulse'>
                 {loadingMessage}
               </p>
-              <p className='text-sm text-gray-500 dark:text-gray-400'>
-                {loadingStage === 'searching' && '正在为您寻找可用播放源...'}
-                {loadingStage === 'fetching' && '正在解析视频信息和播放列表...'}
-                {loadingStage === 'ready' && '一切准备就绪，马上就能观看啦！'}
-              </p>
             </div>
           </div>
         </div>
