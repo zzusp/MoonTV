@@ -55,7 +55,6 @@ function PlayPageClient() {
   });
 
   // 视频基本信息
-  const [videoType, setVideoType] = useState(searchParams.get('type') || '');
   const [videoDoubanId, setVideoDoubanId] = useState(
     searchParams.get('douban_id') || ''
   );
@@ -256,7 +255,6 @@ function PlayPageClient() {
         setCurrentSource(searchResults[0].source);
         setCurrentId(searchResults[0].id);
         setVideoYear(searchResults[0].year);
-        setVideoType('');
         setVideoDoubanId(''); // 清空豆瓣ID
         // 替换URL参数
         const newUrl = new URL(window.location.href);
@@ -422,10 +420,6 @@ function PlayPageClient() {
               : true) &&
             (videoDoubanId && result.douban_id
               ? result.douban_id.toString() === videoDoubanId
-              : true) &&
-            (videoType
-              ? (videoType === 'movie' && result.episodes.length === 1) ||
-                (videoType === 'tv' && result.episodes.length > 1)
               : true)
         );
         if (exactMatchs.length > 0) {
