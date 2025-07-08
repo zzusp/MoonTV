@@ -13,7 +13,6 @@ import {
 } from '@/lib/db.client';
 import { SearchResult } from '@/lib/types';
 
-import AggregateCard from '@/components/AggregateCard';
 import PageLayout from '@/components/PageLayout';
 import VideoCard from '@/components/VideoCard';
 
@@ -186,7 +185,15 @@ function SearchPageClient() {
                   ? aggregatedResults.map(([mapKey, group]) => {
                       return (
                         <div key={`agg-${mapKey}`} className='w-full'>
-                          <AggregateCard items={group} year={group[0].year} />
+                          <VideoCard
+                            id={group[0].id}
+                            source={group[0].source}
+                            title={group[0].title}
+                            poster={group[0].poster}
+                            source_name={group[0].source_name}
+                            year={group[0].year}
+                            items={group}
+                          />
                         </div>
                       );
                     })
