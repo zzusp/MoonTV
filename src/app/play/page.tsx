@@ -668,7 +668,7 @@ function PlayPageClient() {
     }
 
     try {
-      await savePlayRecord(currentSource, currentId, {
+      await savePlayRecord(currentSourceRef.current, currentIdRef.current, {
         title: videoTitleRef.current,
         source_name: detailRef.current?.source_name || '',
         year: detailRef.current?.year || '',
