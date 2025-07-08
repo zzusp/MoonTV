@@ -5,7 +5,7 @@
 import Artplayer from 'artplayer';
 import Hls from 'hls.js';
 import { Heart } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState } from 'react';
 
 import {
@@ -33,6 +33,7 @@ declare global {
 }
 
 function PlayPageClient() {
+  const router = useRouter();
   const searchParams = useSearchParams();
 
   // -----------------------------------------------------------------------------
@@ -50,7 +51,7 @@ function PlayPageClient() {
   const [favorited, setFavorited] = useState(false);
 
   // 去广告开关（从 localStorage 继承，默认 true）
-  const [blockAdEnabled, _setBlockAdEnabled] = useState<boolean>(() => {
+  const [blockAdEnabled, setBlockAdEnabled] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       const v = localStorage.getItem('enable_blockad');
       if (v !== null) return v === 'true';
@@ -953,12 +954,22 @@ function PlayPageClient() {
             onClick() {
               const newVal = !blockAdEnabled;
               try {
-                saveCurrentPlayProgress();
                 localStorage.setItem('enable_blockad', String(newVal));
+                if (artPlayerRef.current) {
+                  resumeTimeRef.current = artPlayerRef.current.currentTime;
+                  if (
+                    artPlayerRef.current.video &&
+                    artPlayerRef.current.video.hls
+                  ) {
+                    artPlayerRef.current.video.hls.destroy();
+                  }
+                  artPlayerRef.current.destroy();
+                  artPlayerRef.current = null;
+                }
+                setBlockAdEnabled(newVal);
               } catch (_) {
                 // ignore
               }
-              window.location.reload();
               return newVal ? '当前开启' : '当前关闭';
             },
           },
@@ -1067,7 +1078,7 @@ function PlayPageClient() {
       console.error('创建播放器失败:', err);
       setError('播放器初始化失败');
     }
-  }, [Artplayer, Hls, videoUrl, loading]);
+  }, [Artplayer, Hls, videoUrl, loading, blockAdEnabled]);
 
   // ---------------------------------------------------------------------------
   // 视频元素事件监听
@@ -1194,7 +1205,7 @@ function PlayPageClient() {
   if (loading) {
     return (
       <PageLayout activePath='/play'>
-        <div className='flex items-center justify-center min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900'>
+        <div className='flex items-center justify-center min-h-screen bg-transparent'>
           <div className='text-center max-w-md mx-auto px-6'>
             {/* 动画影院图标 */}
             <div className='relative mb-8'>
@@ -1283,7 +1294,7 @@ function PlayPageClient() {
   if (error) {
     return (
       <PageLayout activePath='/play'>
-        <div className='flex items-center justify-center min-h-screen bg-gradient-to-br from-red-50 via-white to-orange-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900'>
+        <div className='flex items-center justify-center min-h-screen bg-transparent'>
           <div className='text-center max-w-md mx-auto px-6'>
             {/* 错误图标 */}
             <div className='relative mb-8'>
@@ -1327,10 +1338,8 @@ function PlayPageClient() {
               <button
                 onClick={() =>
                   videoTitle
-                    ? (window.location.href = `/search?q=${encodeURIComponent(
-                        videoTitle
-                      )}`)
-                    : window.history.back()
+                    ? router.push(`/search?q=${encodeURIComponent(videoTitle)}`)
+                    : router.back()
                 }
                 className='w-full px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-medium hover:from-green-600 hover:to-emerald-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl'
               >
