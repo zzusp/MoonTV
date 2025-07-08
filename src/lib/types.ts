@@ -109,6 +109,3 @@ export interface DoubanResult {
   message: string;
   list: DoubanItem[];
 }
-
-// 导出AdminConfig类型
-export { AdminConfig };

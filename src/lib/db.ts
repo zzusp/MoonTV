@@ -1,10 +1,8 @@
 /* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 
+import { AdminConfig } from './admin.types';
 import { RedisStorage } from './redis.db';
-import { AdminConfig, Favorite, IStorage, PlayRecord } from './types';
-
-// 重新导出类型，保持向后兼容
-export type { AdminConfig, Favorite, IStorage, PlayRecord };
+import { Favorite, IStorage, PlayRecord } from './types';
 
 // storage type 常量: 'localstorage' | 'database'，默认 'localstorage'
 const STORAGE_TYPE =
