@@ -671,10 +671,10 @@ function PlayPageClient() {
       await savePlayRecord(currentSource, currentId, {
         title: videoTitleRef.current,
         source_name: detailRef.current?.source_name || '',
-        year: videoYear || detailRef.current?.year || '',
-        cover: videoCover,
-        index: currentEpisodeIndex + 1, // 转换为1基索引
-        total_episodes: totalEpisodes,
+        year: detailRef.current?.year || '',
+        cover: detailRef.current?.poster || '',
+        index: currentEpisodeIndexRef.current + 1, // 转换为1基索引
+        total_episodes: detailRef.current?.episodes.length || 1,
         play_time: Math.floor(currentTime),
         total_time: Math.floor(duration),
         save_time: Date.now(),
@@ -745,15 +745,15 @@ function PlayPageClient() {
 
   // 切换收藏
   const handleToggleFavorite = async () => {
-    if (!currentSource || !currentId) return;
+    if (!videoTitleRef.current || !detailRef.current || !currentSourceRef.current || !currentIdRef.current) return;
 
     try {
-      const newState = await toggleFavorite(currentSource, currentId, {
-        title: videoTitle,
-        source_name: detail?.source_name || '',
-        year: detail?.year || videoYear || '',
-        cover: videoCover || '',
-        total_episodes: totalEpisodes || 1,
+      const newState = await toggleFavorite(currentSourceRef.current, currentIdRef.current, {
+        title: videoTitleRef.current,
+        source_name: detailRef.current?.source_name || '',
+        year: detailRef.current?.year || '',
+        cover: detailRef.current?.poster || '',
+        total_episodes: detailRef.current?.episodes.length || 1,
         save_time: Date.now(),
       });
       setFavorited(newState);
