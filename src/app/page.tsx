@@ -156,7 +156,7 @@ function HomeClient() {
               <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8 sm:px-4'>
                 {favoriteItems.map((item) => (
                   <div key={item.id + item.source} className='w-full'>
-                    <VideoCard {...item} from='favorites' />
+                    <VideoCard {...item} from='favorite' />
                   </div>
                 ))}
                 {favoriteItems.length === 0 && (
@@ -207,11 +207,10 @@ function HomeClient() {
                           className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
                         >
                           <VideoCard
-                            id=''
-                            source=''
+                            from='douban'
                             title={movie.title}
                             poster={movie.poster}
-                            source_name=''
+                            douban_id={movie.id}
                             rate={movie.rate}
                           />
                         </div>
@@ -254,11 +253,10 @@ function HomeClient() {
                           className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
                         >
                           <VideoCard
-                            id={show.id}
-                            source=''
+                            from='douban'
                             title={show.title}
                             poster={show.poster}
-                            source_name=''
+                            douban_id={show.id}
                             rate={show.rate}
                           />
                         </div>

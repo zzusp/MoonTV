@@ -4,37 +4,27 @@ import { useRouter } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { deletePlayRecord, isFavorited, toggleFavorite } from '@/lib/db.client';
+import { SearchResult } from '@/lib/types';
 
 import { ImagePlaceholder } from '@/components/ImagePlaceholder';
 
-// 聚合卡需要的基本字段，与搜索接口保持一致
-interface SearchResult {
-  id: string;
-  title: string;
-  poster: string;
-  source: string;
-  source_name: string;
-  douban_id?: number;
-  episodes: string[];
-}
-
 interface VideoCardProps {
-  id: string;
-  source: string;
-  title: string;
-  poster: string;
+  id?: string;
+  source?: string;
+  title?: string;
+  poster?: string;
   episodes?: number;
-  source_name: string;
+  source_name?: string;
   progress?: number;
   year?: string;
-  from?: string;
+  from: 'playrecord' | 'favorite' | 'search' | 'douban';
   currentEpisode?: number;
-  douban_id?: number;
+  douban_id?: string;
   onDelete?: () => void;
 
-  // 可选属性，根据存在与否决定卡片行为
-  rate?: string; // 如果存在，按demo卡片处理
-  items?: SearchResult[]; // 如果存在，按aggregate卡片处理
+  // 可选属性
+  rate?: string; // douban 卡片可能有评分
+  items?: SearchResult[]; // search 卡片可能有聚合数据
 }
 
 function CheckCircleCustom() {
@@ -111,10 +101,8 @@ export default function VideoCard({
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
 
-  // 判断卡片类型
-  const isDemo = !!rate;
-  const isAggregate = !!items && items.length > 0;
-  const isStandard = !isDemo && !isAggregate;
+  // 判断是否为聚合卡片（只有 search 类型可能有聚合）
+  const isAggregate = from === 'search' && !!items && items.length > 0;
 
   // 处理聚合卡片的逻辑
   const aggregateData = useMemo(() => {
@@ -159,33 +147,54 @@ export default function VideoCard({
       }
     });
 
+    // 统计出现次数最多的年份
+    const yearCountMap = new Map<string, number>();
+    items.forEach((item) => {
+      if (item.year && item.year.trim()) {
+        const yearStr = item.year.trim();
+        yearCountMap.set(yearStr, (yearCountMap.get(yearStr) || 0) + 1);
+      }
+    });
+
+    let mostFrequentYear: string | undefined;
+    let maxYearCount = 0;
+    yearCountMap.forEach((cnt, yr) => {
+      if (cnt > maxYearCount) {
+        maxYearCount = cnt;
+        mostFrequentYear = yr;
+      }
+    });
+
     return {
       first,
       mostFrequentDoubanId,
       mostFrequentEpisodes,
+      mostFrequentYear,
     };
   }, [isAggregate, items]);
 
   // 根据卡片类型决定实际使用的数据
   const actualTitle =
-    isAggregate && aggregateData ? aggregateData.first.title : title;
+    isAggregate && aggregateData ? aggregateData.first.title : title || '';
   const actualPoster =
-    isAggregate && aggregateData ? aggregateData.first.poster : poster;
+    isAggregate && aggregateData ? aggregateData.first.poster : poster || '';
   const actualSource =
     isAggregate && aggregateData ? aggregateData.first.source : source;
   const actualId = isAggregate && aggregateData ? aggregateData.first.id : id;
   const actualDoubanId =
     isAggregate && aggregateData
-      ? aggregateData.mostFrequentDoubanId
+      ? aggregateData.mostFrequentDoubanId?.toString()
       : douban_id;
   const actualEpisodes =
     isAggregate && aggregateData
       ? aggregateData.mostFrequentEpisodes
       : episodes;
+  const actualYear =
+    isAggregate && aggregateData ? aggregateData.mostFrequentYear : year;
 
-  // 检查初始收藏状态（仅标准卡片）
+  // 检查初始收藏状态（需要 source 和 id 的卡片类型）
   useEffect(() => {
-    if (!isStandard) return;
+    if (from === 'douban' || !actualSource || !actualId) return;
 
     (async () => {
       try {
@@ -195,22 +204,22 @@ export default function VideoCard({
         throw new Error('检查收藏状态失败');
       }
     })();
-  }, [isStandard, actualSource, actualId]);
+  }, [from, actualSource, actualId]);
 
-  // 切换收藏状态（仅标准卡片）
+  // 切换收藏状态
   const handleToggleFavorite = async (
     e: React.MouseEvent<HTMLSpanElement | SVGElement, MouseEvent>
   ) => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!isStandard) return;
+    if (from === 'douban' || !actualSource || !actualId) return;
 
     try {
       const newState = await toggleFavorite(actualSource, actualId, {
         title: actualTitle,
-        source_name,
-        year: year || '',
+        source_name: source_name || '',
+        year: actualYear || '',
         cover: actualPoster,
         total_episodes: actualEpisodes ?? 1,
         save_time: Date.now(),
@@ -225,14 +234,14 @@ export default function VideoCard({
     }
   };
 
-  // 删除对应播放记录（仅标准卡片）
+  // 删除对应播放记录
   const handleDeleteRecord = async (
     e: React.MouseEvent<HTMLSpanElement | SVGElement, MouseEvent>
   ) => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!isStandard) return;
+    if (from !== 'playrecord' || !actualSource || !actualId) return;
 
     try {
       await deletePlayRecord(actualSource, actualId);
@@ -244,13 +253,15 @@ export default function VideoCard({
 
   // 点击处理逻辑
   const handleClick = () => {
-    if (isDemo) {
+    if (from === 'douban') {
+      // douban 卡片使用 title 搜索
       router.push(`/play?title=${encodeURIComponent(actualTitle.trim())}`);
-    } else {
+    } else if (actualSource && actualId) {
+      // 其他类型使用 source 和 id
       router.push(
         `/play?source=${actualSource}&id=${actualId}&title=${encodeURIComponent(
           actualTitle.trim()
-        )}${year ? `&year=${year}` : ''}`
+        )}${actualYear ? `&year=${actualYear}` : ''}`
       );
     }
   };
@@ -262,20 +273,101 @@ export default function VideoCard({
     handleClick();
   };
 
-  const hideCheckCircle =
-    from === 'favorites' || from === 'search' || !isStandard;
-  const alwaysShowHeart = from !== 'favorites' && isStandard;
-  const showHoverLayer = isStandard
-    ? alwaysShowHeart
-      ? 'opacity-50 group-hover:opacity-100'
-      : 'opacity-0 group-hover:opacity-100'
-    : 'opacity-0 group-hover:opacity-100';
+  // 根据 from 类型决定显示逻辑
+  const getDisplayConfig = () => {
+    switch (from) {
+      case 'playrecord':
+        return {
+          showSourceName: true,
+          showProgress: true,
+          showPlayButton: true,
+          playButtonAlwaysVisible: true,
+          playButtonOpacity: 'opacity-50 group-hover:opacity-100',
+          showHeart: true,
+          heartAlwaysVisible: true,
+          heartOpacity: 'opacity-100',
+          showCheckCircle: true,
+          checkCircleAlwaysVisible: true,
+          showDoubanLink: false,
+          showRating: false,
+          hoverLayerOpacity: 'opacity-50 group-hover:opacity-100',
+        };
+      case 'favorite':
+        return {
+          showSourceName: true,
+          showProgress: false,
+          showPlayButton: true,
+          playButtonAlwaysVisible: false,
+          playButtonOpacity: 'opacity-70 group-hover:opacity-100',
+          showHeart: true,
+          heartAlwaysVisible: false,
+          heartOpacity: 'opacity-70 group-hover:opacity-100',
+          showCheckCircle: false,
+          checkCircleAlwaysVisible: false,
+          showDoubanLink: false,
+          showRating: false,
+          hoverLayerOpacity: 'opacity-0 group-hover:opacity-100',
+        };
+      case 'search':
+        return {
+          showSourceName: true,
+          showProgress: false,
+          showPlayButton: true,
+          playButtonAlwaysVisible: true,
+          playButtonOpacity: 'opacity-50 group-hover:opacity-100',
+          showHeart: !isAggregate, // 聚合卡片不显示收藏
+          heartAlwaysVisible: !isAggregate,
+          heartOpacity: 'opacity-50 group-hover:opacity-100',
+          showCheckCircle: false,
+          checkCircleAlwaysVisible: false,
+          showDoubanLink: !!actualDoubanId,
+          showRating: false,
+          hoverLayerOpacity: isAggregate
+            ? 'opacity-50 group-hover:opacity-100'
+            : 'opacity-50 group-hover:opacity-100',
+        };
+      case 'douban':
+        return {
+          showSourceName: false,
+          showProgress: false,
+          showPlayButton: true,
+          playButtonAlwaysVisible: false,
+          playButtonOpacity: 'opacity-70 group-hover:opacity-100',
+          showHeart: false,
+          heartAlwaysVisible: false,
+          heartOpacity: '',
+          showCheckCircle: false,
+          checkCircleAlwaysVisible: false,
+          showDoubanLink: true,
+          showRating: !!rate,
+          hoverLayerOpacity: 'opacity-0 group-hover:opacity-100',
+        };
+      default:
+        return {
+          showSourceName: true,
+          showProgress: false,
+          showPlayButton: true,
+          playButtonAlwaysVisible: false,
+          playButtonOpacity: 'opacity-70 group-hover:opacity-100',
+          showHeart: true,
+          heartAlwaysVisible: false,
+          heartOpacity: 'opacity-70 group-hover:opacity-100',
+          showCheckCircle: false,
+          checkCircleAlwaysVisible: false,
+          showDoubanLink: false,
+          showRating: false,
+          hoverLayerOpacity: 'opacity-0 group-hover:opacity-100',
+        };
+    }
+  };
+
+  const config = getDisplayConfig();
 
   return (
     <div
       className={`group relative w-full rounded-lg bg-transparent flex flex-col cursor-pointer transition-all duration-300 ease-in-out ${
         isDeleting ? 'opacity-0 scale-90' : ''
-      } ${isDemo ? 'group-hover:scale-[1.02]' : ''}`}
+      } ${from === 'douban' ? 'group-hover:scale-[1.02]' : ''}`}
       onClick={handleClick}
     >
       {/* 海报图片容器 */}
@@ -297,29 +389,34 @@ export default function VideoCard({
           referrerPolicy='no-referrer'
           priority={false}
         />
+
         {/* Hover 效果层 */}
         <div
-          className={`absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent ${showHoverLayer} transition-all duration-300 cubic-bezier(0.4,0,0.2,1) flex items-center justify-center overflow-hidden`}
+          className={`absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent ${config.hoverLayerOpacity} transition-all duration-300 cubic-bezier(0.4,0,0.2,1) flex items-center justify-center overflow-hidden`}
         >
           {/* 播放按钮 */}
-          <div className='absolute inset-0 flex items-center justify-center pointer-events-auto'>
-            <div
-              className={`transition-all duration-300 cubic-bezier(0.4,0,0.2,1) ${
-                playHover ? 'scale-100 opacity-100' : 'scale-90 opacity-70'
-              } ${isDemo && playHover ? 'scale-110 rotate-12' : ''}`}
-              style={{ cursor: 'pointer' }}
-              onClick={handlePlayClick}
-              onMouseEnter={() => setPlayHover(true)}
-              onMouseLeave={() => setPlayHover(false)}
-            >
-              <PlayCircleSolid fillColor={playHover ? '#22c55e' : 'none'} />
+          {config.showPlayButton && (
+            <div className='absolute inset-0 flex items-center justify-center pointer-events-auto'>
+              <div
+                className={`transition-all duration-300 cubic-bezier(0.4,0,0.2,1) ${
+                  playHover ? 'scale-100 opacity-100' : 'scale-90 opacity-70'
+                } ${
+                  from === 'douban' && playHover ? 'scale-110 rotate-12' : ''
+                } ${config.playButtonOpacity}`}
+                style={{ cursor: 'pointer' }}
+                onClick={handlePlayClick}
+                onMouseEnter={() => setPlayHover(true)}
+                onMouseLeave={() => setPlayHover(false)}
+              >
+                <PlayCircleSolid fillColor={playHover ? '#22c55e' : 'none'} />
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* 右侧操作按钮组（仅标准卡片） */}
-          {isStandard && (
+          {/* 右侧操作按钮组 */}
+          {(config.showHeart || config.showCheckCircle) && (
             <div className='absolute bottom-2 right-2 sm:bottom-4 sm:right-4 flex items-center gap-3 transform transition-all duration-300 cubic-bezier(0.4,0,0.2,1) group-hover:scale-110'>
-              {!hideCheckCircle && (
+              {config.showCheckCircle && (
                 <span
                   onClick={handleDeleteRecord}
                   title='标记已看'
@@ -329,26 +426,27 @@ export default function VideoCard({
                 </span>
               )}
 
-              <span
-                onClick={handleToggleFavorite}
-                title={favorited ? '移除收藏' : '加入收藏'}
-                className={`inline-flex items-center justify-center ${
-                  alwaysShowHeart ? 'opacity-100' : 'opacity-70'
-                } hover:opacity-100 transition-opacity duration-200`}
-              >
-                <Heart
-                  className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                    favorited ? 'scale-105 text-red-500' : 'text-white/90'
-                  }`}
-                  strokeWidth={2}
-                  fill={favorited ? 'currentColor' : 'none'}
-                />
-              </span>
+              {config.showHeart && (
+                <span
+                  onClick={handleToggleFavorite}
+                  title={favorited ? '移除收藏' : '加入收藏'}
+                  className={`inline-flex items-center justify-center ${config.heartOpacity} hover:opacity-100 transition-opacity duration-200`}
+                >
+                  <Heart
+                    className={`h-4 w-4 sm:h-5 sm:w-5 ${
+                      favorited ? 'scale-105 text-red-500' : 'text-white/90'
+                    }`}
+                    strokeWidth={2}
+                    fill={favorited ? 'currentColor' : 'none'}
+                  />
+                </span>
+              )}
             </div>
           )}
         </div>
-        {/* 评分徽章（如果有rate字段） */}
-        {rate && (
+
+        {/* 评分徽章（豆瓣卡片） */}
+        {config.showRating && rate && (
           <div className='absolute top-2 right-2 min-w-[1.25rem] h-4 w-4 sm:h-7 sm:w-7 sm:min-w-[1.5rem] bg-pink-500 dark:bg-pink-400 rounded-full flex items-center justify-center px-1 shadow-md transform transition-all duration-300 cubic-bezier(0.4, 0, 0.2, 1) group-hover:scale-110 group-hover:rotate-3'>
             <span className='text-white text-[0.5rem] sm:text-xs font-bold leading-none'>
               {rate}
@@ -356,8 +454,8 @@ export default function VideoCard({
           </div>
         )}
 
-        {/* 继续观看 - 集数矩形展示框（标准卡片） */}
-        {isStandard &&
+        {/* 继续观看 - 集数矩形展示框 */}
+        {(from === 'playrecord' || from === 'favorite') &&
           actualEpisodes &&
           actualEpisodes > 1 &&
           currentEpisode && (
@@ -372,8 +470,8 @@ export default function VideoCard({
             </div>
           )}
 
-        {/* 搜索非聚合/聚合 - 集数圆形展示框 */}
-        {(isStandard || isAggregate) &&
+        {/* 搜索页 - 集数圆形展示框 */}
+        {from === 'search' &&
           actualEpisodes &&
           actualEpisodes > 1 &&
           !currentEpisode && (
@@ -385,30 +483,29 @@ export default function VideoCard({
           )}
 
         {/* 豆瓣链接按钮 */}
-        {actualDoubanId &&
-          (isDemo || (isStandard && from === 'search') || isAggregate) && (
-            <a
-              href={`https://movie.douban.com/subject/${actualDoubanId}`}
-              target='_blank'
-              rel='noopener noreferrer'
-              onClick={(e) => e.stopPropagation()}
-              className='absolute top-2 left-2 scale-90 group-hover:scale-100 opacity-0 group-hover:opacity-100 transition-all duration-300 cubic-bezier(0.4,0,0.2,1)'
+        {config.showDoubanLink && actualDoubanId && (
+          <a
+            href={`https://movie.douban.com/subject/${actualDoubanId}`}
+            target='_blank'
+            rel='noopener noreferrer'
+            onClick={(e) => e.stopPropagation()}
+            className='absolute top-2 left-2 scale-90 group-hover:scale-100 opacity-0 group-hover:opacity-100 transition-all duration-300 cubic-bezier(0.4,0,0.2,1)'
+          >
+            <div
+              className={`w-4 h-4 sm:w-7 sm:h-7 rounded-full bg-[#22c55e] ${
+                from === 'douban' ? 'dark:bg-[#16a34a]' : ''
+              } flex items-center justify-center shadow-md opacity-70 hover:opacity-100 transition-all duration-200 ease-in-out hover:scale-110 hover:bg-[#16a34a] ${
+                from === 'douban' ? 'dark:hover:bg-[#15803d]' : ''
+              }`}
             >
-              <div
-                className={`w-4 h-4 sm:w-7 sm:h-7 rounded-full bg-[#22c55e] ${
-                  isDemo ? 'dark:bg-[#16a34a]' : ''
-                } flex items-center justify-center shadow-md opacity-70 hover:opacity-100 transition-all duration-200 ease-in-out hover:scale-110 hover:bg-[#16a34a] ${
-                  isDemo ? 'dark:hover:bg-[#15803d]' : ''
-                }`}
-              >
-                <LinkIcon className='w-4 h-4 text-white' strokeWidth={2} />
-              </div>
-            </a>
-          )}
+              <LinkIcon className='w-4 h-4 text-white' strokeWidth={2} />
+            </div>
+          </a>
+        )}
       </div>
 
-      {/* 播放进度条（仅标准卡片） */}
-      {isStandard && progress !== undefined && (
+      {/* 播放进度条（仅播放记录卡片） */}
+      {config.showProgress && progress !== undefined && (
         <div className='mt-1 h-1 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden'>
           <div
             className='h-full bg-[#22c55e] rounded-full transition-all duration-200'
@@ -422,8 +519,8 @@ export default function VideoCard({
         {actualTitle}
       </span>
 
-      {/* 来源信息（仅标准卡片） */}
-      {isStandard && actualSource && (
+      {/* 来源信息 */}
+      {config.showSourceName && source_name && (
         <span className='mt-1 px-1 block text-gray-500 text-[0.5rem] sm:text-xs w-full text-center dark:text-gray-400 transition-all duration-400 cubic-bezier(0.4,0,0.2,1) group-hover:translate-y-[-2px] translate-y-1 opacity-80 group-hover:opacity-100'>
           <span className='inline-block border border-gray-500/60 rounded px-2 py-[1px] dark:border-gray-400/60'>
             {source_name}
