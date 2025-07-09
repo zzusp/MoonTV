@@ -146,10 +146,5 @@ function shouldSkipAuth(pathname: string): boolean {
 
 // 配置middleware匹配规则
 export const config = {
-  matcher: [
-    /*
-     * 匹配所有请求路径，除了静态文件
-     */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|api).*)'],
 };

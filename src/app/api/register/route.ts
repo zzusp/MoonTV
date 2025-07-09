@@ -39,12 +39,8 @@ async function generateSignature(
 }
 
 // 生成认证Cookie（带签名）
-async function generateAuthCookie(
-  username: string,
-  password: string
-): Promise<string> {
+async function generateAuthCookie(username: string): Promise<string> {
   const authData: any = {
-    password,
     username,
     timestamp: Date.now(),
   };
@@ -105,7 +101,7 @@ export async function POST(req: NextRequest) {
 
       // 注册成功，设置认证cookie
       const response = NextResponse.json({ ok: true });
-      const cookieValue = await generateAuthCookie(username, password);
+      const cookieValue = await generateAuthCookie(username);
       const expires = new Date();
       expires.setDate(expires.getDate() + 7); // 7天过期
 
