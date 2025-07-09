@@ -871,6 +871,8 @@ function PlayPageClient() {
         lang: 'zh-cn',
         hotkey: false,
         fastForward: true,
+        autoOrientation: true,
+        lock: true,
         moreVideoAttr: {
           crossOrigin: 'anonymous',
         },
@@ -1027,18 +1029,6 @@ function PlayPageClient() {
           setTimeout(() => {
             setCurrentEpisodeIndex(idx + 1);
           }, 1000);
-        }
-      });
-
-      artPlayerRef.current.on('fullscreen', async (state: boolean) => {
-        if (state) {
-          if (screen.orientation && (screen.orientation as any).lock) {
-            await (screen.orientation as any).lock('landscape');
-          }
-        } else {
-          if (screen.orientation && (screen.orientation as any).unlock) {
-            (screen.orientation as any).unlock();
-          }
         }
       });
 
