@@ -860,7 +860,7 @@ function PlayPageClient() {
         playbackRate: true,
         aspectRatio: false,
         fullscreen: true,
-        fullscreenWeb: false,
+        fullscreenWeb: true,
         subtitleOffset: false,
         miniProgressBar: false,
         mutex: true,
