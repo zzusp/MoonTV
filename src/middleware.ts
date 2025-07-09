@@ -33,8 +33,8 @@ export async function middleware(request: NextRequest) {
   }
 
   // 其他模式：只验证签名
-  // 检查是否有用户名和密码
-  if (!authInfo.username || !authInfo.password) {
+  // 检查是否有用户名（非localStorage模式下密码不存储在cookie中）
+  if (!authInfo.username || !authInfo.signature) {
     return redirectToLogin(request, pathname);
   }
 
@@ -76,10 +76,10 @@ async function verifySignature(
       ['verify']
     );
 
-    // 将十六进制字符串转换为ArrayBuffer
+    // 将十六进制字符串转换为Uint8Array
     const signatureBuffer = new Uint8Array(
       signature.match(/.{1,2}/g)?.map((byte) => parseInt(byte, 16)) || []
-    ).buffer;
+    );
 
     // 验证签名
     return await crypto.subtle.verify(
