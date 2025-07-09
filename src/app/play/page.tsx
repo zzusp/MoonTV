@@ -1027,6 +1027,9 @@ function PlayPageClient() {
 
       artPlayerRef.current.on('error', (err: any) => {
         console.error('播放器错误:', err);
+        if (artPlayerRef.current.currentTime > 0) {
+          return;
+        }
         setError('视频播放失败');
       });
 
