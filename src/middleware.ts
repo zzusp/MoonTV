@@ -132,6 +132,7 @@ function shouldSkipAuth(pathname: string): boolean {
     '/api/login',
     '/api/register',
     '/api/logout',
+    '/api/server-config',
     '/_next',
     '/favicon.ico',
     '/robots.txt',
