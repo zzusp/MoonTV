@@ -486,7 +486,7 @@ function PlayPageClient() {
         setNeedPrefer(false);
         setCurrentSource(preferredSource.source);
         setCurrentId(preferredSource.id);
-        setVideoYear(preferredSource.year);
+        setVideoYear(preferredSource.year || 'unknown');
 
         // 替换URL参数
         const newUrl = new URL(window.location.href);
@@ -513,7 +513,7 @@ function PlayPageClient() {
 
           // 更新状态保存详情
           setVideoTitle(detailData.title || videoTitleRef.current);
-          setVideoYear(detailData.year);
+          setVideoYear(detailData.year || 'unknown');
           setVideoCover(detailData.poster);
           setDetail(detailData);
 
