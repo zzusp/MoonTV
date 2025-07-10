@@ -719,8 +719,9 @@ function PlayPageClient() {
       const newDetail = await fetchVideoDetail({
         source: newSource,
         id: newId,
-        fallbackTitle: newTitle.trim(),
-        fallbackYear: videoYearRef.current,
+        fallbackTitle: searchTitle || newTitle.trim(),
+        fallbackYear:
+          videoYearRef.current === 'unknown' ? '' : videoYearRef.current,
       });
 
       // 尝试跳转到当前正在播放的集数
@@ -743,9 +744,11 @@ function PlayPageClient() {
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.set('source', newSource);
       newUrl.searchParams.set('id', newId);
+      newUrl.searchParams.set('year', newDetail.year || 'unknown');
       window.history.replaceState({}, '', newUrl.toString());
 
       setVideoTitle(newDetail.title || newTitle);
+      setVideoYear(newDetail.year || 'unknown');
       setVideoCover(newDetail.poster);
       setCurrentSource(newSource);
       setCurrentId(newId);
