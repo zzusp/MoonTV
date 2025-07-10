@@ -10,6 +10,7 @@ export interface PlayRecord {
   play_time: number; // 播放进度（秒）
   total_time: number; // 总进度（秒）
   save_time: number; // 记录保存时间（时间戳）
+  search_title?: string; // 搜索时使用的标题
 }
 
 // 收藏数据结构
@@ -19,6 +20,7 @@ export interface Favorite {
   title: string;
   cover: string;
   save_time: number; // 记录保存时间（时间戳）
+  search_title?: string; // 搜索时使用的标题
 }
 
 // 存储接口
