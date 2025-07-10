@@ -96,8 +96,9 @@ export default function VideoCard({
     aggregateData?.mostFrequentDoubanId ?? douban_id
   );
   const actualEpisodes = aggregateData?.mostFrequentEpisodes ?? episodes;
-  const actualYear =
-    (isAggregate ? aggregateData?.first.year : year) || 'unknown';
+  const actualYear = isAggregate
+    ? aggregateData?.first.year || 'unknown'
+    : year;
   const actualQuery = query || '';
   const actualSearchType = isAggregate
     ? aggregateData?.first.episodes.length === 1

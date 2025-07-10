@@ -513,6 +513,7 @@ function PlayPageClient() {
 
           // 更新状态保存详情
           setVideoTitle(detailData.title || videoTitleRef.current);
+          setVideoYear(detailData.year);
           setVideoCover(detailData.poster);
           setDetail(detailData);
 
@@ -930,6 +931,7 @@ function PlayPageClient() {
       console.log('播放进度已保存:', {
         title: videoTitleRef.current,
         episode: currentEpisodeIndexRef.current + 1,
+        year: detailRef.current?.year || 'unknown',
         progress: `${Math.floor(currentTime)}/${Math.floor(duration)}`,
       });
     } catch (err) {
