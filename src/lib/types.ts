@@ -5,6 +5,7 @@ export interface PlayRecord {
   title: string;
   source_name: string;
   cover: string;
+  year: string;
   index: number; // 第几集
   total_episodes: number; // 总集数
   play_time: number; // 播放进度（秒）
@@ -18,6 +19,7 @@ export interface Favorite {
   source_name: string;
   total_episodes: number; // 总集数
   title: string;
+  year: string;
   cover: string;
   save_time: number; // 记录保存时间（时间戳）
   search_title?: string; // 搜索时使用的标题
