@@ -224,7 +224,9 @@ export default function VideoCard({
   return (
     <div
       className={`group relative w-full rounded-lg bg-transparent transition-all duration-300 transform ${
-        isDeleting ? 'opacity-0 scale-90 translate-y-4' : 'hover:-translate-y-1'
+        isDeleting
+          ? 'opacity-0 scale-90 translate-y-4'
+          : 'hover:-translate-y-1 hover:scale-[1.02]'
       }`}
       onClick={handleClick}
     >
