@@ -174,10 +174,20 @@ export default function VideoCard({
       router.push(
         `/play?source=${actualSource}&id=${actualId}&title=${encodeURIComponent(
           actualTitle
-        )}${actualYear ? `&year=${actualYear}` : ''}`
+        )}${actualYear ? `&year=${actualYear}` : ''}${
+          isAggregate ? '&prefer=true' : ''
+        }`
       );
     }
-  }, [from, actualSource, actualId, router, actualTitle, actualYear]);
+  }, [
+    from,
+    actualSource,
+    actualId,
+    router,
+    actualTitle,
+    actualYear,
+    isAggregate,
+  ]);
 
   const config = useMemo(() => {
     const configs = {
@@ -249,7 +259,7 @@ export default function VideoCard({
         />
 
         {/* 悬浮层 - 添加渐变动画效果 */}
-        <div className='absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center'>
+        <div className='absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center cursor-pointer'>
           {config.showPlayButton && (
             <PlayCircleIcon
               size={52}
