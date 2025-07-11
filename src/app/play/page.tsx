@@ -525,6 +525,11 @@ function PlayPageClient() {
           // 清理URL参数（移除index参数）
           if (searchParams.has('index')) {
             const newUrl = new URL(window.location.href);
+            newUrl.searchParams.set('year', detailData.year || 'unknown');
+            newUrl.searchParams.set(
+              'title',
+              detailData.title || videoTitleRef.current
+            );
             newUrl.searchParams.delete('index');
             newUrl.searchParams.delete('position');
             window.history.replaceState({}, '', newUrl.toString());
