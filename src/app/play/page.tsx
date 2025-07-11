@@ -486,7 +486,7 @@ function PlayPageClient() {
         setNeedPrefer(false);
         setCurrentSource(preferredSource.source);
         setCurrentId(preferredSource.id);
-        setVideoYear(preferredSource.year || 'unknown');
+        setVideoYear(preferredSource.year);
 
         // 替换URL参数
         const newUrl = new URL(window.location.href);
@@ -507,13 +507,11 @@ function PlayPageClient() {
             source: currentSource,
             id: currentId,
             fallbackTitle: searchTitle || videoTitleRef.current.trim(),
-            fallbackYear:
-              videoYearRef.current === 'unknown' ? '' : videoYearRef.current,
           });
 
           // 更新状态保存详情
           setVideoTitle(detailData.title || videoTitleRef.current);
-          setVideoYear(detailData.year || 'unknown');
+          setVideoYear(detailData.year);
           setVideoCover(detailData.poster);
           setDetail(detailData);
 
@@ -525,7 +523,7 @@ function PlayPageClient() {
           // 清理URL参数（移除index参数）
           if (searchParams.has('index')) {
             const newUrl = new URL(window.location.href);
-            newUrl.searchParams.set('year', detailData.year || 'unknown');
+            newUrl.searchParams.set('year', detailData.year);
             newUrl.searchParams.set(
               'title',
               detailData.title || videoTitleRef.current
@@ -661,10 +659,7 @@ function PlayPageClient() {
             result.title.toLowerCase() ===
               videoTitleRef.current.toLowerCase() &&
             (videoYearRef.current
-              ? videoYearRef.current === 'unknown'
-                ? result.year === ''
-                : result.year.toLowerCase() ===
-                  videoYearRef.current.toLowerCase()
+              ? result.year.toLowerCase() === videoYearRef.current.toLowerCase()
               : true) &&
             (detailRef.current
               ? (detailRef.current.episodes.length === 1 &&
@@ -725,8 +720,6 @@ function PlayPageClient() {
         source: newSource,
         id: newId,
         fallbackTitle: searchTitle || newTitle.trim(),
-        fallbackYear:
-          videoYearRef.current === 'unknown' ? '' : videoYearRef.current,
       });
 
       // 尝试跳转到当前正在播放的集数
@@ -749,11 +742,11 @@ function PlayPageClient() {
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.set('source', newSource);
       newUrl.searchParams.set('id', newId);
-      newUrl.searchParams.set('year', newDetail.year || 'unknown');
+      newUrl.searchParams.set('year', newDetail.year);
       window.history.replaceState({}, '', newUrl.toString());
 
       setVideoTitle(newDetail.title || newTitle);
-      setVideoYear(newDetail.year || 'unknown');
+      setVideoYear(newDetail.year);
       setVideoCover(newDetail.poster);
       setCurrentSource(newSource);
       setCurrentId(newId);
@@ -925,7 +918,7 @@ function PlayPageClient() {
       await savePlayRecord(currentSourceRef.current, currentIdRef.current, {
         title: videoTitleRef.current,
         source_name: detailRef.current?.source_name || '',
-        year: detailRef.current?.year || 'unknown',
+        year: detailRef.current?.year,
         cover: detailRef.current?.poster || '',
         index: currentEpisodeIndexRef.current + 1, // 转换为1基索引
         total_episodes: detailRef.current?.episodes.length || 1,
@@ -939,7 +932,7 @@ function PlayPageClient() {
       console.log('播放进度已保存:', {
         title: videoTitleRef.current,
         episode: currentEpisodeIndexRef.current + 1,
-        year: detailRef.current?.year || 'unknown',
+        year: detailRef.current?.year,
         progress: `${Math.floor(currentTime)}/${Math.floor(duration)}`,
       });
     } catch (err) {
@@ -1013,7 +1006,7 @@ function PlayPageClient() {
         {
           title: videoTitleRef.current,
           source_name: detailRef.current?.source_name || '',
-          year: detailRef.current?.year || 'unknown',
+          year: detailRef.current?.year,
           cover: detailRef.current?.poster || '',
           total_episodes: detailRef.current?.episodes.length || 1,
           save_time: Date.now(),
