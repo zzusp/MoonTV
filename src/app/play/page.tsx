@@ -176,10 +176,11 @@ function PlayPageClient() {
               return null;
             }
 
-            const firstEpisodeUrl = source.episodes[0];
-            const testResult = await getVideoResolutionFromM3u8(
-              firstEpisodeUrl
-            );
+            const episodeUrl =
+              source.episodes.length > 1
+                ? source.episodes[1]
+                : source.episodes[0];
+            const testResult = await getVideoResolutionFromM3u8(episodeUrl);
 
             return {
               source,
