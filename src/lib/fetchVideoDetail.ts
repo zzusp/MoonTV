@@ -71,15 +71,15 @@ export async function fetchVideoDetail({
   const detail = await getDetailFromApi(apiSite, id);
 
   return {
-    id: detail.videoInfo.id,
-    title: detail.videoInfo.title,
-    poster: detail.videoInfo.cover || '',
+    id: detail.id,
+    title: detail.title,
+    poster: detail.poster || '',
     episodes: detail.episodes,
-    source: detail.videoInfo.source,
-    source_name: detail.videoInfo.source_name,
-    class: detail.videoInfo.remarks,
-    year: detail.videoInfo.year || '',
-    desc: detail.videoInfo.desc,
-    type_name: detail.videoInfo.type,
+    source: detail.source,
+    source_name: detail.source_name,
+    class: detail.class,
+    year: detail.year || '',
+    desc: detail.desc,
+    type_name: detail.type_name,
   };
 }
