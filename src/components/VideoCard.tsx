@@ -262,7 +262,7 @@ export default function VideoCard({
             <PlayCircleIcon
               size={50}
               strokeWidth={0.8}
-              className='rounded-full play-icon-fixed'
+              className='rounded-full text-white fill-transparent transition-[fill,transform] duration-200 ease-out [-webkit-transform:translateZ(0)] [-webkit-backface-visibility:hidden] [backface-visibility:hidden] [will-change:transform,fill,opacity] hover:fill-green-500 hover:scale-110'
             />
           </div>
         )}
