@@ -5,6 +5,8 @@ import { getRequestContext } from '@cloudflare/next-on-pages';
 import { AdminConfig } from './admin.types';
 import { Favorite, IStorage, PlayRecord } from './types';
 
+export const runtime = 'edge';
+
 // 搜索历史最大条数
 const SEARCH_HISTORY_LIMIT = 20;
 
