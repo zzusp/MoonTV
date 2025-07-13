@@ -116,14 +116,7 @@ const INIT_SQL = `
 
 // 获取全局D1数据库实例
 function getD1Database(): D1Database {
-  // 在 next-on-pages 环境中，D1 数据库可能通过 process.env 暴露
-  if (typeof process !== 'undefined' && (process.env as any).DB) {
-    return (process.env as any).DB as D1Database;
-  }
-
-  throw new Error(
-    'D1 database not available. Make sure DB is bound in your Cloudflare Pages project settings'
-  );
+  return (process.env as any).DB as D1Database;
 }
 
 export class D1Storage implements IStorage {
