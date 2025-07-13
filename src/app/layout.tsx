@@ -14,7 +14,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 // 动态生成 metadata，支持配置更新后的标题变化
 export async function generateMetadata(): Promise<Metadata> {
-  const config = getConfig();
+  const config = await getConfig();
 
   return {
     title: config.SiteConfig.SiteName,
@@ -27,12 +27,12 @@ export const viewport: Viewport = {
   themeColor: '#000000',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const config = getConfig();
+  const config = await getConfig();
   const siteName = config.SiteConfig.SiteName;
   const announcement = config.SiteConfig.Announcement;
 
