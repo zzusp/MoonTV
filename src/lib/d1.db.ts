@@ -140,16 +140,29 @@ function getD1Database(): D1Database {
 }
 
 export class D1Storage implements IStorage {
-  private db: D1Database;
+  private db: D1Database | null = null;
+  private initialized = false;
 
   constructor() {
-    this.db = getD1Database();
-    this.initDatabase();
+    // 不在构造函数中初始化数据库，延迟到实际使用时
+  }
+
+  private async getDatabase(): Promise<D1Database> {
+    if (!this.db) {
+      this.db = getD1Database();
+      if (!this.initialized) {
+        await this.initDatabase();
+        this.initialized = true;
+      }
+    }
+    return this.db;
   }
 
   private async initDatabase() {
     try {
-      await this.db.exec(INIT_SQL);
+      if (this.db) {
+        await this.db.exec(INIT_SQL);
+      }
     } catch (err) {
       console.error('Failed to initialize D1 database:', err);
       throw err;
@@ -162,7 +175,8 @@ export class D1Storage implements IStorage {
     key: string
   ): Promise<PlayRecord | null> {
     try {
-      const result = await this.db
+      const db = await this.getDatabase();
+      const result = await db
         .prepare('SELECT * FROM play_records WHERE username = ? AND key = ?')
         .bind(userName, key)
         .first<any>();
@@ -193,7 +207,8 @@ export class D1Storage implements IStorage {
     record: PlayRecord
   ): Promise<void> {
     try {
-      await this.db
+      const db = await this.getDatabase();
+      await db
         .prepare(
           `
           INSERT OR REPLACE INTO play_records 
@@ -226,7 +241,8 @@ export class D1Storage implements IStorage {
     userName: string
   ): Promise<Record<string, PlayRecord>> {
     try {
-      const result = await this.db
+      const db = await this.getDatabase();
+      const result = await db
         .prepare(
           'SELECT * FROM play_records WHERE username = ? ORDER BY save_time DESC'
         )
@@ -259,7 +275,8 @@ export class D1Storage implements IStorage {
 
   async deletePlayRecord(userName: string, key: string): Promise<void> {
     try {
-      await this.db
+      const db = await this.getDatabase();
+      await db
         .prepare('DELETE FROM play_records WHERE username = ? AND key = ?')
         .bind(userName, key)
         .run();
@@ -272,7 +289,8 @@ export class D1Storage implements IStorage {
   // 收藏相关
   async getFavorite(userName: string, key: string): Promise<Favorite | null> {
     try {
-      const result = await this.db
+      const db = await this.getDatabase();
+      const result = await db
         .prepare('SELECT * FROM favorites WHERE username = ? AND key = ?')
         .bind(userName, key)
         .first<any>();
@@ -299,7 +317,8 @@ export class D1Storage implements IStorage {
     favorite: Favorite
   ): Promise<void> {
     try {
-      await this.db
+      const db = await this.getDatabase();
+      await db
         .prepare(
           `
           INSERT OR REPLACE INTO favorites 
@@ -326,7 +345,8 @@ export class D1Storage implements IStorage {
 
   async getAllFavorites(userName: string): Promise<Record<string, Favorite>> {
     try {
-      const result = await this.db
+      const db = await this.getDatabase();
+      const result = await db
         .prepare(
           'SELECT * FROM favorites WHERE username = ? ORDER BY save_time DESC'
         )
@@ -355,7 +375,8 @@ export class D1Storage implements IStorage {
 
   async deleteFavorite(userName: string, key: string): Promise<void> {
     try {
-      await this.db
+      const db = await this.getDatabase();
+      await db
         .prepare('DELETE FROM favorites WHERE username = ? AND key = ?')
         .bind(userName, key)
         .run();
@@ -368,7 +389,8 @@ export class D1Storage implements IStorage {
   // 用户相关
   async registerUser(userName: string, password: string): Promise<void> {
     try {
-      await this.db
+      const db = await this.getDatabase();
+      await db
         .prepare('INSERT INTO users (username, password) VALUES (?, ?)')
         .bind(userName, password)
         .run();
@@ -380,7 +402,8 @@ export class D1Storage implements IStorage {
 
   async verifyUser(userName: string, password: string): Promise<boolean> {
     try {
-      const result = await this.db
+      const db = await this.getDatabase();
+      const result = await db
         .prepare('SELECT password FROM users WHERE username = ?')
         .bind(userName)
         .first<{ password: string }>();
@@ -394,7 +417,8 @@ export class D1Storage implements IStorage {
 
   async checkUserExist(userName: string): Promise<boolean> {
     try {
-      const result = await this.db
+      const db = await this.getDatabase();
+      const result = await db
         .prepare('SELECT 1 FROM users WHERE username = ?')
         .bind(userName)
         .first();
@@ -408,7 +432,8 @@ export class D1Storage implements IStorage {
 
   async changePassword(userName: string, newPassword: string): Promise<void> {
     try {
-      await this.db
+      const db = await this.getDatabase();
+      await db
         .prepare('UPDATE users SET password = ? WHERE username = ?')
         .bind(newPassword, userName)
         .run();
@@ -420,20 +445,19 @@ export class D1Storage implements IStorage {
 
   async deleteUser(userName: string): Promise<void> {
     try {
+      const db = await this.getDatabase();
       const statements = [
-        this.db.prepare('DELETE FROM users WHERE username = ?').bind(userName),
-        this.db
+        db.prepare('DELETE FROM users WHERE username = ?').bind(userName),
+        db
           .prepare('DELETE FROM play_records WHERE username = ?')
           .bind(userName),
-        this.db
-          .prepare('DELETE FROM favorites WHERE username = ?')
-          .bind(userName),
-        this.db
+        db.prepare('DELETE FROM favorites WHERE username = ?').bind(userName),
+        db
           .prepare('DELETE FROM search_history WHERE username = ?')
           .bind(userName),
       ];
 
-      await this.db.batch(statements);
+      await db.batch(statements);
     } catch (err) {
       console.error('Failed to delete user:', err);
       throw err;
@@ -443,7 +467,8 @@ export class D1Storage implements IStorage {
   // 搜索历史相关
   async getSearchHistory(userName: string): Promise<string[]> {
     try {
-      const result = await this.db
+      const db = await this.getDatabase();
+      const result = await db
         .prepare(
           'SELECT keyword FROM search_history WHERE username = ? ORDER BY created_at DESC LIMIT ?'
         )
@@ -459,8 +484,9 @@ export class D1Storage implements IStorage {
 
   async addSearchHistory(userName: string, keyword: string): Promise<void> {
     try {
+      const db = await this.getDatabase();
       // 先删除可能存在的重复记录
-      await this.db
+      await db
         .prepare(
           'DELETE FROM search_history WHERE username = ? AND keyword = ?'
         )
@@ -468,13 +494,13 @@ export class D1Storage implements IStorage {
         .run();
 
       // 添加新记录
-      await this.db
+      await db
         .prepare('INSERT INTO search_history (username, keyword) VALUES (?, ?)')
         .bind(userName, keyword)
         .run();
 
       // 保持历史记录条数限制
-      await this.db
+      await db
         .prepare(
           `
           DELETE FROM search_history 
@@ -496,15 +522,16 @@ export class D1Storage implements IStorage {
 
   async deleteSearchHistory(userName: string, keyword?: string): Promise<void> {
     try {
+      const db = await this.getDatabase();
       if (keyword) {
-        await this.db
+        await db
           .prepare(
             'DELETE FROM search_history WHERE username = ? AND keyword = ?'
           )
           .bind(userName, keyword)
           .run();
       } else {
-        await this.db
+        await db
           .prepare('DELETE FROM search_history WHERE username = ?')
           .bind(userName)
           .run();
@@ -518,7 +545,8 @@ export class D1Storage implements IStorage {
   // 用户列表
   async getAllUsers(): Promise<string[]> {
     try {
-      const result = await this.db
+      const db = await this.getDatabase();
+      const result = await db
         .prepare('SELECT username FROM users ORDER BY created_at ASC')
         .all<{ username: string }>();
 
@@ -532,7 +560,8 @@ export class D1Storage implements IStorage {
   // 管理员配置相关
   async getAdminConfig(): Promise<AdminConfig | null> {
     try {
-      const result = await this.db
+      const db = await this.getDatabase();
+      const result = await db
         .prepare('SELECT config FROM admin_config WHERE id = 1')
         .first<{ config: string }>();
 
@@ -547,7 +576,8 @@ export class D1Storage implements IStorage {
 
   async setAdminConfig(config: AdminConfig): Promise<void> {
     try {
-      await this.db
+      const db = await this.getDatabase();
+      await db
         .prepare(
           'INSERT OR REPLACE INTO admin_config (id, config) VALUES (1, ?)'
         )
