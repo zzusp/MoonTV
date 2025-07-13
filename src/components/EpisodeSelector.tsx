@@ -478,13 +478,16 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                                     </div>
                                   );
                                 } else {
-                                  // 根据分辨率设置不同颜色：1080p及以上为绿色，720p及以下为黄色
-                                  const isHighRes = [
-                                    '4K',
-                                    '2K',
-                                    '1080p',
-                                  ].includes(videoInfo.quality);
-                                  const textColorClasses = isHighRes
+                                  // 根据分辨率设置不同颜色：2K、4K为紫色，1080p、720p为绿色，其他为黄色
+                                  const isUltraHigh = ['4K', '2K'].includes(
+                                    videoInfo.quality
+                                  );
+                                  const isHigh = ['1080p', '720p'].includes(
+                                    videoInfo.quality
+                                  );
+                                  const textColorClasses = isUltraHigh
+                                    ? 'text-purple-600 dark:text-purple-400'
+                                    : isHigh
                                     ? 'text-green-600 dark:text-green-400'
                                     : 'text-yellow-600 dark:text-yellow-400';
 
