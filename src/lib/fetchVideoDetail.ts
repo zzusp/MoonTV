@@ -3,20 +3,6 @@ import { SearchResult } from '@/lib/types';
 
 import { getDetailFromApi, searchFromApi } from './downstream';
 
-export interface VideoDetail {
-  id: string;
-  title: string;
-  poster: string;
-  episodes: string[];
-  source: string;
-  source_name: string;
-  class?: string;
-  year: string;
-  desc?: string;
-  type_name?: string;
-  douban_id?: number;
-}
-
 interface FetchVideoDetailOptions {
   source: string;
   id: string;
@@ -32,7 +18,7 @@ export async function fetchVideoDetail({
   source,
   id,
   fallbackTitle = '',
-}: FetchVideoDetailOptions): Promise<VideoDetail> {
+}: FetchVideoDetailOptions): Promise<SearchResult> {
   // 优先通过搜索接口查找精确匹配
   const apiSites = getAvailableApiSites();
   const apiSite = apiSites.find((site) => site.key === source);
@@ -48,19 +34,7 @@ export async function fetchVideoDetail({
           item.id.toString() === id.toString()
       );
       if (exactMatch) {
-        return {
-          id: exactMatch.id,
-          title: exactMatch.title,
-          poster: exactMatch.poster,
-          episodes: exactMatch.episodes,
-          source: exactMatch.source,
-          source_name: exactMatch.source_name,
-          class: exactMatch.class,
-          year: exactMatch.year,
-          desc: exactMatch.desc,
-          type_name: exactMatch.type_name,
-          douban_id: exactMatch.douban_id,
-        } as VideoDetail;
+        return exactMatch;
       }
     } catch (error) {
       // do nothing
@@ -69,17 +43,9 @@ export async function fetchVideoDetail({
 
   // 调用 /api/detail 接口
   const detail = await getDetailFromApi(apiSite, id);
+  if (!detail) {
+    throw new Error('获取视频详情失败');
+  }
 
-  return {
-    id: detail.id,
-    title: detail.title,
-    poster: detail.poster || '',
-    episodes: detail.episodes,
-    source: detail.source,
-    source_name: detail.source_name,
-    class: detail.class,
-    year: detail.year || '',
-    desc: detail.desc,
-    type_name: detail.type_name,
-  };
+  return detail;
 }
