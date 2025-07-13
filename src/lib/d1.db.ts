@@ -1,11 +1,7 @@
 /* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 
-import { getRequestContext } from '@cloudflare/next-on-pages';
-
 import { AdminConfig } from './admin.types';
 import { Favorite, IStorage, PlayRecord } from './types';
-
-export const runtime = 'edge';
 
 // 搜索历史最大条数
 const SEARCH_HISTORY_LIMIT = 20;
@@ -120,17 +116,6 @@ const INIT_SQL = `
 
 // 获取全局D1数据库实例
 function getD1Database(): D1Database {
-  try {
-    // 在 Cloudflare Pages 环境中，通过 getRequestContext 访问 D1 数据库
-    const { env } = getRequestContext();
-    if (env && (env as any).DB) {
-      return (env as any).DB as D1Database;
-    }
-  } catch (error) {
-    // 如果 getRequestContext 失败，继续尝试其他方式
-    console.warn('Failed to get request context:', error);
-  }
-
   // 在 next-on-pages 环境中，D1 数据库可能通过 process.env 暴露
   if (typeof process !== 'undefined' && (process.env as any).DB) {
     return (process.env as any).DB as D1Database;
@@ -144,10 +129,6 @@ function getD1Database(): D1Database {
 export class D1Storage implements IStorage {
   private db: D1Database | null = null;
   private initialized = false;
-
-  constructor() {
-    // 不在构造函数中初始化数据库，延迟到实际使用时
-  }
 
   private async getDatabase(): Promise<D1Database> {
     if (!this.db) {
