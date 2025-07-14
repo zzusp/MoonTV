@@ -1205,7 +1205,10 @@ function PlayPageClient() {
 
       artPlayerRef.current.on('video:timeupdate', () => {
         const now = Date.now();
-        if (now - lastSaveTimeRef.current > 5000) {
+        if (
+          now - lastSaveTimeRef.current >
+          (process.env.NEXT_PUBLIC_STORAGE_TYPE === 'd1' ? 10000 : 5000)
+        ) {
           saveCurrentPlayProgress();
           lastSaveTimeRef.current = now;
         }
