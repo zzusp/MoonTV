@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, no-console */
 
 'use client';
 
@@ -13,7 +13,8 @@ import {
   getAllPlayRecords,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
-import { DoubanItem, DoubanResult } from '@/lib/types';
+import { getDoubanData } from '@/lib/douban.client';
+import { DoubanItem } from '@/lib/types';
 
 import CapsuleSwitch from '@/components/CapsuleSwitch';
 import ContinueWatching from '@/components/ContinueWatching';
@@ -63,20 +64,20 @@ function HomeClient() {
         setLoading(true);
 
         // 并行获取热门电影和热门剧集
-        const [moviesResponse, tvShowsResponse] = await Promise.all([
-          fetch('/api/douban?type=movie&tag=热门'),
-          fetch('/api/douban?type=tv&tag=热门'),
+        const [moviesData, tvShowsData] = await Promise.all([
+          getDoubanData({ type: 'movie', tag: '热门' }),
+          getDoubanData({ type: 'tv', tag: '热门' }),
         ]);
 
-        if (moviesResponse.ok) {
-          const moviesData: DoubanResult = await moviesResponse.json();
+        if (moviesData.code === 200) {
           setHotMovies(moviesData.list);
         }
 
-        if (tvShowsResponse.ok) {
-          const tvShowsData: DoubanResult = await tvShowsResponse.json();
+        if (tvShowsData.code === 200) {
           setHotTvShows(tvShowsData.list);
         }
+      } catch (error) {
+        console.error('获取豆瓣数据失败:', error);
       } finally {
         setLoading(false);
       }

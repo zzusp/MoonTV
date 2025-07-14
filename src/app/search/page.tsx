@@ -28,14 +28,20 @@ function SearchPageClient() {
   const [showResults, setShowResults] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
 
-  // 视图模式：聚合(agg) 或 全部(all)，默认值由环境变量 NEXT_PUBLIC_AGGREGATE_SEARCH_RESULT 决定
-  const defaultAggregate =
-    typeof window !== 'undefined' &&
-    Boolean((window as any).RUNTIME_CONFIG?.AGGREGATE_SEARCH_RESULT);
+  // 获取默认聚合设置：只读取用户本地设置，默认为 true
+  const getDefaultAggregate = () => {
+    if (typeof window !== 'undefined') {
+      const userSetting = localStorage.getItem('defaultAggregateSearch');
+      if (userSetting !== null) {
+        return JSON.parse(userSetting);
+      }
+    }
+    return true; // 默认启用聚合
+  };
 
-  const [viewMode, setViewMode] = useState<'agg' | 'all'>(
-    defaultAggregate ? 'agg' : 'all'
-  );
+  const [viewMode, setViewMode] = useState<'agg' | 'all'>(() => {
+    return getDefaultAggregate() ? 'agg' : 'all';
+  });
 
   // 聚合后的结果（按标题和年份分组）
   const aggregatedResults = useMemo(() => {

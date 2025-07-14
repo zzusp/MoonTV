@@ -18,7 +18,7 @@ import {
   toggleFavorite,
 } from '@/lib/db.client';
 import { SearchResult } from '@/lib/types';
-import { getVideoResolutionFromM3u8 } from '@/lib/utils';
+import { getVideoResolutionFromM3u8, processImageUrl } from '@/lib/utils';
 
 import EpisodeSelector from '@/components/EpisodeSelector';
 import PageLayout from '@/components/PageLayout';
@@ -1611,7 +1611,7 @@ function PlayPageClient() {
               <div className='bg-gray-300 dark:bg-gray-700 aspect-[2/3] flex items-center justify-center rounded-xl overflow-hidden'>
                 {videoCover ? (
                   <img
-                    src={videoCover}
+                    src={processImageUrl(videoCover)}
                     alt={videoTitle}
                     className='w-full h-full object-cover'
                   />

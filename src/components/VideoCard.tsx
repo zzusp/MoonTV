@@ -13,6 +13,7 @@ import {
   toggleFavorite,
 } from '@/lib/db.client';
 import { SearchResult } from '@/lib/types';
+import { processImageUrl } from '@/lib/utils';
 
 import { ImagePlaceholder } from '@/components/ImagePlaceholder';
 
@@ -265,7 +266,7 @@ export default function VideoCard({
 
         {/* 图片加载动画 - 改进淡入和锐化效果 */}
         <Image
-          src={actualPoster}
+          src={processImageUrl(actualPoster)}
           alt={actualTitle}
           fill
           className={`object-cover transition-all duration-700 ease-out ${
