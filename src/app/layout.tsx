@@ -14,7 +14,7 @@ const inter = Inter({ subsets: ['latin'] });
 // 动态生成 metadata，支持配置更新后的标题变化
 export async function generateMetadata(): Promise<Metadata> {
   let siteName = process.env.NEXT_PUBLIC_SITE_NAME;
-  if (process.env.NEXT_PUBLIC_STORAGE_TYPE === 'd1') {
+  if (process.env.NEXT_PUBLIC_STORAGE_TYPE !== 'd1') {
     const config = await getConfig();
     siteName = config.SiteConfig.SiteName;
   }
