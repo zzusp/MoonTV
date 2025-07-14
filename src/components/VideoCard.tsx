@@ -1,9 +1,17 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { CheckCircle, Heart, Link, PlayCircleIcon } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { deletePlayRecord, isFavorited, toggleFavorite } from '@/lib/db.client';
+import {
+  deletePlayRecord,
+  generateStorageKey,
+  isFavorited,
+  subscribeToDataUpdates,
+  toggleFavorite,
+} from '@/lib/db.client';
 import { SearchResult } from '@/lib/types';
 
 import { ImagePlaceholder } from '@/components/ImagePlaceholder';
@@ -103,6 +111,7 @@ export default function VideoCard({
   // 获取收藏状态
   useEffect(() => {
     if (from === 'douban' || !actualSource || !actualId) return;
+
     const fetchFavoriteStatus = async () => {
       try {
         const fav = await isFavorited(actualSource, actualId);
@@ -111,7 +120,21 @@ export default function VideoCard({
         throw new Error('检查收藏状态失败');
       }
     };
+
     fetchFavoriteStatus();
+
+    // 监听收藏状态更新事件
+    const storageKey = generateStorageKey(actualSource, actualId);
+    const unsubscribe = subscribeToDataUpdates(
+      'favoritesUpdated',
+      (newFavorites: Record<string, any>) => {
+        // 检查当前项目是否在新的收藏列表中
+        const isNowFavorited = !!newFavorites[storageKey];
+        setFavorited(isNowFavorited);
+      }
+    );
+
+    return unsubscribe;
   }, [from, actualSource, actualId]);
 
   const handleToggleFavorite = useCallback(

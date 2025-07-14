@@ -14,6 +14,7 @@ import {
   getAllPlayRecords,
   isFavorited,
   savePlayRecord,
+  subscribeToDataUpdates,
   toggleFavorite,
 } from '@/lib/db.client';
 import { SearchResult } from '@/lib/types';
@@ -914,6 +915,22 @@ function PlayPageClient() {
         console.error('检查收藏状态失败:', err);
       }
     })();
+  }, [currentSource, currentId]);
+
+  // 监听收藏数据更新事件
+  useEffect(() => {
+    if (!currentSource || !currentId) return;
+
+    const unsubscribe = subscribeToDataUpdates(
+      'favoritesUpdated',
+      (favorites: Record<string, any>) => {
+        const key = generateStorageKey(currentSource, currentId);
+        const isFav = !!favorites[key];
+        setFavorited(isFav);
+      }
+    );
+
+    return unsubscribe;
   }, [currentSource, currentId]);
 
   // 切换收藏
