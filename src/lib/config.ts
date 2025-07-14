@@ -219,7 +219,23 @@ async function initConfig() {
 }
 
 export async function getConfig(): Promise<AdminConfig> {
-  await initConfig();
+  const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+  if (process.env.DOCKER_ENV === 'true' || storageType === 'localstorage') {
+    await initConfig();
+    return cachedConfig;
+  }
+  // 非 docker 环境且 DB 存储，直接读 db 配置
+  const storage = getStorage();
+  let adminConfig: AdminConfig | null = null;
+  if (storage && typeof (storage as any).getAdminConfig === 'function') {
+    adminConfig = await (storage as any).getAdminConfig();
+  }
+  if (adminConfig) {
+    cachedConfig = adminConfig;
+  } else {
+    // DB 无配置，执行一次初始化
+    await initConfig();
+  }
   return cachedConfig;
 }
 
