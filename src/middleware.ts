@@ -128,6 +128,6 @@ function shouldSkipAuth(pathname: string): boolean {
 // 配置middleware匹配规则
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|api/detail|api/search|api/image-proxy|api/douban).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/detail|api/search|api/image-proxy|api/douban|api/cron|api/server-config).*)',
   ],
 };
