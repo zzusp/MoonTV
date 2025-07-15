@@ -457,11 +457,11 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                         onClick={() =>
                           !isCurrentSource && handleSourceClick(source)
                         }
-                        className={`flex items-start gap-3 px-2 py-3 rounded-lg cursor-pointer transition-all duration-200 relative
+                        className={`flex items-start gap-3 px-2 py-3 rounded-lg transition-all select-none duration-200 relative
                       ${
                         isCurrentSource
                           ? 'bg-green-500/10 dark:bg-green-500/20 border-green-500/30 border'
-                          : 'hover:bg-gray-200/50 dark:hover:bg-white/10 hover:scale-[1.02]'
+                          : 'hover:bg-gray-200/50 dark:hover:bg-white/10 hover:scale-[1.02] cursor-pointer'
                       }`.trim()}
                       >
                         {/* 封面 */}
