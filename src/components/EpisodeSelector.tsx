@@ -437,7 +437,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                         onClick={() =>
                           !isCurrentSource && handleSourceClick(source)
                         }
-                        className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 relative
+                        className={`flex items-start gap-3 px-2 py-3 rounded-lg cursor-pointer transition-all duration-200 relative
                       ${
                         isCurrentSource
                           ? 'bg-green-500/10 dark:bg-green-500/20 border-green-500/30 border'
@@ -462,8 +462,8 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                         {/* 信息区域 */}
                         <div className='flex-1 min-w-0 flex flex-col justify-between h-20'>
                           {/* 标题和分辨率 - 顶部 */}
-                          <div className='flex items-start justify-between gap-2 h-6'>
-                            <div className='flex-1 relative group/title'>
+                          <div className='flex items-start justify-between gap-3 h-6'>
+                            <div className='flex-1 min-w-0 relative group/title'>
                               <h3 className='font-medium text-base truncate text-gray-900 dark:text-gray-100 leading-none'>
                                 {source.title}
                               </h3>
@@ -482,7 +482,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                               if (videoInfo && videoInfo.quality !== '未知') {
                                 if (videoInfo.hasError) {
                                   return (
-                                    <div className='bg-gray-500/10 dark:bg-gray-400/20 text-red-600 dark:text-red-400 px-1.5 py-0 rounded text-xs flex-shrink-0'>
+                                    <div className='bg-gray-500/10 dark:bg-gray-400/20 text-red-600 dark:text-red-400 px-1.5 py-0 rounded text-xs flex-shrink-0 min-w-[50px] text-center'>
                                       检测失败
                                     </div>
                                   );
@@ -502,7 +502,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
 
                                   return (
                                     <div
-                                      className={`bg-gray-500/10 dark:bg-gray-400/20 ${textColorClasses} px-1.5 py-0 rounded text-xs flex-shrink-0`}
+                                      className={`bg-gray-500/10 dark:bg-gray-400/20 ${textColorClasses} px-1.5 py-0 rounded text-xs flex-shrink-0 min-w-[50px] text-center`}
                                     >
                                       {videoInfo.quality}
                                     </div>
@@ -510,7 +510,12 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                                 }
                               }
 
-                              return null;
+                              // 始终显示占位符，确保布局一致且分辨率信息始终可见
+                              return (
+                                <div className='bg-gray-500/10 dark:bg-gray-400/20 text-gray-500 dark:text-gray-400 px-1.5 py-0 rounded text-xs flex-shrink-0 min-w-[50px] text-center'>
+                                  检测中
+                                </div>
+                              );
                             })()}
                           </div>
 
