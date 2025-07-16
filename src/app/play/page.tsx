@@ -1131,9 +1131,9 @@ function PlayPageClient() {
         },
         settings: [
           {
-            html: blockAdEnabled ? '关闭去广告' : '开启去广告',
+            html: '去广告',
             icon: '<text x="50%" y="50%" font-size="20" font-weight="bold" text-anchor="middle" dominant-baseline="middle" fill="#ffffff">AD</text>',
-            tooltip: blockAdEnabled ? '当前开启' : '当前关闭',
+            tooltip: blockAdEnabled ? '已开启' : '已关闭',
             onClick() {
               const newVal = !blockAdEnabled;
               try {
