@@ -540,8 +540,23 @@ function PlayPageClient() {
       }
 
       let detailData: SearchResult = sourcesInfo[0];
+      // 指定源和id且无需优选
+      if (currentSource && currentId && !needPreferRef.current) {
+        const target = sourcesInfo.find(
+          (source) => source.source === currentSource && source.id === currentId
+        );
+        if (target) {
+          detailData = target;
+        } else {
+          setError('未找到匹配结果');
+          setLoading(false);
+          return;
+        }
+      }
+
+      // 未指定源和 id 或需要优选，且开启优选开关
       if (
-        ((!currentSource && !currentId) || needPreferRef.current) &&
+        (!currentSource || !currentId || needPreferRef.current) &&
         optimizationEnabled
       ) {
         setLoadingStage('preferring');
@@ -550,7 +565,6 @@ function PlayPageClient() {
         detailData = await preferBestSource(sourcesInfo);
       }
 
-      console.log(sourcesInfo);
       console.log(detailData.source, detailData.id);
 
       setNeedPrefer(false);
