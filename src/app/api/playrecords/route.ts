@@ -36,6 +36,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    console.log('username', authInfo.username);
+    console.log('body', body);
     const { key, record }: { key: string; record: PlayRecord } = body;
 
     if (!key || !record) {
