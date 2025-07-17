@@ -36,8 +36,6 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    console.log('username', authInfo.username);
-    console.log('body', body);
     const { key, record }: { key: string; record: PlayRecord } = body;
 
     if (!key || !record) {
@@ -64,7 +62,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await db.savePlayRecord(authInfo.username, source, id, record);
+    const finalRecord = {
+      ...record,
+      save_time: record.save_time ?? Date.now(),
+    } as PlayRecord;
+
+    await db.savePlayRecord(authInfo.username, source, id, finalRecord);
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (err) {
