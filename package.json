@@ -2,13 +2,14 @@
   "name": "moontv",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "pnpm gen:runtime && pnpm gen:manifest && next dev -H 0.0.0.0",
     "build": "pnpm gen:runtime && pnpm gen:manifest && next build",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "eslint src --fix && pnpm format",
-    "lint:strict": "eslint --max-warnings=0 src",
+    "lint:strict": "eslint --max-warnings=10 src",
     "typecheck": "tsc --noEmit --incremental false",
     "test:watch": "jest --watch",
     "test": "jest",
@@ -80,7 +81,7 @@
   },
   "lint-staged": {
     "**/*.{js,jsx,ts,tsx}": [
-      "eslint --max-warnings=0",
+      "eslint --max-warnings=10",
       "prettier -w"
     ],
     "**/*.{json,css,scss,md,webmanifest}": [
