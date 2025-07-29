@@ -1,5 +1,5 @@
 {
-  "buildCommand": "pnpm gen:runtime && cp next.config.edgeone.js next.config.js && pnpm next build",
+  "buildCommand": "pnpm gen:runtime && pnpm gen:manifest && next build && npx @cloudflare/next-on-pages --experimental-minify",
   "installCommand": "pnpm install --frozen-lockfile",
   "outputDirectory": "out",
   "nodeVersion": "22.11.0"
