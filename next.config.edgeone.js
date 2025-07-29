@@ -5,6 +5,11 @@ const nextConfig = {
     dirs: ['src'],
   },
 
+  // 强制 Next.js 使用边缘运行时
+  experimental: {
+    runtime: 'experimental-edge',
+  },
+
   reactStrictMode: true,
   swcMinify: true,
 
