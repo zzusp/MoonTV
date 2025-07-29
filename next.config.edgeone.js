@@ -31,6 +31,12 @@ const nextConfig = {
     // 禁用webpack缓存以减少文件大小
     config.cache = false;
 
+    // 将 Node.js 核心模块标记为外部依赖
+    config.externals = config.externals || {};
+    config.externals['net'] = 'commonjs net';
+    config.externals['tls'] = 'commonjs tls';
+    config.externals['crypto'] = 'commonjs crypto';
+
     // Grab the existing rule that handles SVG imports
     const fileLoaderRule = config.module.rules.find((rule) =>
       rule.test?.test?.('.svg')
